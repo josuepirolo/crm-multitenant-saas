@@ -97,7 +97,7 @@ export default function RegisterPage() {
                   autoFocus
                   autoComplete="organization"
                   required
-                  className="h-11 rounded-xl border-border/60 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus-visible:ring-primary/30 transition-all duration-200"
+                  className="h-11 rounded-xl border-border/60 bg-background text-foreground text-sm placeholder:text-muted-foreground focus-visible:ring-primary/30 transition-all duration-200"
                 />
               </div>
             </motion.div>
@@ -122,7 +122,7 @@ export default function RegisterPage() {
                 placeholder="Seu nome completo"
                 autoComplete="name"
                 required
-                className="h-11 rounded-xl border-border/60 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus-visible:ring-primary/30 transition-all duration-200"
+                className="h-11 rounded-xl border-border/60 bg-background text-foreground text-sm placeholder:text-muted-foreground focus-visible:ring-primary/30 transition-all duration-200"
               />
             </motion.div>
 
@@ -135,7 +135,7 @@ export default function RegisterPage() {
                 placeholder="voce@empresa.com"
                 autoComplete="email"
                 required
-                className="h-11 rounded-xl border-border/60 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus-visible:ring-primary/30 transition-all duration-200"
+                className="h-11 rounded-xl border-border/60 bg-background text-foreground text-sm placeholder:text-muted-foreground focus-visible:ring-primary/30 transition-all duration-200"
               />
             </motion.div>
 
@@ -148,7 +148,7 @@ export default function RegisterPage() {
                 placeholder="Mínimo 6 caracteres"
                 autoComplete="new-password"
                 required
-                className="h-11 rounded-xl border-border/60 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus-visible:ring-primary/30 transition-all duration-200"
+                className="h-11 rounded-xl border-border/60 bg-background text-foreground text-sm placeholder:text-muted-foreground focus-visible:ring-primary/30 transition-all duration-200"
               />
             </motion.div>
 
@@ -163,7 +163,7 @@ export default function RegisterPage() {
                 placeholder="••••••••"
                 autoComplete="new-password"
                 required
-                className="h-11 rounded-xl border-border/60 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus-visible:ring-primary/30 transition-all duration-200"
+                className="h-11 rounded-xl border-border/60 bg-background text-foreground text-sm placeholder:text-muted-foreground focus-visible:ring-primary/30 transition-all duration-200"
               />
             </motion.div>
 

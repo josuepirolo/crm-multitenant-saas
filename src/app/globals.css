@@ -49,6 +49,8 @@
 }
 
 :root {
+  color-scheme: light;
+
   /* Apple Blue como primary */
   --primary: oklch(0.623 0.214 255.7);
   --primary-foreground: oklch(1 0 0);
@@ -96,6 +98,8 @@
 }
 
 .dark {
+  color-scheme: dark;
+
   --primary: oklch(0.68 0.2 255.7);
   --primary-foreground: oklch(1 0 0);
 

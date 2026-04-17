@@ -62,7 +62,7 @@ export default function LoginPage() {
         className="relative w-full max-w-[400px]"
       >
         {/* Card */}
-        <div className="rounded-2xl border border-border/50 bg-white/80 dark:bg-white/[0.04] backdrop-blur-xl shadow-xl shadow-black/[0.06] dark:shadow-black/30 p-8">
+        <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl shadow-xl shadow-black/[0.06] p-8">
 
           {/* Logo */}
           <motion.div variants={item} className="flex flex-col items-center gap-3 mb-8">
@@ -93,7 +93,7 @@ export default function LoginPage() {
                 autoFocus
                 autoComplete="email"
                 required
-                className="h-11 rounded-xl border-border/60 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus-visible:ring-primary/30 transition-all duration-200"
+                className="h-11 rounded-xl border-border/60 bg-background text-foreground text-sm placeholder:text-muted-foreground focus-visible:ring-primary/30 transition-all duration-200"
               />
             </motion.div>
 
@@ -116,7 +116,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
-                className="h-11 rounded-xl border-border/60 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus-visible:ring-primary/30 transition-all duration-200"
+                className="h-11 rounded-xl border-border/60 bg-background text-foreground text-sm placeholder:text-muted-foreground focus-visible:ring-primary/30 transition-all duration-200"
               />
             </motion.div>
 
