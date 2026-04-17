@@ -3,6 +3,28 @@
 ## Princípio fundamental
 Antes de escrever qualquer linha de código de interface, analise e aplique as melhores práticas de UI/UX disponíveis para o framework ou linguagem em uso. Qualidade visual e experiência do usuário não são opcionais — são requisitos de qualidade equivalentes ao código funcional.
 
+## Design System — tokens obrigatórios (regra absoluta)
+
+**Nunca usar cores, tamanhos ou espaçamentos hardcoded.** Alterar em um lugar, o sistema inteiro obedece.
+
+### Cores — sempre via CSS tokens
+- **Proibido:** `bg-white`, `text-gray-900`, `text-gray-400`, `bg-gray-100`, `border-gray-200`, ou qualquer cor Tailwind literal em componentes de UI
+- **Obrigatório:** `bg-background`, `text-foreground`, `text-muted-foreground`, `bg-card`, `bg-muted`, `border-border`, `text-primary`, `bg-destructive`, etc.
+- Todos os tokens são definidos em `src/app/globals.css` dentro de `:root` (light) e `.dark` — é o único lugar a alterar para mudar o tema inteiro
+- `color-scheme: light/dark` deve estar nos blocos `:root` e `.dark` do CSS — nunca via inline style ou JS
+
+### `color-scheme` e ThemeProvider
+- O `next-themes` deve ser configurado com `enableColorScheme={false}` para não injetar `style="color-scheme: ..."` inline no `<html>` — isso quebraria os tokens CSS
+- O `color-scheme` é controlado exclusivamente pelo CSS cascade via `:root { color-scheme: light }` e `.dark { color-scheme: dark }`
+
+### Checklist de tokens antes de entregar qualquer UI
+- [ ] Nenhuma cor Tailwind literal nos classNames (ex: `gray-*`, `white`, `black`, `slate-*`, `zinc-*`)
+- [ ] Backgrounds usam `bg-background`, `bg-card`, `bg-muted`, `bg-popover`
+- [ ] Textos usam `text-foreground`, `text-muted-foreground`, `text-card-foreground`
+- [ ] Bordas usam `border-border`, `border-input`
+- [ ] Elementos de foco usam `ring-ring`
+- [ ] Cores de destaque usam `text-primary`, `bg-primary`, `text-destructive`, `bg-destructive`
+
 ## Análise obrigatória antes de codar
 Para qualquer tarefa de frontend, responda internamente antes de começar:
 1. Qual é o framework/stack em uso? (React, Vue, Angular, Svelte, vanilla, etc.)
