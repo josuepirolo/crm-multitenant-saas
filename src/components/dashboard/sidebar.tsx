@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -80,8 +81,12 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Sign out */}
-      <div className="border-t p-3">
+      {/* Theme toggle + Sign out */}
+      <div className="border-t p-3 space-y-1">
+        <div className={cn("flex items-center px-3 py-2", collapsed ? "justify-center" : "justify-between")}>
+          {!collapsed && <span className="text-xs text-muted-foreground">Tema</span>}
+          <ThemeToggle />
+        </div>
         <button
           onClick={handleSignOut}
           className={cn(
