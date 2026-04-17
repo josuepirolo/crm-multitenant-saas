@@ -48,7 +48,7 @@ export default function RegisterPage() {
   const [state, action] = useActionState(signUp, null);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F5F5F7] px-4 py-12 [color-scheme:light]">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-muted px-4 py-12">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/8 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
@@ -60,7 +60,7 @@ export default function RegisterPage() {
         animate="show"
         className="relative w-full max-w-[400px]"
       >
-        <div className="rounded-2xl border border-border/50 bg-white/80 backdrop-blur-xl shadow-xl shadow-black/[0.06] p-8">
+        <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl shadow-xl shadow-black/[0.06] p-8">
 
           {/* Logo */}
           <motion.div variants={item} className="flex flex-col items-center gap-3 mb-8">

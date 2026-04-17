@@ -8,7 +8,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider attribute="class" forcedTheme="light">
+    <ThemeProvider attribute="class" forcedTheme="light" enableColorScheme={false}>
       {children}
     </ThemeProvider>
   );
