@@ -24,18 +24,21 @@
 ## Estrutura de pastas relevante
 ```
 src/
-├── app/                  # rotas Next.js (App Router)
+├── app/                  # Apresentação — rotas Next.js (App Router)
 │   ├── (auth)/           # login, registro, recuperação de senha
 │   ├── (dashboard)/      # área autenticada
 │   └── api/              # route handlers
 ├── components/
 │   ├── ui/               # componentes base (shadcn/ui)
-│   └── [feature]/        # componentes por funcionalidade
-├── hooks/                # custom hooks
+│   └── [feature]/        # componentes visuais por funcionalidade (View)
+├── viewmodels/           # MVVM — hooks de estado e lógica de apresentação
+├── usecases/             # Regras de negócio — um arquivo por caso de uso
+├── repositories/         # Acesso a dados — interface + implementação Supabase
 ├── lib/
-│   ├── supabase/         # cliente e helpers do Supabase
+│   ├── supabase/         # Infraestrutura — clientes Supabase (browser, server, middleware)
+│   ├── validations/      # Schemas Zod
 │   └── utils/            # utilitários gerais
-└── types/                # tipos TypeScript globais
+└── types/                # Entidades de domínio e DTOs
 ```
 
 ## Comandos essenciais
@@ -58,3 +61,4 @@ src/
 
 @import .claude/rules/ui-design.md
 @import .claude/rules/security.md
+@import .claude/rules/architecture.md

@@ -130,6 +130,50 @@ Todo componente interativo deve ter todos os estados implementados:
 - Tooltips de gráfico: fundo com `bg-popover`, borda sutil, valor formatado
 - Gráficos responsivos — usar `ResponsiveContainer` sempre
 
+## Padrão Apple de design
+
+O padrão Apple é o referencial estético deste projeto. Aplicar em todas as telas:
+
+### Princípios visuais
+- **Clareza acima de tudo** — o conteúdo é o design; remover qualquer elemento que não sirva ao usuário
+- **Profundidade e materialidade** — camadas com sombras sutis, blur/backdrop para modais e popovers
+- **Espaçamento generoso** — preferir mais espaço vazio a telas densas; o espaço é parte do design
+- **Tipografia como hierarquia** — títulos grandes e bold, corpo leve, nunca mais de 3 pesos na mesma tela
+- **Cantos arredondados** — `rounded-xl` (12px) para cards e modais, `rounded-lg` (8px) para inputs e botões
+- **Superfícies translúcidas** — usar `backdrop-blur` com opacidade em sidebars, headers e modais
+
+### Cores e luz
+- Fundo principal: branco puro no light (`#FFFFFF`), cinza muito escuro no dark (`#0A0A0A` ou `#111111`)
+- Superfícies secundárias: cinza levíssimo (`#F5F5F7`) no light, cinza escuro (`#1C1C1E`) no dark
+- Cor de acesso primária: definir uma cor viva e usar com moderação — apenas em CTAs e destaques
+- Sombras: `shadow-sm` para cards, `shadow-md` para modais — nunca sombras coloridas ou pesadas
+- Separadores: linha `border` com opacidade baixa (`border-border/50`) — nunca linhas pesadas
+
+### Botões e interações
+- Botão primário: fundo sólido na cor primary, texto branco, `rounded-lg`, sem bordas
+- Botão secundário: fundo transparente com borda sutil ou fundo muted — nunca competir com o primário
+- Hover: transição suave de fundo/opacidade — nunca mudança abrupta
+- Ícones: sempre acompanhados de label ou tooltip — nunca ícone sozinho sem contexto
+
+### Motion e transições (suavidade obrigatória)
+- **Duração padrão:** 200ms para micro-interações, 350ms para transições de tela, 500ms para modais
+- **Easing padrão Apple:** `cubic-bezier(0.25, 0.46, 0.45, 0.94)` — suave e natural
+- **Framer Motion como padrão** para animações de entrada/saída de elementos
+- Padrões de animação obrigatórios:
+  - Modais/sheets: `y: 20 → 0` + `opacity: 0 → 1` ao abrir
+  - Listas: `staggerChildren` com delay de 50ms por item
+  - Páginas: `opacity: 0 → 1` com `y: 8 → 0`
+  - Toasts: slide in da direita/baixo
+- **Nunca** animar cor, border-radius ou propriedades que causam layout recalc
+- Respeitar `prefers-reduced-motion` — desabilitar animações se o usuário preferir
+
+### Tipografia no padrão Apple
+- Fonte principal: `Inter` ou `SF Pro` (via system font stack)
+- Títulos de página: `text-3xl font-bold tracking-tight`
+- Subtítulos de seção: `text-lg font-semibold`
+- Labels e metadados: `text-sm text-muted-foreground`
+- Nunca usar `font-black` ou `font-thin` — manter entre `font-normal` e `font-bold`
+
 ## Revisão de qualidade antes de entregar
 Antes de considerar qualquer implementação de UI concluída, verifique:
 - [ ] A hierarquia visual está clara sem precisar de explicação?
