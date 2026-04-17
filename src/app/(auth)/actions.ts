@@ -22,6 +22,9 @@ export async function signIn(_: unknown, formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
+    if (error.message.toLowerCase().includes("email not confirmed")) {
+      return { error: "Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada." };
+    }
     return { error: "E-mail ou senha inválidos" };
   }
 
@@ -50,12 +53,18 @@ export async function signUp(_: unknown, formData: FormData) {
   });
 
   if (authError) {
+    if (authError.message.toLowerCase().includes("already registered")) {
+      return { error: "Este e-mail já está cadastrado." };
+    }
     return { error: authError.message };
   }
 
   if (!authData.user) {
     return { error: "Erro ao criar usuário. Tente novamente." };
   }
+
+  // Se o e-mail precisa ser confirmado, sessão não é criada — redireciona para login
+  const needsConfirmation = !authData.session;
 
   // Cria workspace e vincula o usuário como owner via service_role
   try {
@@ -68,9 +77,12 @@ export async function signUp(_: unknown, formData: FormData) {
       owner_id: authData.user.id,
     });
   } catch (err) {
-    // Workspace falhou mas usuário foi criado — logar para investigar
     console.error("[signUp] Erro ao criar workspace:", err);
     return { error: "Conta criada, mas houve um erro ao configurar seu workspace. Entre em contato com o suporte." };
+  }
+
+  if (needsConfirmation) {
+    redirect("/login?confirm=1");
   }
 
   redirect("/dashboard");

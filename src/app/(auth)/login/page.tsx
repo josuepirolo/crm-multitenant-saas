@@ -3,12 +3,13 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { signIn } from "../actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, AlertCircle } from "lucide-react";
+import { MessageSquare, AlertCircle, MailCheck } from "lucide-react";
 import { appleEase } from "@/components/ui/motion";
 
 const container = {
@@ -46,6 +47,8 @@ function SubmitButton() {
 
 export default function LoginPage() {
   const [state, action] = useActionState(signIn, null);
+  const searchParams = useSearchParams();
+  const confirmPending = searchParams.get("confirm") === "1";
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-muted px-4">
@@ -78,6 +81,18 @@ export default function LoginPage() {
               </p>
             </div>
           </motion.div>
+
+          {confirmPending && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2, ease: appleEase }}
+              className="flex items-center gap-2.5 rounded-xl bg-primary/8 border border-primary/20 px-4 py-3 mb-6"
+            >
+              <MailCheck size={15} className="shrink-0 text-primary" />
+              <p className="text-sm text-primary">Conta criada! Confirme seu e-mail para entrar.</p>
+            </motion.div>
+          )}
 
           {/* Form */}
           <form action={action} className="space-y-5">
