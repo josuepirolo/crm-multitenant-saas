@@ -8,7 +8,7 @@ import { signUp } from "../actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, AlertCircle } from "lucide-react";
+import { MessageSquare, AlertCircle, Building2 } from "lucide-react";
 import { appleEase } from "@/components/ui/motion";
 
 const container = {
@@ -48,8 +48,7 @@ export default function RegisterPage() {
   const [state, action] = useActionState(signUp, null);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F5F5F7] dark:bg-[#0A0A0A] px-4">
-      {/* Fundo com gradiente sutil */}
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F5F5F7] px-4 py-12">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/8 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
@@ -61,8 +60,7 @@ export default function RegisterPage() {
         animate="show"
         className="relative w-full max-w-[400px]"
       >
-        {/* Card */}
-        <div className="rounded-2xl border border-border/50 bg-white/80 dark:bg-white/[0.04] backdrop-blur-xl shadow-xl shadow-black/[0.06] dark:shadow-black/30 p-8">
+        <div className="rounded-2xl border border-border/50 bg-white/80 backdrop-blur-xl shadow-xl shadow-black/[0.06] p-8">
 
           {/* Logo */}
           <motion.div variants={item} className="flex flex-col items-center gap-3 mb-8">
@@ -70,27 +68,58 @@ export default function RegisterPage() {
               <MessageSquare size={26} className="text-white" />
             </div>
             <div className="text-center">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                Criar conta
-              </h1>
+              <h1 className="text-2xl font-bold tracking-tight">Criar conta</h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 Comece a usar o CRM Vendas grátis
               </p>
             </div>
           </motion.div>
 
-          {/* Form */}
           <form action={action} className="space-y-4">
+
+            {/* Separador empresa */}
+            <motion.div variants={item}>
+              <div className="flex items-center gap-2 mb-3">
+                <Building2 size={14} className="text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Sua empresa
+                </span>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="workspaceName" className="text-sm font-medium">
+                  Nome da empresa
+                </Label>
+                <Input
+                  id="workspaceName"
+                  name="workspaceName"
+                  type="text"
+                  placeholder="Acme Vendas"
+                  autoFocus
+                  autoComplete="organization"
+                  required
+                  className="h-11 rounded-xl border-border/60 bg-background/60 text-sm placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 transition-all duration-200"
+                />
+              </div>
+            </motion.div>
+
+            {/* Separador conta */}
+            <motion.div variants={item}>
+              <div className="flex items-center gap-2 mb-3 pt-1">
+                <div className="h-px flex-1 bg-border/60" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2">
+                  Sua conta
+                </span>
+                <div className="h-px flex-1 bg-border/60" />
+              </div>
+            </motion.div>
+
             <motion.div variants={item} className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium">
-                Nome
-              </Label>
+              <Label htmlFor="name" className="text-sm font-medium">Nome</Label>
               <Input
                 id="name"
                 name="name"
                 type="text"
                 placeholder="Seu nome completo"
-                autoFocus
                 autoComplete="name"
                 required
                 className="h-11 rounded-xl border-border/60 bg-background/60 text-sm placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 transition-all duration-200"
@@ -98,9 +127,7 @@ export default function RegisterPage() {
             </motion.div>
 
             <motion.div variants={item} className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                E-mail
-              </Label>
+              <Label htmlFor="email" className="text-sm font-medium">E-mail</Label>
               <Input
                 id="email"
                 name="email"
@@ -113,9 +140,7 @@ export default function RegisterPage() {
             </motion.div>
 
             <motion.div variants={item} className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
-                Senha
-              </Label>
+              <Label htmlFor="password" className="text-sm font-medium">Senha</Label>
               <Input
                 id="password"
                 name="password"
@@ -159,25 +184,17 @@ export default function RegisterPage() {
             </motion.div>
           </form>
 
-          {/* Link para login */}
           <motion.div variants={item} className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Já tem uma conta?{" "}
-              <Link
-                href="/login"
-                className="font-medium text-primary hover:text-primary/80 transition-colors duration-150"
-              >
+              <Link href="/login" className="font-medium text-primary hover:text-primary/80 transition-colors duration-150">
                 Entrar
               </Link>
             </p>
           </motion.div>
         </div>
 
-        {/* Rodapé */}
-        <motion.p
-          variants={item}
-          className="mt-6 text-center text-xs text-muted-foreground/60"
-        >
+        <motion.p variants={item} className="mt-6 text-center text-xs text-muted-foreground/60">
           Ao criar uma conta, você concorda com os{" "}
           <span className="underline underline-offset-2 cursor-pointer hover:text-muted-foreground transition-colors">
             Termos de Uso
