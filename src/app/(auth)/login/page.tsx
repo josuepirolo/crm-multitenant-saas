@@ -48,7 +48,7 @@ export default function LoginPage() {
   const [state, action] = useActionState(signIn, null);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F5F5F7] dark:bg-[#0A0A0A] px-4">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F5F5F7] px-4 [color-scheme:light]">
       {/* Fundo com gradiente sutil */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/8 blur-3xl" />

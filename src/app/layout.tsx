@@ -28,6 +28,7 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       className={`${inter.variable} ${geistMono.variable} h-full`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col antialiased">
         <Providers>{children}</Providers>
