@@ -93,7 +93,7 @@ export default function LoginPage() {
                 autoFocus
                 autoComplete="email"
                 required
-                className="h-11 rounded-xl border-border/60 bg-background/60 text-sm placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 transition-all duration-200"
+                className="h-11 rounded-xl border-border/60 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus-visible:ring-primary/30 transition-all duration-200"
               />
             </motion.div>
 
@@ -116,7 +116,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
-                className="h-11 rounded-xl border-border/60 bg-background/60 text-sm placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 transition-all duration-200"
+                className="h-11 rounded-xl border-border/60 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus-visible:ring-primary/30 transition-all duration-200"
               />
             </motion.div>
 
