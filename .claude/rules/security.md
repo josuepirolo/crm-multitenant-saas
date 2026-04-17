@@ -3,6 +3,22 @@
 ## Princípio fundamental
 Segurança não é opcional. Todo código gerado deve seguir práticas seguras por padrão, especialmente por ser um SaaS multi-tenant com dados sensíveis de clientes.
 
+## Estratégia de acesso ao Supabase
+
+A `anon key` pode ser exposta no cliente — isso é intencional. A segurança vem do RLS, não do segredo da key. Use a estratégia abaixo para decidir onde cada operação deve rodar:
+
+| Operação | Onde fazer | Cliente Supabase |
+|---|---|---|
+| Login, leitura de dados do usuário | Client Component | `createBrowserClient` + anon key + RLS |
+| Queries de leads, contatos, chat | Server Component | `createServerClient` + anon key + RLS |
+| Operações admin (criar workspace, billing) | Route Handler | `createServerClient` + service_role |
+| Webhooks WhatsApp | Route Handler | `createServerClient` + service_role |
+
+- **RLS é sempre a última barreira** — nunca desabilitar, mesmo em desenvolvimento
+- **`service_role` nunca no cliente** — apenas em Route Handlers e Server Actions
+- **Server Components** são o padrão para leitura de dados — menos round-trips, mais seguro
+- **Client Components** apenas quando precisar de interatividade ou realtime (Supabase Realtime)
+
 ## Multi-tenancy — isolamento de dados (prioridade máxima)
 - **Toda query ao Supabase deve filtrar por `workspace_id`** — nunca retornar dados sem esse filtro
 - Nunca confiar no `workspace_id` vindo do cliente — sempre derivar do contexto autenticado (sessão/JWT)
