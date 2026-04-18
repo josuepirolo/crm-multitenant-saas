@@ -28,9 +28,9 @@ export async function signIn(_: unknown, formData: FormData) {
 
   if (error) {
     if (error.message.toLowerCase().includes("email not confirmed")) {
-      return { error: "Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada." };
+      return { error: "Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.", email: parsed.data.email };
     }
-    return { error: "E-mail ou senha inválidos" };
+    return { error: "E-mail ou senha inválidos", email: parsed.data.email };
   }
 
   redirect("/dashboard");
@@ -64,9 +64,9 @@ export async function signUp(_: unknown, formData: FormData) {
 
   if (authError) {
     if (authError.message.toLowerCase().includes("already registered")) {
-      return { error: "Este e-mail já está cadastrado." };
+      return { error: "Este e-mail já está cadastrado.", email: parsed.data.email, name: parsed.data.name, workspaceName: parsed.data.workspaceName };
     }
-    return { error: authError.message };
+    return { error: authError.message, email: parsed.data.email, name: parsed.data.name, workspaceName: parsed.data.workspaceName };
   }
 
   if (!authData.user) {

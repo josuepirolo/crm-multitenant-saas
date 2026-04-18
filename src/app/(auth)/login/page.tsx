@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { signIn } from "../actions";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, AlertCircle, MailCheck } from "lucide-react";
@@ -53,7 +54,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-muted px-4">
-      {/* Fundo com gradiente sutil */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/8 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
@@ -65,21 +65,15 @@ export default function LoginPage() {
         animate="show"
         className="relative w-full max-w-[400px]"
       >
-        {/* Card */}
         <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl shadow-xl shadow-black/[0.06] p-8">
 
-          {/* Logo */}
           <motion.div variants={item} className="flex flex-col items-center gap-3 mb-8">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30">
               <MessageSquare size={26} className="text-white" />
             </div>
             <div className="text-center">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                CRM Vendas
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Entre na sua conta para continuar
-              </p>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">CRM Vendas</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Entre na sua conta para continuar</p>
             </div>
           </motion.div>
 
@@ -95,12 +89,9 @@ export default function LoginPage() {
             </motion.div>
           )}
 
-          {/* Form */}
           <form action={action} className="space-y-5">
             <motion.div variants={item} className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                E-mail
-              </Label>
+              <Label htmlFor="email" className="text-sm font-medium">E-mail</Label>
               <Input
                 id="email"
                 name="email"
@@ -109,15 +100,14 @@ export default function LoginPage() {
                 autoFocus
                 autoComplete="email"
                 required
+                defaultValue={state?.email ?? ""}
                 className="h-11 rounded-xl border-border/60 bg-background text-foreground text-sm placeholder:text-muted-foreground focus-visible:ring-primary/30 transition-all duration-200"
               />
             </motion.div>
 
             <motion.div variants={item} className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Senha
-                </Label>
+                <Label htmlFor="password" className="text-sm font-medium">Senha</Label>
                 <Link
                   href="/reset-password"
                   className="text-xs text-primary hover:text-primary/80 transition-colors duration-150"
@@ -125,14 +115,12 @@ export default function LoginPage() {
                   Esqueceu a senha?
                 </Link>
               </div>
-              <Input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
-                className="h-11 rounded-xl border-border/60 bg-background text-foreground text-sm placeholder:text-muted-foreground focus-visible:ring-primary/30 transition-all duration-200"
               />
             </motion.div>
 
@@ -157,25 +145,17 @@ export default function LoginPage() {
             </motion.div>
           </form>
 
-          {/* Divider */}
           <motion.div variants={item} className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Não tem uma conta?{" "}
-              <Link
-                href="/register"
-                className="font-medium text-primary hover:text-primary/80 transition-colors duration-150"
-              >
+              <Link href="/register" className="font-medium text-primary hover:text-primary/80 transition-colors duration-150">
                 Criar conta
               </Link>
             </p>
           </motion.div>
         </div>
 
-        {/* Rodapé */}
-        <motion.p
-          variants={item}
-          className="mt-6 text-center text-xs text-muted-foreground/60"
-        >
+        <motion.p variants={item} className="mt-6 text-center text-xs text-muted-foreground/60">
           Ao continuar, você concorda com os{" "}
           <span className="underline underline-offset-2 cursor-pointer hover:text-muted-foreground transition-colors">
             Termos de Uso
