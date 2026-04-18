@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, AlertCircle, MailCheck } from "lucide-react";
 import { appleEase } from "@/components/ui/motion";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 const container = {
   hidden: { opacity: 0 },
@@ -146,6 +147,10 @@ export default function LoginPage() {
                 <p className="text-sm text-destructive">{state.error}</p>
               </motion.div>
             )}
+
+            <motion.div variants={item} className="flex justify-center">
+              <Turnstile siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} />
+            </motion.div>
 
             <motion.div variants={item}>
               <SubmitButton />

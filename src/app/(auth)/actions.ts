@@ -18,8 +18,13 @@ export async function signIn(_: unknown, formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
+  const captchaToken = formData.get("cf-turnstile-response") as string | undefined;
+
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { error } = await supabase.auth.signInWithPassword({
+    ...parsed.data,
+    options: captchaToken ? { captchaToken } : undefined,
+  });
 
   if (error) {
     if (error.message.toLowerCase().includes("email not confirmed")) {
@@ -45,11 +50,16 @@ export async function signUp(_: unknown, formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
+  const captchaToken = formData.get("cf-turnstile-response") as string | undefined;
+
   const supabase = await createClient();
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { data: { name: parsed.data.name } },
+    options: {
+      data: { name: parsed.data.name },
+      ...(captchaToken ? { captchaToken } : {}),
+    },
   });
 
   if (authError) {
@@ -63,10 +73,8 @@ export async function signUp(_: unknown, formData: FormData) {
     return { error: "Erro ao criar usuário. Tente novamente." };
   }
 
-  // Se o e-mail precisa ser confirmado, sessão não é criada — redireciona para login
   const needsConfirmation = !authData.session;
 
-  // Cria workspace e vincula o usuário como owner via service_role
   try {
     const admin = createAdminClient();
     const workspaceRepo = new SupabaseWorkspaceRepository(admin);
