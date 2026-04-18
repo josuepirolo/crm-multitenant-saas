@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { loginSchema, registerSchema } from "@/lib/validations/auth";
+import { loginSchema, registerSchema, resetPasswordSchema, updatePasswordSchema } from "@/lib/validations/auth";
 import { SupabaseWorkspaceRepository } from "@/repositories/workspace.repository";
 import { uniqueSlug } from "@/lib/utils/slug";
 import { redirect } from "next/navigation";
@@ -92,6 +92,35 @@ export async function signUp(_: unknown, formData: FormData) {
   if (needsConfirmation) {
     redirect("/login?confirm=1");
   }
+
+  redirect("/dashboard");
+}
+
+export async function requestPasswordReset(_: unknown, formData: FormData) {
+  const parsed = resetPasswordSchema.safeParse({ email: formData.get("email") });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/update-password`,
+  });
+
+  if (error) return { error: "Não foi possível enviar o e-mail. Tente novamente.", email: parsed.data.email };
+
+  return { success: true };
+}
+
+export async function updatePassword(_: unknown, formData: FormData) {
+  const parsed = updatePasswordSchema.safeParse({
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+
+  if (error) return { error: "Não foi possível atualizar a senha. O link pode ter expirado." };
 
   redirect("/dashboard");
 }

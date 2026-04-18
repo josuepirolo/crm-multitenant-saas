@@ -16,5 +16,17 @@ export const registerSchema = z.object({
   path: ["confirmPassword"],
 });
 
+export const resetPasswordSchema = z.object({
+  email: z.string().email("E-mail inválido"),
+});
+
+export const updatePasswordSchema = z.object({
+  password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
+  confirmPassword: z.string(),
+}).refine((d) => d.password === d.confirmPassword, {
+  message: "Senhas não conferem",
+  path: ["confirmPassword"],
+});
+
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type RegisterSchema = z.infer<typeof registerSchema>;
