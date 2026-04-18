@@ -18,6 +18,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         "md:text-sm",
         className
       )}
+      suppressHydrationWarning
       {...props}
     />
   )
