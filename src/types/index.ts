@@ -1,4 +1,6 @@
-export type MemberRole = "owner" | "admin" | "member";
+export type MemberRole = "owner" | "admin" | "manager" | "sales" | "support";
+export type PermissionModule = "leads" | "contacts" | "deals" | "chat" | "analytics" | "settings" | "members";
+export type PermissionAction = "view" | "create" | "edit" | "delete";
 export type ContactStatus = "lead" | "prospect" | "customer" | "churned";
 export type DealStatus = "open" | "won" | "lost" | "archived";
 export type ConvStatus = "open" | "pending" | "resolved" | "archived";
