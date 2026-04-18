@@ -15,9 +15,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { signOut } from "@/app/(dashboard)/actions";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,14 +29,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
-
-  async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
 
   return (
     <aside
@@ -87,15 +79,17 @@ export function Sidebar() {
           {!collapsed && <span className="text-xs text-muted-foreground">Tema</span>}
           <ThemeToggle />
         </div>
-        <button
-          onClick={handleSignOut}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-          )}
-        >
-          <LogOut size={18} className="shrink-0" />
-          {!collapsed && <span>Sair</span>}
-        </button>
+        <form action={signOut}>
+          <button
+            type="submit"
+            className={cn(
+              "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            )}
+          >
+            <LogOut size={18} className="shrink-0" />
+            {!collapsed && <span>Sair</span>}
+          </button>
+        </form>
       </div>
     </aside>
   );
