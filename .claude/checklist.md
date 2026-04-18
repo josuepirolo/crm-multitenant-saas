@@ -22,20 +22,25 @@
 - [x] Middleware de proteção das rotas do dashboard
 - [x] Cookies HttpOnly + Secure (Supabase SSR)
 - [x] Tratamento de confirmação de e-mail
-- [ ] Reset de senha (página + Server Action)
+- [x] Reset de senha (solicitar + redefinir + /auth/callback)
+- [x] Cloudflare Turnstile (proteção contra bots)
+- [x] Sessão única por usuário (sessions_single_per_user)
+- [x] Sign out com invalidação de sessão no servidor (scope: global)
 - [ ] Convite de membros para o workspace
 
 ## UI / Design
 - [x] Tema light forçado nas telas de auth
-- [x] Dark mode no dashboard com toggle
+- [x] Dark mode no dashboard com toggle (segue sistema + manual)
 - [x] Tela de login — padrão Apple
 - [x] Tela de registro — padrão Apple
-- [ ] Página de reset de senha
-- [ ] Página 404 customizada
-- [ ] Loading global (skeleton / spinner)
+- [x] Toggle show/hide senha + aviso de CapsLock
+- [x] E-mail/campos mantidos após erro de submit
+- [x] Página de reset de senha
+- [x] Página de redefinição de senha
+- [x] Página 404 customizada
+- [x] Skeleton loading do dashboard
 
 ## Dashboard
-- [ ] Layout com sidebar colapsável
 - [ ] Página inicial com métricas (cards + gráficos)
 - [ ] Gráfico de conversões
 - [ ] Gráfico de receita
