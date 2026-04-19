@@ -41,22 +41,36 @@
 - [x] Skeleton loading do dashboard
 
 ## Dashboard
-- [ ] Página inicial com métricas (cards + gráficos)
-- [ ] Gráfico de conversões
+- [x] Página inicial com métricas (4 cards — leads, deals, conversas, conversão)
+- [x] Gráfico de leads por período (AreaChart — recharts)
+- [x] Gráfico de negociações por status (PieChart donut — recharts)
+- [x] Tabela de contatos recentes
 - [ ] Gráfico de receita
-- [ ] Gráfico de leads por período
+- [ ] Gráfico de conversões por funil
 
-## Leads
-- [ ] Listagem com tabela (paginação, filtros, busca)
-- [ ] Criar lead (modal / página)
-- [ ] Editar lead
-- [ ] Deletar lead
-- [ ] Importar leads (CSV)
+## Permissões e papéis
+- [x] Enum de roles: owner, admin, manager, sales, support
+- [x] Matriz de permissões estática por módulo e ação
+- [x] Guard `requirePermission()` nas Server Actions
+- [x] Hook `usePermissions()` para controle de UI
+- [x] Soft delete em todas as entidades (deleted_at)
 
-## Contatos
-- [ ] Listagem de contatos
-- [ ] Criar / editar / deletar contato
+## Contatos (ex-Leads — módulo unificado em /contacts)
+- [x] Repositório + Use Cases (CRUD + soft delete)
+- [x] Server Actions com guard de permissão
+- [x] ViewModel com paginação, filtros e estado de modal
+- [x] Filtros: busca por nome/email/telefone + tabs de status
+- [x] Tabela com skeleton loading, avatar, badge de status
+- [x] Criar / editar contato (modal com react-hook-form + zod)
+- [x] Remover contato (soft delete com dialog de confirmação)
+- [x] Pessoa Física / Jurídica com toggle
+- [x] CPF com máscara + validação de dígitos verificadores
+- [x] CNPJ com máscara + validação de dígitos verificadores
+- [x] Telefone internacional (PhoneInput, seletor de país, E.164)
+- [x] Unicidade: phone, email, CPF/CNPJ por workspace (DB + backend + frontend)
+- [x] Normalização automática via trigger no banco
 - [ ] Histórico de interações
+- [ ] Importar contatos (CSV)
 
 ## Negociações (Kanban)
 - [ ] Board kanban com colunas por estágio

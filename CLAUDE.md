@@ -1,5 +1,19 @@
 # CLAUDE.md
 
+<available_skills>
+<skill>
+<name>direto</name>
+<description>Estilo padrão de comunicação: direto, conciso e sem rodeios.</description>
+<location>.claude/skills/direto/SKILL.md</location>
+</skill>
+
+<skill>
+<name>economico</name>
+<description>Modo padrão de execução: minimizar uso de tokens e evitar exploração desnecessária.</description>
+<location>.claude/skills/economico/SKILL.md</location>
+</skill>
+</available_skills>
+
 ## Projeto
 **CRM Vendas WhatsApp** — plataforma SaaS para gestão de vendas via WhatsApp. Permite gerenciar leads, contatos, conversas, funis de vendas e análise de performance. Público-alvo: empresas e equipes de vendas que usam WhatsApp como canal principal.
 

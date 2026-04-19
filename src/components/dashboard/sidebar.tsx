@@ -20,7 +20,7 @@ import { signOut } from "@/app/(dashboard)/actions";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/leads", label: "Leads", icon: Users },
+  { href: "/contacts", label: "Contatos", icon: Users },
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/kanban", label: "Kanban", icon: KanbanSquare },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },

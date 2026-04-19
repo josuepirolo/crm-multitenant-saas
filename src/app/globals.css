@@ -157,3 +157,59 @@
     @apply font-sans h-full;
   }
 }
+
+/* ─── PhoneInput — integração com design system ─────────────────────────── */
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.phone-input-wrapper .PhoneInputCountry {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.6);
+  background: hsl(var(--background));
+  flex-shrink: 0;
+}
+.phone-input-wrapper .PhoneInputCountrySelect {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  max-width: 1.5rem;
+  opacity: 0;
+  position: absolute;
+}
+.phone-input-wrapper .PhoneInputCountryIcon {
+  width: 1.25rem;
+  height: auto;
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.phone-input-wrapper .PhoneInputCountrySelectArrow {
+  color: hsl(var(--muted-foreground));
+  margin-left: 0.25rem;
+  font-size: 0.625rem;
+}
+.phone-input-wrapper input {
+  flex: 1;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.6);
+  background: hsl(var(--background));
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
+  outline: none;
+  transition: box-shadow 0.15s;
+}
+.phone-input-wrapper input:focus {
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.3);
+}

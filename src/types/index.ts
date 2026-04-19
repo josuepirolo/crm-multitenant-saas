@@ -40,6 +40,7 @@ export interface Contact {
   name: string;
   phone: string | null;
   email: string | null;
+  document: string | null;
   company: string | null;
   status: ContactStatus;
   avatar_url: string | null;

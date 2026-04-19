@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { can } from "@/lib/permissions";
 import type { MemberRole, PermissionModule, PermissionAction } from "@/types";
 
@@ -12,13 +13,23 @@ export async function getSessionUser() {
 
 export async function getUserRole(workspaceId: string): Promise<MemberRole | null> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  // Admin client bypasses RLS — server-side permission check only
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("workspace_members")
     .select("role")
     .eq("workspace_id", workspaceId)
-    .eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "")
+    .eq("user_id", user.id)
     .is("deleted_at", null)
-    .single();
+    .maybeSingle();
+
+  if (error) {
+    console.error("[getUserRole] Erro ao buscar role:", error.message);
+    return null;
+  }
 
   return (data?.role as MemberRole) ?? null;
 }
@@ -27,11 +38,12 @@ export async function requirePermission(
   workspaceId: string,
   module: PermissionModule,
   action: PermissionAction
-): Promise<void> {
+): Promise<{ error: string } | null> {
   const role = await getUserRole(workspaceId);
   if (!can(role, module, action)) {
-    throw new Error("Você não tem permissão para realizar esta ação.");
+    return { error: "Você não tem permissão para realizar esta ação." };
   }
+  return null;
 }
 
 export async function getCurrentWorkspaceId(): Promise<string | null> {
