@@ -7,14 +7,15 @@ import { toast } from "sonner";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import PhoneInput, { type Value as PhoneValue } from "react-phone-number-input";
+import ptBR from "react-phone-number-input/locale/pt-BR.json";
 import "react-phone-number-input/style.css";
-import { createLead, updateLead } from "@/app/(dashboard)/contacts/actions";
+import { createContact, updateContact } from "@/app/(dashboard)/contacts/actions";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { appleEase } from "@/components/ui/motion";
 import { contactSchema, type ContactFormValues, maskCPF, maskCNPJ, toDigits } from "@/lib/validations/contact";
-import type { Lead } from "@/repositories/lead.repository";
+import type { Contact } from "@/repositories/contact.repository";
 
 const STATUS_OPTIONS = [
   { value: "lead",     label: "Lead" },
@@ -23,15 +24,15 @@ const STATUS_OPTIONS = [
   { value: "churned",  label: "Inativo" },
 ];
 
-interface LeadModalProps {
+interface ContactModalProps {
   open: boolean;
-  lead?: Lead | null;
+  contact?: Contact | null;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (contact: Contact, isEdit: boolean) => void;
 }
 
-export function LeadModal({ open, lead, onClose, onSaved }: LeadModalProps) {
-  const isEdit = !!lead;
+export function ContactModal({ open, contact, onClose, onSaved }: ContactModalProps) {
+  const isEdit = !!contact;
   const [docMasked, setDocMasked] = useState("");
 
   const { register, handleSubmit, reset, setError, control, watch, setValue,
@@ -45,38 +46,36 @@ export function LeadModal({ open, lead, onClose, onSaved }: LeadModalProps) {
 
   useEffect(() => {
     if (!open) return;
-    if (lead) {
-      const pType = lead.document
-        ? toDigits(lead.document).length === 14 ? "juridica" : "fisica"
+    if (contact) {
+      const pType = contact.document
+        ? toDigits(contact.document).length === 14 ? "juridica" : "fisica"
         : "fisica";
-      const masked = lead.document
-        ? pType === "fisica" ? maskCPF(lead.document) : maskCNPJ(lead.document)
+      const masked = contact.document
+        ? pType === "fisica" ? maskCPF(contact.document) : maskCNPJ(contact.document)
         : "";
       setDocMasked(masked);
       reset({
-        name:       lead.name,
+        name:       contact.name,
         personType: pType,
         document:   masked,
-        phone:      lead.phone ? `+${lead.phone}` : "",
-        email:      lead.email ?? "",
-        company:    lead.company ?? "",
-        status:     lead.status,
-        notes:      lead.notes ?? "",
+        phone:      contact.phone ? `+${contact.phone}` : "",
+        email:      contact.email ?? "",
+        company:    contact.company ?? "",
+        status:     contact.status,
+        notes:      contact.notes ?? "",
       });
     } else {
       setDocMasked("");
       reset({ name: "", personType: "fisica", document: "", phone: "", email: "", company: "", status: "lead", notes: "" });
     }
-  }, [open, lead, reset]);
+  }, [open, contact, reset]);
 
-  // Troca tipo de pessoa → limpa documento
   function handlePersonTypeChange(type: "fisica" | "juridica") {
     setValue("personType", type);
     setValue("document", "");
     setDocMasked("");
   }
 
-  // Máscara dinâmica do documento
   function handleDocChange(e: React.ChangeEvent<HTMLInputElement>) {
     const masked = personType === "fisica"
       ? maskCPF(e.target.value)
@@ -88,20 +87,29 @@ export function LeadModal({ open, lead, onClose, onSaved }: LeadModalProps) {
   async function onSubmit(values: ContactFormValues) {
     const formData = new FormData();
     Object.entries(values).forEach(([k, v]) => formData.append(k, v ?? ""));
-    if (isEdit) formData.append("id", lead.id);
+    if (isEdit) formData.append("id", contact.id);
 
-    const action = isEdit ? updateLead : createLead;
-    const result = await action(null, formData);
+    const action = isEdit ? updateContact : createContact;
 
-    if (result.error) {
-      const msg = result.error;
-      if (msg.includes("telefone"))            setError("phone",    { message: msg });
-      else if (msg.includes("e-mail"))         setError("email",    { message: msg });
+    const resultPromise = action(null, formData).then((r): { error: undefined; contact: Contact } => {
+      if (r.error) throw new Error(r.error);
+      return r as { error: undefined; contact: Contact };
+    });
+
+    toast.promise(resultPromise, {
+      loading: isEdit ? "Salvando alterações..." : "Criando contato...",
+      success: isEdit ? "Contato atualizado!" : "Contato criado!",
+      error: (err: Error) => err.message ?? "Erro ao salvar contato.",
+    });
+
+    try {
+      const result = await resultPromise;
+      onSaved(result.contact!, isEdit);
+    } catch (err) {
+      const msg = (err as Error).message;
+      if (msg.includes("telefone"))                          setError("phone",    { message: msg });
+      else if (msg.includes("e-mail"))                       setError("email",    { message: msg });
       else if (msg.includes("CPF") || msg.includes("CNPJ")) setError("document", { message: msg });
-      else toast.error(msg);
-    } else {
-      toast.success(isEdit ? "Contato atualizado!" : "Contato criado!");
-      onSaved();
     }
   }
 
@@ -124,7 +132,6 @@ export function LeadModal({ open, lead, onClose, onSaved }: LeadModalProps) {
             transition={{ duration: 0.25, ease: appleEase }}
             className="fixed inset-x-4 top-1/2 z-50 mx-auto max-w-lg -translate-y-1/2 rounded-2xl border border-border/50 bg-card shadow-2xl shadow-black/20 overflow-y-auto max-h-[90vh]"
           >
-            {/* Header */}
             <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
               <h2 className="text-base font-semibold">{isEdit ? "Editar contato" : "Novo contato"}</h2>
               <button onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
@@ -135,14 +142,12 @@ export function LeadModal({ open, lead, onClose, onSaved }: LeadModalProps) {
             <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
-                {/* Nome */}
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-sm font-medium">Nome *</Label>
                   <Input {...register("name")} placeholder="Nome completo" autoFocus className={inputCls} />
                   {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
                 </div>
 
-                {/* Tipo de pessoa */}
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-sm font-medium">Tipo de pessoa</Label>
                   <div className="flex gap-1 rounded-xl border border-border/60 bg-muted/40 p-1 w-fit">
@@ -161,7 +166,6 @@ export function LeadModal({ open, lead, onClose, onSaved }: LeadModalProps) {
                   </div>
                 </div>
 
-                {/* CPF ou CNPJ */}
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-sm font-medium">{personType === "fisica" ? "CPF" : "CNPJ"}</Label>
                   <Input
@@ -173,7 +177,6 @@ export function LeadModal({ open, lead, onClose, onSaved }: LeadModalProps) {
                   {errors.document && <p className="text-xs text-destructive">{errors.document.message}</p>}
                 </div>
 
-                {/* Telefone — PhoneInput com DDI */}
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-sm font-medium">Telefone</Label>
                   <Controller
@@ -183,6 +186,7 @@ export function LeadModal({ open, lead, onClose, onSaved }: LeadModalProps) {
                       <PhoneInput
                         international
                         defaultCountry="BR"
+                        labels={ptBR}
                         value={field.value as PhoneValue}
                         onChange={field.onChange}
                         inputComponent={Input as React.ComponentType<React.InputHTMLAttributes<HTMLInputElement>>}
@@ -196,20 +200,17 @@ export function LeadModal({ open, lead, onClose, onSaved }: LeadModalProps) {
                   }
                 </div>
 
-                {/* E-mail */}
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-sm font-medium">E-mail</Label>
                   <Input type="email" {...register("email")} placeholder="email@empresa.com" className={inputCls} />
                   {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
                 </div>
 
-                {/* Empresa */}
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium">Empresa</Label>
                   <Input {...register("company")} placeholder="Nome da empresa" className={inputCls} />
                 </div>
 
-                {/* Status */}
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium">Status</Label>
                   <select {...register("status")}
@@ -220,7 +221,6 @@ export function LeadModal({ open, lead, onClose, onSaved }: LeadModalProps) {
                   </select>
                 </div>
 
-                {/* Notas */}
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-sm font-medium">Notas</Label>
                   <textarea {...register("notes")} placeholder="Observações sobre este contato..."

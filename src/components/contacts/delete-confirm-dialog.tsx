@@ -4,29 +4,29 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { deleteLead } from "@/app/(dashboard)/contacts/actions";
+import { deleteContact } from "@/app/(dashboard)/contacts/actions";
 import { Button } from "@/components/ui/button";
 import { appleEase } from "@/components/ui/motion";
-import type { Lead } from "@/repositories/lead.repository";
+import type { Contact } from "@/repositories/contact.repository";
 
 interface DeleteConfirmDialogProps {
-  lead: Lead | null;
+  contact: Contact | null;
   onClose: () => void;
   onDeleted: () => void;
 }
 
-export function DeleteConfirmDialog({ lead, onClose, onDeleted }: DeleteConfirmDialogProps) {
+export function DeleteConfirmDialog({ contact, onClose, onDeleted }: DeleteConfirmDialogProps) {
   const [loading, setLoading] = useState(false);
 
   async function handleDelete() {
-    if (!lead) return;
+    if (!contact) return;
     setLoading(true);
     try {
-      const result = await deleteLead(lead.id);
+      const result = await deleteContact(contact.id);
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Lead removido.");
+        toast.success("Contato removido.");
         onDeleted();
       }
     } finally {
@@ -36,7 +36,7 @@ export function DeleteConfirmDialog({ lead, onClose, onDeleted }: DeleteConfirmD
 
   return (
     <AnimatePresence>
-      {lead && (
+      {contact && (
         <>
           <motion.div
             key="backdrop"
@@ -61,7 +61,7 @@ export function DeleteConfirmDialog({ lead, onClose, onDeleted }: DeleteConfirmD
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
                   <AlertTriangle size={16} className="text-destructive" />
                 </div>
-                <h2 className="text-base font-semibold">Remover lead</h2>
+                <h2 className="text-base font-semibold">Remover contato</h2>
               </div>
               <button
                 onClick={onClose}
@@ -73,8 +73,8 @@ export function DeleteConfirmDialog({ lead, onClose, onDeleted }: DeleteConfirmD
 
             <div className="px-6 pb-6">
               <p className="text-sm text-muted-foreground">
-                Tem certeza que deseja remover <span className="font-medium text-foreground">{lead.name}</span>?
-                O lead será desativado e não aparecerá mais na lista.
+                Tem certeza que deseja remover <span className="font-medium text-foreground">{contact.name}</span>?
+                O contato será desativado e não aparecerá mais na lista.
               </p>
 
               <div className="mt-5 flex justify-end gap-2">

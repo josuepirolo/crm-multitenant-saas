@@ -2,12 +2,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { SupabaseLeadRepository } from "@/repositories/lead.repository";
-import { GetLeadsUseCase, CreateLeadUseCase, UpdateLeadUseCase, SoftDeleteLeadUseCase } from "@/usecases/LeadUseCases";
-import { getCurrentWorkspaceId, requirePermission } from "@/lib/guards";
+import { SupabaseContactRepository } from "@/repositories/contact.repository";
+import { GetContactsUseCase, CreateContactUseCase, UpdateContactUseCase, SoftDeleteContactUseCase } from "@/usecases/ContactUseCases";
+import { getCurrentWorkspaceId, getWorkspaceContext } from "@/lib/guards";
 import { revalidatePath } from "next/cache";
 import { contactSchema, toDigits, validateCPF, validateCNPJ } from "@/lib/validations/contact";
-import type { LeadFilters } from "@/repositories/lead.repository";
+import type { ContactFilters } from "@/repositories/contact.repository";
 
 // ─── normalização ────────────────────────────────────────────────────────────
 function normalizeInput(raw: Record<string, string>) {
@@ -39,26 +39,24 @@ function uniqueViolationMessage(err: unknown): string | null {
 
 // ─── actions ─────────────────────────────────────────────────────────────────
 
-export async function getLeads(filters: LeadFilters, page: number, pageSize: number) {
+export async function getContacts(filters: ContactFilters, page: number, pageSize: number) {
+  const supabase = await createClient();
   const workspaceId = await getCurrentWorkspaceId();
   if (!workspaceId) return { error: "Workspace não encontrado.", data: [], total: 0 };
 
   try {
-    const repo = new SupabaseLeadRepository(createAdminClient());
-    const result = await new GetLeadsUseCase(repo).execute(workspaceId, filters, page, pageSize);
+    const repo = new SupabaseContactRepository(supabase);
+    const result = await new GetContactsUseCase(repo).execute(workspaceId, filters, page, pageSize);
     return { error: undefined, data: result.data, total: result.total };
   } catch (err) {
-    console.error("[getLeads]", err);
+    console.error("[getContacts]", err);
     return { error: "Erro ao buscar contatos.", data: [], total: 0 };
   }
 }
 
-export async function createLead(_: unknown, formData: FormData) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) return { error: "Workspace não encontrado." };
-
-  const perm = await requirePermission(workspaceId, "contacts", "create");
-  if (perm) return perm;
+export async function createContact(_: unknown, formData: FormData) {
+  const ctx = await getWorkspaceContext("contacts", "create");
+  if ("error" in ctx) return ctx;
 
   const raw = normalizeInput(Object.fromEntries(formData) as Record<string, string>);
   const parsed = contactSchema.safeParse(raw);
@@ -67,29 +65,25 @@ export async function createLead(_: unknown, formData: FormData) {
   const docError = validateDocument(parsed.data.personType, parsed.data.document);
   if (docError) return { error: docError };
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
   try {
-    const lead = await new CreateLeadUseCase(new SupabaseLeadRepository(createAdminClient())).execute({
+    const contact = await new CreateContactUseCase(new SupabaseContactRepository(createAdminClient())).execute({
       ...parsed.data,
-      workspace_id: workspaceId,
-      created_by: user?.id,
+      workspace_id: ctx.workspaceId,
+      created_by: ctx.userId,
     });
     revalidatePath("/contacts");
-    return { error: undefined, lead };
+    return { error: undefined, contact };
   } catch (err) {
     return { error: uniqueViolationMessage(err) ?? "Erro ao criar contato. Tente novamente." };
   }
 }
 
-export async function updateLead(_: unknown, formData: FormData) {
+export async function updateContact(_: unknown, formData: FormData) {
   const id = formData.get("id") as string;
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId || !id) return { error: "Dados inválidos." };
+  if (!id) return { error: "Dados inválidos." };
 
-  const perm = await requirePermission(workspaceId, "contacts", "edit");
-  if (perm) return perm;
+  const ctx = await getWorkspaceContext("contacts", "edit");
+  if ("error" in ctx) return ctx;
 
   const raw = normalizeInput(Object.fromEntries(formData) as Record<string, string>);
   const parsed = contactSchema.safeParse(raw);
@@ -99,23 +93,20 @@ export async function updateLead(_: unknown, formData: FormData) {
   if (docError) return { error: docError };
 
   try {
-    const lead = await new UpdateLeadUseCase(new SupabaseLeadRepository(createAdminClient())).execute(workspaceId, id, parsed.data);
+    const contact = await new UpdateContactUseCase(new SupabaseContactRepository(createAdminClient())).execute(ctx.workspaceId, id, parsed.data);
     revalidatePath("/contacts");
-    return { error: undefined, lead };
+    return { error: undefined, contact };
   } catch (err) {
     return { error: uniqueViolationMessage(err) ?? "Erro ao atualizar contato. Tente novamente." };
   }
 }
 
-export async function deleteLead(id: string) {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) return { error: "Workspace não encontrado." };
-
-  const perm = await requirePermission(workspaceId, "contacts", "delete");
-  if (perm) return perm;
+export async function deleteContact(id: string) {
+  const ctx = await getWorkspaceContext("contacts", "delete");
+  if ("error" in ctx) return ctx;
 
   try {
-    await new SoftDeleteLeadUseCase(new SupabaseLeadRepository(createAdminClient())).execute(workspaceId, id);
+    await new SoftDeleteContactUseCase(new SupabaseContactRepository(createAdminClient())).execute(ctx.workspaceId, id);
     revalidatePath("/contacts");
     return { error: undefined };
   } catch {

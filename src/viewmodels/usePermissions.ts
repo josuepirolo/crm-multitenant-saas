@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getUserRole } from "@/lib/guards";
 import { can, PERMISSIONS } from "@/lib/permissions";
 import type { MemberRole, PermissionModule, PermissionAction } from "@/types";
 
@@ -21,25 +21,10 @@ export function usePermissions(workspaceId: string | null): UsePermissionsReturn
   useEffect(() => {
     if (!workspaceId) { setLoading(false); return; }
 
-    const supabase = createClient();
-
-    async function fetchRole() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-
-      const { data } = await supabase
-        .from("workspace_members")
-        .select("role")
-        .eq("workspace_id", workspaceId)
-        .eq("user_id", user.id)
-        .is("deleted_at", null)
-        .single();
-
-      setRole((data?.role as MemberRole) ?? null);
+    getUserRole(workspaceId).then((r) => {
+      setRole(r);
       setLoading(false);
-    }
-
-    fetchRole();
+    });
   }, [workspaceId]);
 
   return {

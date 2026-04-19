@@ -1,23 +1,9 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { ContactStatus } from "@/types";
+import type { Contact, ContactStatus } from "@/types";
 
-export interface Lead {
-  id: string;
-  workspace_id: string;
-  name: string;
-  phone: string | null;
-  email: string | null;
-  document: string | null;
-  company: string | null;
-  status: ContactStatus;
-  notes: string | null;
-  avatar_url: string | null;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export type { Contact };
 
-export interface CreateLeadDTO {
+export interface CreateContactDTO {
   workspace_id: string;
   name: string;
   phone?: string;
@@ -29,7 +15,7 @@ export interface CreateLeadDTO {
   created_by?: string;
 }
 
-export interface UpdateLeadDTO {
+export interface UpdateContactDTO {
   name?: string;
   phone?: string;
   email?: string;
@@ -39,28 +25,28 @@ export interface UpdateLeadDTO {
   notes?: string;
 }
 
-export interface LeadFilters {
+export interface ContactFilters {
   search?: string;
   status?: ContactStatus | "all";
 }
 
-export interface LeadPage {
-  data: Lead[];
+export interface ContactPage {
+  data: Contact[];
   total: number;
 }
 
-export interface ILeadRepository {
-  findAll(workspaceId: string, filters: LeadFilters, page: number, pageSize: number): Promise<LeadPage>;
-  findById(workspaceId: string, id: string): Promise<Lead | null>;
-  create(data: CreateLeadDTO): Promise<Lead>;
-  update(workspaceId: string, id: string, data: UpdateLeadDTO): Promise<Lead>;
+export interface IContactRepository {
+  findAll(workspaceId: string, filters: ContactFilters, page: number, pageSize: number): Promise<ContactPage>;
+  findById(workspaceId: string, id: string): Promise<Contact | null>;
+  create(data: CreateContactDTO): Promise<Contact>;
+  update(workspaceId: string, id: string, data: UpdateContactDTO): Promise<Contact>;
   softDelete(workspaceId: string, id: string): Promise<void>;
 }
 
-export class SupabaseLeadRepository implements ILeadRepository {
+export class SupabaseContactRepository implements IContactRepository {
   constructor(private readonly client: SupabaseClient) {}
 
-  async findAll(workspaceId: string, filters: LeadFilters, page: number, pageSize: number): Promise<LeadPage> {
+  async findAll(workspaceId: string, filters: ContactFilters, page: number, pageSize: number): Promise<ContactPage> {
     let query = this.client
       .from("contacts")
       .select("*", { count: "exact" })
@@ -84,10 +70,10 @@ export class SupabaseLeadRepository implements ILeadRepository {
       .range(from, to);
 
     if (error) throw new Error(error.message);
-    return { data: (data ?? []) as Lead[], total: count ?? 0 };
+    return { data: (data ?? []) as Contact[], total: count ?? 0 };
   }
 
-  async findById(workspaceId: string, id: string): Promise<Lead | null> {
+  async findById(workspaceId: string, id: string): Promise<Contact | null> {
     const { data } = await this.client
       .from("contacts")
       .select("*")
@@ -98,8 +84,8 @@ export class SupabaseLeadRepository implements ILeadRepository {
     return data ?? null;
   }
 
-  async create(data: CreateLeadDTO): Promise<Lead> {
-    const { data: lead, error } = await this.client
+  async create(data: CreateContactDTO): Promise<Contact> {
+    const { data: contact, error } = await this.client
       .from("contacts")
       .insert({
         workspace_id: data.workspace_id,
@@ -115,11 +101,11 @@ export class SupabaseLeadRepository implements ILeadRepository {
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return lead as Lead;
+    return contact as Contact;
   }
 
-  async update(workspaceId: string, id: string, data: UpdateLeadDTO): Promise<Lead> {
-    const { data: lead, error } = await this.client
+  async update(workspaceId: string, id: string, data: UpdateContactDTO): Promise<Contact> {
+    const { data: contact, error } = await this.client
       .from("contacts")
       .update({
         ...(data.name !== undefined && { name: data.name }),
@@ -136,7 +122,7 @@ export class SupabaseLeadRepository implements ILeadRepository {
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return lead as Lead;
+    return contact as Contact;
   }
 
   async softDelete(workspaceId: string, id: string): Promise<void> {

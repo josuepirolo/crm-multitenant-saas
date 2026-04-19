@@ -2,44 +2,40 @@
 
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LeadFiltersBar } from "@/components/contacts/lead-filters";
-import { LeadsTable } from "@/components/contacts/leads-table";
-import { LeadModal } from "@/components/contacts/lead-modal";
+import { ContactFiltersBar } from "@/components/contacts/contact-filters";
+import { ContactsTable } from "@/components/contacts/contacts-table";
+import { ContactModal } from "@/components/contacts/contact-modal";
 import { DeleteConfirmDialog } from "@/components/contacts/delete-confirm-dialog";
-import { useLeadsViewModel } from "@/viewmodels/useLeadsViewModel";
+import { useContactsViewModel } from "@/viewmodels/useContactsViewModel";
 
 export function ContactsClient() {
-  const vm = useLeadsViewModel();
+  const vm = useContactsViewModel();
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Contatos</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {vm.total > 0 ? `${vm.total} lead${vm.total !== 1 ? "s" : ""} no total` : "Gerencie seus leads"}
+            {vm.total > 0 ? `${vm.total} contato${vm.total !== 1 ? "s" : ""} no total` : "Gerencie seus contatos"}
           </p>
         </div>
         <Button onClick={vm.openCreate} className="rounded-xl gap-1.5">
           <Plus size={15} />
-          Novo lead
+          Novo contato
         </Button>
       </div>
 
-      {/* Filters */}
-      <LeadFiltersBar filters={vm.filters} onChange={vm.updateFilters} />
+      <ContactFiltersBar filters={vm.filters} onChange={vm.updateFilters} />
 
-      {/* Fetch error */}
       {vm.fetchError && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {vm.fetchError}
         </div>
       )}
 
-      {/* Table */}
-      <LeadsTable
-        leads={vm.leads}
+      <ContactsTable
+        contacts={vm.contacts}
         total={vm.total}
         page={vm.page}
         pageSize={vm.pageSize}
@@ -49,17 +45,15 @@ export function ContactsClient() {
         onPageChange={vm.setPage}
       />
 
-      {/* Create/Edit modal */}
-      <LeadModal
+      <ContactModal
         open={vm.modalOpen}
-        lead={vm.editingLead}
+        contact={vm.editingContact}
         onClose={vm.closeModal}
         onSaved={vm.onSaved}
       />
 
-      {/* Delete confirmation */}
       <DeleteConfirmDialog
-        lead={vm.deleteConfirm}
+        contact={vm.deleteConfirm}
         onClose={() => vm.setDeleteConfirm(null)}
         onDeleted={vm.onDeleted}
       />
