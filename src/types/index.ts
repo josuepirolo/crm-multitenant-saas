@@ -20,8 +20,10 @@ export interface Workspace {
 export interface Profile {
   id: string;
   name: string | null;
+  email: string | null;
   avatar_url: string | null;
   current_workspace_id: string | null;
+  is_superadmin: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -32,6 +34,32 @@ export interface WorkspaceMember {
   user_id: string;
   role: MemberRole;
   created_at: string;
+}
+
+export type WorkspaceMemberWithProfile = WorkspaceMember & {
+  profiles: {
+    name: string | null;
+    email: string | null;
+    avatar_url: string | null;
+  } | null;
+};
+
+export interface WorkspaceWithStats {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  created_at: string;
+  member_count: number;
+  contact_count: number;
+  deal_count: number;
+}
+
+export interface AdminGlobalStats {
+  total_workspaces: number;
+  total_members: number;
+  total_contacts: number;
+  total_deals: number;
 }
 
 export interface Contact {

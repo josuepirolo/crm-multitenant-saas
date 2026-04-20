@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { MemberRole, WorkspaceMember } from "@/types";
+import type { MemberRole, WorkspaceMember, WorkspaceMemberWithProfile } from "@/types";
 
 export interface InviteMemberDTO {
   workspace_id: string;
@@ -8,7 +8,7 @@ export interface InviteMemberDTO {
 }
 
 export interface IWorkspaceMemberRepository {
-  findByWorkspace(workspaceId: string): Promise<WorkspaceMember[]>;
+  findByWorkspace(workspaceId: string): Promise<WorkspaceMemberWithProfile[]>;
   findRole(workspaceId: string, userId: string): Promise<MemberRole | null>;
   invite(data: InviteMemberDTO): Promise<WorkspaceMember>;
   updateRole(workspaceId: string, userId: string, role: MemberRole): Promise<void>;
@@ -18,16 +18,16 @@ export interface IWorkspaceMemberRepository {
 export class SupabaseWorkspaceMemberRepository implements IWorkspaceMemberRepository {
   constructor(private readonly client: SupabaseClient) {}
 
-  async findByWorkspace(workspaceId: string): Promise<WorkspaceMember[]> {
+  async findByWorkspace(workspaceId: string): Promise<WorkspaceMemberWithProfile[]> {
     const { data, error } = await this.client
       .from("workspace_members")
-      .select("*, profiles(name, avatar_url, email:id)")
+      .select("*, profiles(name, email, avatar_url)")
       .eq("workspace_id", workspaceId)
       .is("deleted_at", null)
       .order("created_at");
 
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []) as WorkspaceMemberWithProfile[];
   }
 
   async findRole(workspaceId: string, userId: string): Promise<MemberRole | null> {

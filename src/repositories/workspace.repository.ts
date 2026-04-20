@@ -7,9 +7,14 @@ export interface CreateWorkspaceDTO {
   owner_id: string;
 }
 
+export interface UpdateWorkspaceDTO {
+  name?: string;
+}
+
 export interface IWorkspaceRepository {
   create(data: CreateWorkspaceDTO): Promise<Workspace>;
   findById(id: string): Promise<Workspace | null>;
+  update(id: string, data: UpdateWorkspaceDTO): Promise<Workspace>;
 }
 
 export class SupabaseWorkspaceRepository implements IWorkspaceRepository {
@@ -49,5 +54,17 @@ export class SupabaseWorkspaceRepository implements IWorkspaceRepository {
 
     if (error) return null;
     return data;
+  }
+
+  async update(id: string, data: UpdateWorkspaceDTO): Promise<Workspace> {
+    const { data: workspace, error } = await this.client
+      .from("workspaces")
+      .update({ ...data, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return workspace;
   }
 }
