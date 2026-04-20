@@ -51,6 +51,7 @@ GRANT EXECUTE ON FUNCTION get_user_id_by_email(text) TO service_role;
 
 -- 4. RLS: is_superadmin não deve ser alterável pelo próprio usuário
 -- Garante que apenas service_role pode modificar is_superadmin
+DROP POLICY IF EXISTS "superadmin_immutable" ON profiles;
 CREATE POLICY "superadmin_immutable" ON profiles
   AS RESTRICTIVE
   FOR UPDATE
