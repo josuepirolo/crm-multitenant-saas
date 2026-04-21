@@ -35,19 +35,43 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/register") ||
-    request.nextUrl.pathname.startsWith("/reset-password") ||
-    request.nextUrl.pathname.startsWith("/update-password") ||
-    request.nextUrl.pathname.startsWith("/auth/callback");
+  const pathname = request.nextUrl.pathname;
+  const isUpdatePassword = pathname.startsWith("/update-password");
 
-  if (!user && !isAuthRoute) {
+  // Detecta sessão de recovery via JWT (funciona tanto para PKCE quanto implicit/hash flow)
+  if (user && !isUpdatePassword) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      try {
+        const payload = JSON.parse(atob(session.access_token.split(".")[1]));
+        const isRecovery = Array.isArray(payload.amr) &&
+          payload.amr.some((a: { method: string }) => a.method === "recovery");
+        if (isRecovery) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/update-password";
+          return NextResponse.redirect(url);
+        }
+      } catch {
+        // JWT malformado — ignora e segue fluxo normal
+      }
+    }
+  }
+
+  // Rotas públicas (acesso sem autenticação)
+  const isPublicAuthRoute = pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/reset-password") ||
+    isUpdatePassword ||
+    pathname.startsWith("/auth/callback");
+
+  if (!user && !isPublicAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  // Usuário já autenticado não precisa de login/register/reset — exceto update-password
+  if (user && isPublicAuthRoute && !isUpdatePassword) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

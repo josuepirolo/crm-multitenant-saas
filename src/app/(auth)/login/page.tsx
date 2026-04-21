@@ -51,6 +51,9 @@ export default function LoginPage() {
   const [state, action] = useActionState(signIn, null);
   const searchParams = useSearchParams();
   const confirmPending = searchParams.get("confirm") === "1";
+  const urlError = searchParams.get("error") === "link_invalido"
+    ? "O link de redefinição é inválido ou expirou. Solicite um novo."
+    : null;
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-muted px-4">
@@ -124,7 +127,7 @@ export default function LoginPage() {
               />
             </motion.div>
 
-            {state?.error && (
+            {(state?.error || urlError) && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -132,7 +135,7 @@ export default function LoginPage() {
                 className="flex items-center gap-2.5 rounded-xl bg-destructive/8 border border-destructive/20 px-4 py-3"
               >
                 <AlertCircle size={15} className="shrink-0 text-destructive" />
-                <p className="text-sm text-destructive">{state.error}</p>
+                <p className="text-sm text-destructive">{state?.error ?? urlError}</p>
               </motion.div>
             )}
 

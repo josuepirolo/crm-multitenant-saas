@@ -100,9 +100,12 @@ export async function requestPasswordReset(_: unknown, formData: FormData) {
   const parsed = resetPasswordSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
+  const captchaToken = formData.get("cf-turnstile-response") as string | undefined;
+
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/update-password`,
+    captchaToken: captchaToken || undefined,
   });
 
   if (error) return { error: "Não foi possível enviar o e-mail. Tente novamente.", email: parsed.data.email };
