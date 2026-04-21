@@ -41,12 +41,10 @@ export function useSettingsViewModel() {
 
   function onMemberRoleUpdated(userId: string, role: WorkspaceMemberWithProfile["role"]) {
     setMembers((prev) => prev.map((m) => m.user_id === userId ? { ...m, role } : m));
-    startTransition(() => fetchData());
   }
 
   function onMemberDeactivated(userId: string) {
     setMembers((prev) => prev.filter((m) => m.user_id !== userId));
-    startTransition(() => fetchData());
   }
 
   return {

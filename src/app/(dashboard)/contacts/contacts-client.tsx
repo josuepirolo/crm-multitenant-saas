@@ -42,7 +42,7 @@ export function ContactsClient() {
         loading={vm.loading}
         onEdit={vm.openEdit}
         onDelete={vm.setDeleteConfirm}
-        onPageChange={vm.setPage}
+        onPageChange={vm.changePage}
       />
 
       <ContactModal

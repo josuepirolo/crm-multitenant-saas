@@ -14,6 +14,7 @@ export function useContactsViewModel() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isNavigating, startNavigation] = useTransition();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
@@ -79,16 +80,23 @@ export function useContactsViewModel() {
   }
 
   function updateFilters(next: Partial<ContactFilters>) {
-    setPage(0);
-    setFilters((prev) => ({ ...prev, ...next }));
+    startNavigation(() => {
+      setPage(0);
+      setFilters((prev) => ({ ...prev, ...next }));
+    });
+  }
+
+  function changePage(newPage: number) {
+    startNavigation(() => setPage(newPage));
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return {
-    contacts, total, totalPages, page, setPage,
+    contacts, total, totalPages, page, changePage,
     filters, updateFilters,
     loading: loading || isPending,
+    isNavigating,
     fetchError,
     modalOpen, editingContact, openCreate, openEdit, closeModal, onSaved, isEdit: !!editingContact,
     deleteConfirm, setDeleteConfirm, onDeleted,
