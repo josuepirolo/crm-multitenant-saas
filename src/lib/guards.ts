@@ -75,6 +75,22 @@ export async function requireSuperAdmin(): Promise<{ userId: string } | null> {
   return data?.is_superadmin ? { userId: user.id } : null;
 }
 
+/** Verifica se o usuário autenticado é o owner único do SaaS. */
+export async function requireOwner(): Promise<{ userId: string } | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("profiles")
+    .select("is_owner")
+    .eq("id", user.id)
+    .single();
+
+  return data?.is_owner ? { userId: user.id } : null;
+}
+
 // Combina getUser + workspaceId + role em 3 round-trips ao invés de 4
 // (evita chamar getUser() duas vezes separadas)
 export async function getWorkspaceContext(

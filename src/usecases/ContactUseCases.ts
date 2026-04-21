@@ -9,8 +9,19 @@ export class GetContactsUseCase {
 
 export class CreateContactUseCase {
   constructor(private readonly repo: IContactRepository) {}
-  execute(data: CreateContactDTO) {
-    return this.repo.create(data);
+  async execute(data: CreateContactDTO) {
+    try {
+      return await this.repo.create(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("idx_contacts_unique_email") || msg.includes("unique_email")) {
+        throw new Error("Já existe um contato com esse e-mail neste workspace.");
+      }
+      if (msg.includes("idx_contacts_unique_phone") || msg.includes("unique_phone")) {
+        throw new Error("Já existe um contato com esse telefone neste workspace.");
+      }
+      throw err;
+    }
   }
 }
 

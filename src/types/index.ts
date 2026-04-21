@@ -24,6 +24,7 @@ export interface Profile {
   avatar_url: string | null;
   current_workspace_id: string | null;
   is_superadmin: boolean;
+  is_owner: boolean;
   created_at: string;
   updated_at: string;
 }

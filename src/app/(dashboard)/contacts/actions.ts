@@ -29,11 +29,14 @@ function validateDocument(personType: string, doc: string | undefined): string |
 }
 
 // ─── mapeamento de violação de unicidade ─────────────────────────────────────
-function uniqueViolationMessage(err: unknown): string | null {
+function uniqueViolationMessage(err: unknown, empresa?: string): string | null {
+  const suffix = empresa ? ` na empresa ${empresa}` : ".";
+  const end = (base: string) => empresa ? `${base}${suffix}.` : base;
   const msg = err instanceof Error ? err.message : String(err);
-  if (msg.includes("idx_contacts_unique_phone"))    return "Já existe um contato ativo com este telefone.";
-  if (msg.includes("idx_contacts_unique_email"))    return "Já existe um contato ativo com este e-mail.";
-  if (msg.includes("idx_contacts_unique_document")) return "Já existe um contato ativo com este CPF/CNPJ.";
+  if (msg.includes("idx_contacts_unique_phone") || msg.includes("unique_phone"))    return end("Já existe um contato ativo com este telefone");
+  if (msg.includes("idx_contacts_unique_email") || msg.includes("unique_email"))    return end("Já existe um contato ativo com este e-mail");
+  if (msg.includes("idx_contacts_unique_document") || msg.includes("unique_document")) return end("Já existe um contato ativo com este CPF/CNPJ");
+  if (msg.startsWith("Já existe um contato")) return msg.replace("neste workspace", empresa ? `na empresa ${empresa}` : "nesta empresa");
   return null;
 }
 
@@ -65,8 +68,12 @@ export async function createContact(_: unknown, formData: FormData) {
   const docError = validateDocument(parsed.data.personType, parsed.data.document);
   if (docError) return { error: docError };
 
+  const admin = createAdminClient();
+  const { data: ws } = await admin.from("workspaces").select("name").eq("id", ctx.workspaceId).single();
+  const empresaNome = ws?.name as string | undefined;
+
   try {
-    const contact = await new CreateContactUseCase(new SupabaseContactRepository(createAdminClient())).execute({
+    const contact = await new CreateContactUseCase(new SupabaseContactRepository(admin)).execute({
       ...parsed.data,
       workspace_id: ctx.workspaceId,
       created_by: ctx.userId,
@@ -74,7 +81,7 @@ export async function createContact(_: unknown, formData: FormData) {
     revalidatePath("/contacts");
     return { error: undefined, contact };
   } catch (err) {
-    return { error: uniqueViolationMessage(err) ?? "Erro ao criar contato. Tente novamente." };
+    return { error: uniqueViolationMessage(err, empresaNome) ?? "Erro ao criar contato. Tente novamente." };
   }
 }
 
