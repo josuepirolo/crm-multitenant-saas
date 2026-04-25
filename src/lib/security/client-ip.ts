@@ -9,3 +9,8 @@ export async function getClientIp(): Promise<string> {
     "unknown"
   );
 }
+
+export async function getUserAgent(): Promise<string> {
+  const h = await headers();
+  return h.get("user-agent") ?? "unknown";
+}

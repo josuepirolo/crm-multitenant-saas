@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => {
     memberInvite: vi.fn(),
     memberUpdateRole: vi.fn(),
     memberDeactivate: vi.fn(),
+    createAuditLog: vi.fn().mockResolvedValue(undefined),
+    getClientIp: vi.fn().mockResolvedValue("127.0.0.1"),
     mockSupabase,
     mockAdmin,
   };
@@ -24,6 +26,20 @@ vi.mock("@/lib/guards", () => ({ getWorkspaceContext: mocks.getWorkspaceContext 
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: mocks.createAdminClient }));
+vi.mock("@/lib/audit/audit-log", () => ({
+  createAuditLog: mocks.createAuditLog,
+  AUDIT_ACTIONS: {
+    LOGIN_SUCCESS:        "login_success",
+    LOGIN_FAILURE:        "login_failure",
+    RATE_LIMIT_TRIGGERED: "rate_limit_triggered",
+    REGISTER_SUCCESS:     "register_success",
+    WORKSPACE_UPDATED:    "workspace_updated",
+    MEMBER_INVITED:       "member_invited",
+    MEMBER_ROLE_UPDATED:  "member_role_updated",
+    MEMBER_DEACTIVATED:   "member_deactivated",
+  },
+}));
+vi.mock("@/lib/security/client-ip", () => ({ getClientIp: mocks.getClientIp }));
 vi.mock("@/repositories/workspace.repository");
 vi.mock("@/repositories/member.repository");
 
@@ -61,6 +77,8 @@ beforeEach(() => {
   mocks.memberUpdateRole.mockResolvedValue(undefined);
   mocks.memberDeactivate.mockResolvedValue(undefined);
   mocks.mockAdmin.rpc.mockResolvedValue({ data: null, error: { message: "not found" } });
+  mocks.createAuditLog.mockResolvedValue(undefined);
+  mocks.getClientIp.mockResolvedValue("127.0.0.1");
 
   vi.mocked(SupabaseWorkspaceRepository).mockImplementation(function () {
     return { findById: mocks.wsRepoFindById, update: mocks.wsRepoUpdate } as never;
@@ -215,5 +233,76 @@ describe("deactivateMember — proteção de acesso", () => {
     mocks.getWorkspaceContext.mockResolvedValue(CTX);
     await deactivateMember(fd({ userId: VALID_USER_ID }));
     expect(mocks.memberDeactivate).toHaveBeenCalledWith(CTX.workspaceId, VALID_USER_ID);
+  });
+});
+
+// ─── Auditoria — settings actions ────────────────────────────────────────────
+
+describe("updateWorkspace — registra auditoria", () => {
+  it("cria audit log com WORKSPACE_UPDATED e workspace_id do contexto", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    await updateWorkspace(null, fd({ name: "Novo Nome" }));
+
+    expect(mocks.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action:       "workspace_updated",
+        workspace_id: CTX.workspaceId,
+        user_id:      CTX.userId,
+      })
+    );
+  });
+
+  it("não cria audit log quando guard falha", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(ERR_AUTH);
+    await updateWorkspace(null, fd({ name: "Novo" }));
+    expect(mocks.createAuditLog).not.toHaveBeenCalled();
+  });
+});
+
+describe("inviteMember — registra auditoria", () => {
+  it("cria audit log com MEMBER_INVITED e role no metadata", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    mocks.mockAdmin.rpc.mockResolvedValue({ data: "user-bbb", error: null });
+    mocks.memberFindRole.mockResolvedValue(null);
+
+    await inviteMember(null, fd({ email: "novo@x.com", role: "sales" }));
+
+    expect(mocks.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action:       "member_invited",
+        workspace_id: CTX.workspaceId,
+        metadata:     expect.objectContaining({ role: "sales" }),
+      })
+    );
+  });
+});
+
+describe("deactivateMember — registra auditoria", () => {
+  it("cria audit log com MEMBER_DEACTIVATED", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    await deactivateMember(fd({ userId: VALID_USER_ID }));
+
+    expect(mocks.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action:       "member_deactivated",
+        workspace_id: CTX.workspaceId,
+        entity_id:    VALID_USER_ID,
+      })
+    );
+  });
+});
+
+describe("updateMemberRole — registra auditoria", () => {
+  it("cria audit log com MEMBER_ROLE_UPDATED e role no metadata", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    await updateMemberRole(null, fd({ userId: VALID_USER_ID, role: "admin" }));
+
+    expect(mocks.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action:       "member_role_updated",
+        workspace_id: CTX.workspaceId,
+        metadata:     expect.objectContaining({ role: "admin" }),
+      })
+    );
   });
 });

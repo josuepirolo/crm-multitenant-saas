@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
+import { getClientIp } from "@/lib/security/client-ip";
 import { SupabaseWorkspaceRepository } from "@/repositories/workspace.repository";
 import { SupabaseWorkspaceMemberRepository } from "@/repositories/member.repository";
 import { UpdateWorkspaceUseCase } from "@/usecases/WorkspaceUseCases";
@@ -33,6 +35,14 @@ export async function updateWorkspace(_: unknown, formData: FormData) {
   try {
     const supabase = await createClient();
     const workspace = await new UpdateWorkspaceUseCase(new SupabaseWorkspaceRepository(supabase)).execute(ctx.workspaceId, parsed.data);
+    await createAuditLog({
+      action:       AUDIT_ACTIONS.WORKSPACE_UPDATED,
+      workspace_id: ctx.workspaceId,
+      user_id:      ctx.userId,
+      entity_type:  "workspace",
+      entity_id:    ctx.workspaceId,
+      ip_address:   await getClientIp(),
+    });
     revalidatePath("/settings");
     return { error: undefined, workspace };
   } catch (err) {
@@ -67,6 +77,15 @@ export async function inviteMember(_: unknown, formData: FormData) {
       user_id: userId as string,
       role: parsed.data.role,
     });
+    await createAuditLog({
+      action:       AUDIT_ACTIONS.MEMBER_INVITED,
+      workspace_id: ctx.workspaceId,
+      user_id:      ctx.userId,
+      entity_type:  "workspace_member",
+      entity_id:    userId as string,
+      ip_address:   await getClientIp(),
+      metadata:     { role: parsed.data.role },
+    });
     revalidatePath("/settings");
     return { error: undefined };
   } catch (err) {
@@ -92,6 +111,15 @@ export async function updateMemberRole(_: unknown, formData: FormData) {
       ctx.userId,
       parsed.data.role,
     );
+    await createAuditLog({
+      action:       AUDIT_ACTIONS.MEMBER_ROLE_UPDATED,
+      workspace_id: ctx.workspaceId,
+      user_id:      ctx.userId,
+      entity_type:  "workspace_member",
+      entity_id:    parsed.data.userId,
+      ip_address:   await getClientIp(),
+      metadata:     { role: parsed.data.role },
+    });
     revalidatePath("/settings");
     return { error: undefined };
   } catch (err) {
@@ -109,6 +137,14 @@ export async function deactivateMember(formData: FormData) {
   try {
     const supabase = await createClient();
     await new DeactivateMemberUseCase(new SupabaseWorkspaceMemberRepository(supabase)).execute(ctx.workspaceId, userId, ctx.userId);
+    await createAuditLog({
+      action:       AUDIT_ACTIONS.MEMBER_DEACTIVATED,
+      workspace_id: ctx.workspaceId,
+      user_id:      ctx.userId,
+      entity_type:  "workspace_member",
+      entity_id:    userId,
+      ip_address:   await getClientIp(),
+    });
     revalidatePath("/settings");
     return { error: undefined };
   } catch (err) {

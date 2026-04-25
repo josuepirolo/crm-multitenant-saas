@@ -7,12 +7,14 @@ import { SupabaseWorkspaceRepository } from "@/repositories/workspace.repository
 import { uniqueSlug } from "@/lib/utils/slug";
 import { redirect } from "next/navigation";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/security/rate-limit";
-import { getClientIp } from "@/lib/security/client-ip";
+import { getClientIp, getUserAgent } from "@/lib/security/client-ip";
 import { RATE_LIMIT_ERROR } from "@/lib/security/security-errors";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 
 export async function signIn(_: unknown, formData: FormData) {
   const ip = await getClientIp();
   if (!checkRateLimit(`login:ip:${ip}`, RATE_LIMITS.login)) {
+    await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "login" } });
     return { error: RATE_LIMIT_ERROR };
   }
 
@@ -27,30 +29,39 @@ export async function signIn(_: unknown, formData: FormData) {
   }
 
   if (!checkRateLimit(`login:email:${parsed.data.email}`, RATE_LIMITS.login)) {
+    await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "login" } });
     return { error: RATE_LIMIT_ERROR };
   }
 
   const captchaToken = formData.get("cf-turnstile-response") as string | undefined;
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data: authData, error } = await supabase.auth.signInWithPassword({
     ...parsed.data,
     options: captchaToken ? { captchaToken } : undefined,
   });
 
   if (error) {
+    await createAuditLog({ action: AUDIT_ACTIONS.LOGIN_FAILURE, ip_address: ip });
     if (error.message.toLowerCase().includes("email not confirmed")) {
       return { error: "Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.", email: parsed.data.email };
     }
     return { error: "E-mail ou senha inválidos", email: parsed.data.email };
   }
 
+  await createAuditLog({
+    action:     AUDIT_ACTIONS.LOGIN_SUCCESS,
+    user_id:    authData.user?.id,
+    ip_address: ip,
+    user_agent: await getUserAgent(),
+  });
   redirect("/dashboard");
 }
 
 export async function signUp(_: unknown, formData: FormData) {
   const ip = await getClientIp();
   if (!checkRateLimit(`register:ip:${ip}`, RATE_LIMITS.register)) {
+    await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "register" } });
     return { error: RATE_LIMIT_ERROR };
   }
 
@@ -106,6 +117,13 @@ export async function signUp(_: unknown, formData: FormData) {
     return { error: "Conta criada, mas houve um erro ao configurar seu workspace. Entre em contato com o suporte." };
   }
 
+  await createAuditLog({
+    action:   AUDIT_ACTIONS.REGISTER_SUCCESS,
+    user_id:  authData.user.id,
+    ip_address: ip,
+    metadata: { workspace: parsed.data.workspaceName },
+  });
+
   if (needsConfirmation) {
     redirect("/login?confirm=1");
   }
@@ -116,6 +134,7 @@ export async function signUp(_: unknown, formData: FormData) {
 export async function requestPasswordReset(_: unknown, formData: FormData) {
   const ip = await getClientIp();
   if (!checkRateLimit(`forgot:ip:${ip}`, RATE_LIMITS.forgotPassword)) {
+    await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "forgot_password" } });
     return { error: RATE_LIMIT_ERROR };
   }
 
@@ -123,6 +142,7 @@ export async function requestPasswordReset(_: unknown, formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   if (!checkRateLimit(`forgot:email:${parsed.data.email}`, RATE_LIMITS.forgotPassword)) {
+    await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "forgot_password" } });
     return { error: RATE_LIMIT_ERROR };
   }
 
@@ -142,6 +162,7 @@ export async function requestPasswordReset(_: unknown, formData: FormData) {
 export async function updatePassword(_: unknown, formData: FormData) {
   const ip = await getClientIp();
   if (!checkRateLimit(`updatepwd:ip:${ip}`, RATE_LIMITS.updatePassword)) {
+    await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "update_password" } });
     return { error: RATE_LIMIT_ERROR };
   }
 
