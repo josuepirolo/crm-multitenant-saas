@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ModalOverlay } from "@/components/ui/modal-overlay";
 import { deleteContact } from "@/app/(dashboard)/contacts/actions";
 import { Button } from "@/components/ui/button";
 import { appleEase } from "@/components/ui/motion";
@@ -38,15 +39,7 @@ export function DeleteConfirmDialog({ contact, onClose, onDeleted }: DeleteConfi
     <AnimatePresence>
       {contact && (
         <>
-          <motion.div
-            key="backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-            onClick={onClose}
-          />
+          <ModalOverlay onClick={onClose} />
 
           <motion.div
             key="dialog"

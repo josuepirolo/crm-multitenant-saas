@@ -1,17 +1,12 @@
 import Link from "next/link";
 import { Users } from "lucide-react";
+import { CONTACT_STATUS_LABELS, CONTACT_STATUS_STYLES } from "@/lib/constants/contact-status";
 import type { RecentContact } from "@/repositories/dashboard.repository";
+import type { ContactStatus } from "@/types";
 
 interface RecentContactsTableProps {
   contacts: RecentContact[];
 }
-
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  lead:     { label: "Lead",     className: "bg-primary/10 text-primary" },
-  prospect: { label: "Prospect", className: "bg-amber-500/10 text-amber-500" },
-  customer: { label: "Cliente",  className: "bg-emerald-500/10 text-emerald-500" },
-  churned:  { label: "Inativo",  className: "bg-muted text-muted-foreground" },
-};
 
 function Initials({ name }: { name: string }) {
   const parts = name.trim().split(" ");
@@ -57,7 +52,7 @@ export function RecentContactsTable({ contacts }: RecentContactsTableProps) {
       ) : (
         <div className="space-y-1">
           {contacts.map((contact) => {
-            const statusCfg = STATUS_CONFIG[contact.status] ?? STATUS_CONFIG.lead;
+            const status = contact.status as ContactStatus;
             const date = new Date(contact.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
             return (
               <div key={contact.id} className="flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-muted/50 transition-colors">
@@ -67,8 +62,8 @@ export function RecentContactsTable({ contacts }: RecentContactsTableProps) {
                   <p className="text-xs text-muted-foreground truncate">{contact.email ?? contact.phone ?? "—"}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusCfg.className}`}>
-                    {statusCfg.label}
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${CONTACT_STATUS_STYLES[status] ?? CONTACT_STATUS_STYLES.lead}`}>
+                    {CONTACT_STATUS_LABELS[status] ?? contact.status}
                   </span>
                   <span className="text-xs text-muted-foreground">{date}</span>
                 </div>

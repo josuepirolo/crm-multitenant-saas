@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentWorkspaceId } from "@/lib/guards";
 import { SupabaseDashboardRepository } from "@/repositories/dashboard.repository";
 import { GetDashboardStatsUseCase } from "@/usecases/GetDashboardStatsUseCase";
 import { MetricCard } from "@/components/dashboard/metric-card";
@@ -27,20 +28,16 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name, current_workspace_id")
-    .eq("id", user.id)
-    .single();
-
-  const workspaceId = profile?.current_workspace_id;
+  const workspaceId = await getCurrentWorkspaceId();
   if (!workspaceId) redirect("/login");
+
+  // Nome do usuário via auth metadata — sem query direta a profiles
+  const firstName = (user.user_metadata?.name as string | undefined)?.split(" ")[0] ?? "usuário";
 
   const repo = new SupabaseDashboardRepository(supabase);
   const useCase = new GetDashboardStatsUseCase(repo);
   const { stats, leadsByDay, dealsByStatus, recentContacts, conversionRate } = await useCase.execute(workspaceId);
 
-  const firstName = profile?.name?.split(" ")[0] ?? "usuário";
   const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
 
   return (

@@ -10,10 +10,9 @@ import { inviteMemberSchema, type InviteMemberFormValues } from "@/lib/validatio
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ROLE_LABELS } from "@/lib/permissions";
+import { ROLE_LABELS, ASSIGNABLE_ROLES } from "@/lib/permissions";
 import { appleEase } from "@/components/ui/motion";
-
-const ASSIGNABLE_ROLES = ["admin", "manager", "sales", "support"] as const;
+import { ModalOverlay } from "@/components/ui/modal-overlay";
 
 interface InviteMemberModalProps {
   open: boolean;
@@ -55,13 +54,7 @@ export function InviteMemberModal({ open, onClose, onInvited }: InviteMemberModa
     <AnimatePresence>
       {open && (
         <>
-          <motion.div
-            key="backdrop"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-            onClick={onClose}
-          />
+          <ModalOverlay onClick={onClose} />
           <motion.div
             key="modal"
             initial={{ opacity: 0, y: 20, scale: 0.97 }}

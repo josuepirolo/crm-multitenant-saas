@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ModalOverlay } from "@/components/ui/modal-overlay";
 import PhoneInput, { type Value as PhoneValue } from "react-phone-number-input";
 import ptBR from "react-phone-number-input/locale/pt-BR.json";
 import "react-phone-number-input/style.css";
@@ -119,12 +120,7 @@ export function ContactModal({ open, contact, onClose, onSaved }: ContactModalPr
     <AnimatePresence>
       {open && (
         <>
-          <motion.div key="backdrop"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-            onClick={onClose}
-          />
+          <ModalOverlay onClick={onClose} />
           <motion.div key="modal"
             initial={{ opacity: 0, y: 20, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

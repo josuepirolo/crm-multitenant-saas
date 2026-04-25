@@ -1,5 +1,5 @@
 import { ContactsClient } from "./contacts-client";
 
-export default function LeadsPage() {
+export default function ContactsPage() {
   return <ContactsClient />;
 }

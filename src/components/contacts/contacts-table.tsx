@@ -3,21 +3,8 @@
 import { Edit2, Trash2, Phone, Mail, Building2, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { CONTACT_STATUS_LABELS, CONTACT_STATUS_STYLES } from "@/lib/constants/contact-status";
 import type { Contact } from "@/repositories/contact.repository";
-
-const STATUS_STYLES: Record<string, string> = {
-  lead:     "bg-primary/10 text-primary",
-  prospect: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400",
-  customer: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  churned:  "bg-muted text-muted-foreground",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  lead:     "Lead",
-  prospect: "Prospect",
-  customer: "Cliente",
-  churned:  "Inativo",
-};
 
 function getInitials(name: string) {
   return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
@@ -112,9 +99,9 @@ export function ContactsTable({ contacts, total, page, pageSize, loading, onEdit
                 <td className="px-4 py-3">
                   <span className={cn(
                     "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    STATUS_STYLES[contact.status] ?? STATUS_STYLES.lead
+                    CONTACT_STATUS_STYLES[contact.status] ?? CONTACT_STATUS_STYLES.lead
                   )}>
-                    {STATUS_LABELS[contact.status] ?? contact.status}
+                    {CONTACT_STATUS_LABELS[contact.status] ?? contact.status}
                   </span>
                 </td>
 

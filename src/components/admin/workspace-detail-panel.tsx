@@ -2,18 +2,10 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Users, UserCheck, Briefcase } from "lucide-react";
-import { ROLE_LABELS } from "@/lib/permissions";
+import { ROLE_LABELS, ROLE_COLORS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
-import type { MemberRole, WorkspaceMemberWithProfile, WorkspaceWithStats } from "@/types";
+import type { WorkspaceMemberWithProfile, WorkspaceWithStats } from "@/types";
 import { appleEase } from "@/components/ui/motion";
-
-const ROLE_COLORS: Record<MemberRole, string> = {
-  owner:   "bg-primary/10 text-primary",
-  admin:   "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  manager: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  sales:   "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  support: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-};
 
 interface WorkspaceDetailPanelProps {
   workspace: WorkspaceWithStats | null;
