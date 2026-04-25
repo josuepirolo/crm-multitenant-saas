@@ -3,16 +3,63 @@
 <available_skills>
 <skill>
 <name>direto</name>
-<description>Estilo padrão de comunicação: direto, conciso e sem rodeios.</description>
+<description>Ativa um modo de resposta direta, curta e sem rodeios. Use sempre que o usuário pedir respostas concisas, disser "seja direto", "sem enrolação", "vai direto ao ponto", ou quando claramente não quer explicações longas. Prefira este modo por padrão em perguntas simples e objetivas.</description>
 <location>.claude/skills/direto/SKILL.md</location>
 </skill>
 
 <skill>
 <name>economico</name>
-<description>Modo padrão de execução: minimizar uso de tokens e evitar exploração desnecessária.</description>
+<description>Ativa modo de economia de tokens e execução direta. Use quando o usuário pedir para economizar tokens, evitar exploração desnecessária, reduzir chamadas de ferramentas, ou quando a tarefa for simples o suficiente para não precisar de contexto adicional. Ative também quando o usuário disser "economico", "modo econômico" ou "não explore demais".</description>
 <location>.claude/skills/economico/SKILL.md</location>
 </skill>
+
+<skill>
+<name>patch</name>
+<description>Ativa modo de patch mínimo — resolve o problema com a menor alteração possível. Use quando o usuário pedir uma correção pontual, um fix rápido, ou disser "não mexa em mais nada", "só corrija isso", "patch mínimo". Ideal para bugs isolados onde reescrever ou refatorar seria excessivo.</description>
+<location>.claude/skills/patch/SKILL.md</location>
+</skill>
+
+<skill>
+<name>arquitetura</name>
+<description>Guia de arquitetura Clean Architecture + MVVM do CRM Vendas WhatsApp. OBRIGATÓRIO antes de qualquer código — sem exceção. Ative sempre que o usuário pedir para criar ou alterar módulo, feature, página, componente, Server Action, repositório, usecase ou viewmodel. Também ative em revisões, refatorações e auditorias. Gere sempre um plano estruturado por camadas antes de escrever qualquer linha. Esta skill deve ser a primeira a ser carregada em toda sessão de implementação.</description>
+<location>.claude/skills/arquitetura/SKILL.md</location>
+</skill>
+
+<skill>
+<name>performance</name>
+<description>Análise de performance e UX do CRM Vendas WhatsApp. OBRIGATÓRIO em toda implementação ou alteração de código — seja um componente, Server Action, query, migration ou qualquer mudança mínima. Sempre ative junto com a skill de arquitetura: arquitetura define a estrutura, performance garante que nenhuma operação bloqueie o usuário. Ative também quando mencionar "lento", "travando", "fila", "background", "otimista", "UX" ou quando houver risco de o usuário esperar por uma operação assíncrona.</description>
+<location>.claude/skills/performance/SKILL.md</location>
+</skill>
+
+<skill>
+<name>auditoria</name>
+<description>Auditoria profissional completa do CRM Vendas WhatsApp — frontend, backend, comunicação, segurança, Clean Architecture, MVVM, design system e hardcode. Ative quando o usuário pedir auditoria, revisão geral, diagnóstico do projeto ou quiser saber se o código está seguro e consistente. Produz diagnóstico executivo com evidências por arquivo, mapa arquitetural real, problemas priorizados e plano de correção. Não responde com teoria genérica — audita o código real.</description>
+<location>.claude/skills/auditoria/SKILL.md</location>
+</skill>
+
+<skill>
+<name>skill-creator</name>
+<description>Cria, melhora e avalia skills. Usar quando o usuário quiser criar uma nova skill ou melhorar uma existente.</description>
+<location>.claude/skills/skill-creator/SKILL.md</location>
+</skill>
 </available_skills>
+
+## Uso obrigatório de skills
+
+As skills abaixo são **obrigatórias** nas seguintes situações — não são opcionais:
+
+| Situação | Skills obrigatórias |
+|---|---|
+| Criar módulo, feature, página ou componente | `arquitetura` → `performance` |
+| Refatorar ou revisar código existente | `arquitetura` → `performance` |
+| Qualquer alteração de código (mesmo mínima) | `performance` |
+| Correção pontual / fix rápido | `patch` → `performance` |
+| Auditar o projeto (diagnóstico, revisão geral, segurança) | `auditoria` |
+| Criar ou melhorar uma skill | `skill-creator` |
+| Resposta curta / sem enrolação | `direto` |
+| Economizar tokens / execução direta | `economico` |
+
+A skill de `arquitetura` sempre precede a de `performance`. Nenhuma linha de código é escrita sem passar pelas duas.
 
 ## Projeto
 **CRM Vendas WhatsApp** — plataforma SaaS para gestão de vendas via WhatsApp. Permite gerenciar leads, contatos, conversas, funis de vendas e análise de performance. Público-alvo: empresas e equipes de vendas que usam WhatsApp como canal principal.
