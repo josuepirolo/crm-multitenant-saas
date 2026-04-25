@@ -51,6 +51,7 @@ export default function LoginPage() {
   const [state, action] = useActionState(signIn, null);
   const searchParams = useSearchParams();
   const confirmPending = searchParams.get("confirm") === "1";
+  const resetSuccess = searchParams.get("reset") === "1";
   const urlError = searchParams.get("error") === "link_invalido"
     ? "O link de redefinição é inválido ou expirou. Solicite um novo."
     : null;
@@ -79,6 +80,18 @@ export default function LoginPage() {
               <p className="mt-1 text-sm text-muted-foreground">Entre na sua conta para continuar</p>
             </div>
           </motion.div>
+
+          {resetSuccess && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2, ease: appleEase }}
+              className="flex items-center gap-2.5 rounded-xl bg-primary/8 border border-primary/20 px-4 py-3 mb-6"
+            >
+              <MailCheck size={15} className="shrink-0 text-primary" />
+              <p className="text-sm text-primary">Senha atualizada! Entre com sua nova senha.</p>
+            </motion.div>
+          )}
 
           {confirmPending && (
             <motion.div

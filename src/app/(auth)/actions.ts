@@ -125,5 +125,8 @@ export async function updatePassword(_: unknown, formData: FormData) {
 
   if (error) return { error: "Não foi possível atualizar a senha. O link pode ter expirado." };
 
-  redirect("/dashboard");
+  // Encerra a sessão de recovery — o AMR "recovery" persiste no JWT após updateUser,
+  // causando redirect em loop. signOut limpa o cookie antes do redirect para login.
+  await supabase.auth.signOut({ scope: "local" });
+  redirect("/login?reset=1");
 }
