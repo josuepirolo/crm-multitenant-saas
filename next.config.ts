@@ -15,11 +15,15 @@ const securityHeaders = [
   },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=()",
+    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
   },
   {
     key: "Strict-Transport-Security",
     value: "max-age=31536000; includeSubDomains",
+  },
+  {
+    key: "Cross-Origin-Opener-Policy",
+    value: "same-origin",
   },
   {
     key: "Content-Security-Policy",
@@ -32,6 +36,8 @@ const securityHeaders = [
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com",
       "frame-src https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
     ].join("; "),
   },
 ];
