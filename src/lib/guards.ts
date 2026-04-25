@@ -3,36 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { can } from "@/lib/permissions";
+import { getUserRole } from "@/lib/user-role";
 import type { MemberRole, PermissionModule, PermissionAction } from "@/types";
-
-export async function getSessionUser() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-}
-
-export async function getUserRole(workspaceId: string): Promise<MemberRole | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  // Admin client bypasses RLS — server-side permission check only
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("workspace_members")
-    .select("role")
-    .eq("workspace_id", workspaceId)
-    .eq("user_id", user.id)
-    .is("deleted_at", null)
-    .maybeSingle();
-
-  if (error) {
-    console.error("[getUserRole] Erro ao buscar role:", error.message);
-    return null;
-  }
-
-  return (data?.role as MemberRole) ?? null;
-}
 
 export async function requirePermission(
   workspaceId: string,
@@ -75,7 +47,6 @@ export async function requireSuperAdmin(): Promise<{ userId: string } | null> {
   return data?.is_superadmin ? { userId: user.id } : null;
 }
 
-/** Verifica se o usuário autenticado é o owner único do SaaS. */
 export async function requireOwner(): Promise<{ userId: string } | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -91,8 +62,7 @@ export async function requireOwner(): Promise<{ userId: string } | null> {
   return data?.is_owner ? { userId: user.id } : null;
 }
 
-// Combina getUser + workspaceId + role em 3 round-trips ao invés de 4
-// (evita chamar getUser() duas vezes separadas)
+// 2 round-trips: getUser + 1 query com join profiles→workspace_members
 export async function getWorkspaceContext(
   module: PermissionModule,
   action: PermissionAction
@@ -101,23 +71,21 @@ export async function getWorkspaceContext(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Não autenticado." };
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient();
+  const { data: profile } = await admin
     .from("profiles")
-    .select("current_workspace_id")
+    .select("current_workspace_id, workspace_members(role, workspace_id, deleted_at)")
     .eq("id", user.id)
     .single();
 
-  const workspaceId = profile?.current_workspace_id;
+  const workspaceId = profile?.current_workspace_id as string | null;
   if (!workspaceId) return { error: "Workspace não encontrado." };
 
-  const admin = createAdminClient();
-  const { data: member } = await admin
-    .from("workspace_members")
-    .select("role")
-    .eq("workspace_id", workspaceId)
-    .eq("user_id", user.id)
-    .is("deleted_at", null)
-    .maybeSingle();
+  type MemberRow = { role: string; workspace_id: string; deleted_at: string | null };
+  const members = profile?.workspace_members as MemberRow[] | null;
+  const member = members?.find(
+    (m) => m.workspace_id === workspaceId && m.deleted_at === null
+  );
 
   if (!can((member?.role as MemberRole) ?? null, module, action)) {
     return { error: "Você não tem permissão para realizar esta ação." };
@@ -125,3 +93,4 @@ export async function getWorkspaceContext(
 
   return { workspaceId, userId: user.id };
 }
+

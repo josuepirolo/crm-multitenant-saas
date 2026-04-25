@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getUserRole } from "@/lib/guards";
+import { getUserRole } from "@/lib/user-role";
 import { can, PERMISSIONS } from "@/lib/permissions";
 import type { MemberRole, PermissionModule, PermissionAction } from "@/types";
 
