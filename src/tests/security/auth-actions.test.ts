@@ -24,6 +24,8 @@ const mocks = vi.hoisted(() => {
       throw Object.assign(new Error("NEXT_REDIRECT"), { digest: `NEXT_REDIRECT;${url}` });
     }),
     workspaceCreate: vi.fn().mockResolvedValue({ id: "ws-1" }),
+    checkRateLimit: vi.fn().mockReturnValue(true), // permite por padrão
+    getClientIp: vi.fn().mockResolvedValue("127.0.0.1"),
     mockSupabase,
     mockAdmin,
   };
@@ -32,6 +34,14 @@ const mocks = vi.hoisted(() => {
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: mocks.createAdminClient }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("@/lib/security/rate-limit", () => ({
+  checkRateLimit: mocks.checkRateLimit,
+  RATE_LIMITS: { login: {}, register: {}, forgotPassword: {}, updatePassword: {} },
+}));
+vi.mock("@/lib/security/client-ip", () => ({ getClientIp: mocks.getClientIp }));
+vi.mock("@/lib/security/security-errors", () => ({
+  RATE_LIMIT_ERROR: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+}));
 
 vi.mock("@/repositories/workspace.repository", () => ({
   SupabaseWorkspaceRepository: vi.fn().mockImplementation(function () {
@@ -58,6 +68,8 @@ beforeEach(() => {
   mocks.redirect.mockImplementation((url: string) => {
     throw Object.assign(new Error("NEXT_REDIRECT"), { digest: `NEXT_REDIRECT;${url}` });
   });
+  mocks.checkRateLimit.mockReturnValue(true);   // permite por padrão
+  mocks.getClientIp.mockResolvedValue("127.0.0.1");
 });
 
 // ─── signIn ───────────────────────────────────────────────────────────────────
@@ -238,5 +250,66 @@ describe("updatePassword — encerra sessão de recovery após atualizar senha",
 
     expect((result as { error: string }).error).not.toContain("JWT");
     expect((result as { error: string }).error).toContain("link");
+  });
+});
+
+// ─── Rate limit — integração nas actions ─────────────────────────────────────
+
+describe("signIn — rate limit bloqueia e não chama Supabase", () => {
+  it("retorna erro genérico quando rate limit acionado", async () => {
+    mocks.checkRateLimit.mockReturnValue(false);
+
+    const result = await signIn(null, fd({ email: "a@b.com", password: "Abc123!" }));
+
+    expect((result as { error: string }).error).toContain("Muitas tentativas");
+    expect((result as { error: string }).error).not.toContain("senha");
+    expect((result as { error: string }).error).not.toContain("a@b.com");
+  });
+
+  it("não chama Supabase quando rate limit acionado", async () => {
+    mocks.checkRateLimit.mockReturnValue(false);
+
+    await signIn(null, fd({ email: "a@b.com", password: "Abc123!" }));
+
+    expect(mocks.mockSupabase.auth.signInWithPassword).not.toHaveBeenCalled();
+  });
+});
+
+describe("signUp — rate limit bloqueia e não chama Supabase", () => {
+  it("retorna erro genérico quando rate limit acionado", async () => {
+    mocks.checkRateLimit.mockReturnValue(false);
+
+    const result = await signUp(null, fd({
+      name: "Test",
+      workspaceName: "WS",
+      email: "t@t.com",
+      password: "Abc123!@#",
+      confirmPassword: "Abc123!@#",
+    }));
+
+    expect((result as { error: string }).error).toContain("Muitas tentativas");
+    expect(mocks.mockSupabase.auth.signUp).not.toHaveBeenCalled();
+  });
+});
+
+describe("requestPasswordReset — rate limit bloqueia e não chama Supabase", () => {
+  it("retorna erro genérico quando rate limit acionado", async () => {
+    mocks.checkRateLimit.mockReturnValue(false);
+
+    const result = await requestPasswordReset(null, fd({ email: "a@b.com" }));
+
+    expect((result as { error: string }).error).toContain("Muitas tentativas");
+    expect(mocks.mockSupabase.auth.resetPasswordForEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe("updatePassword — rate limit bloqueia e não chama Supabase", () => {
+  it("retorna erro genérico quando rate limit acionado", async () => {
+    mocks.checkRateLimit.mockReturnValue(false);
+
+    const result = await updatePassword(null, fd({ password: "NovaSenha1!", confirmPassword: "NovaSenha1!" }));
+
+    expect((result as { error: string }).error).toContain("Muitas tentativas");
+    expect(mocks.mockSupabase.auth.updateUser).not.toHaveBeenCalled();
   });
 });

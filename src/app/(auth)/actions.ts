@@ -6,8 +6,16 @@ import { loginSchema, registerSchema, resetPasswordSchema, updatePasswordSchema 
 import { SupabaseWorkspaceRepository } from "@/repositories/workspace.repository";
 import { uniqueSlug } from "@/lib/utils/slug";
 import { redirect } from "next/navigation";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/security/rate-limit";
+import { getClientIp } from "@/lib/security/client-ip";
+import { RATE_LIMIT_ERROR } from "@/lib/security/security-errors";
 
 export async function signIn(_: unknown, formData: FormData) {
+  const ip = await getClientIp();
+  if (!checkRateLimit(`login:ip:${ip}`, RATE_LIMITS.login)) {
+    return { error: RATE_LIMIT_ERROR };
+  }
+
   const raw = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
@@ -16,6 +24,10 @@ export async function signIn(_: unknown, formData: FormData) {
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
+  }
+
+  if (!checkRateLimit(`login:email:${parsed.data.email}`, RATE_LIMITS.login)) {
+    return { error: RATE_LIMIT_ERROR };
   }
 
   const captchaToken = formData.get("cf-turnstile-response") as string | undefined;
@@ -37,6 +49,11 @@ export async function signIn(_: unknown, formData: FormData) {
 }
 
 export async function signUp(_: unknown, formData: FormData) {
+  const ip = await getClientIp();
+  if (!checkRateLimit(`register:ip:${ip}`, RATE_LIMITS.register)) {
+    return { error: RATE_LIMIT_ERROR };
+  }
+
   const raw = {
     name: formData.get("name") as string,
     workspaceName: formData.get("workspaceName") as string,
@@ -97,8 +114,17 @@ export async function signUp(_: unknown, formData: FormData) {
 }
 
 export async function requestPasswordReset(_: unknown, formData: FormData) {
+  const ip = await getClientIp();
+  if (!checkRateLimit(`forgot:ip:${ip}`, RATE_LIMITS.forgotPassword)) {
+    return { error: RATE_LIMIT_ERROR };
+  }
+
   const parsed = resetPasswordSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  if (!checkRateLimit(`forgot:email:${parsed.data.email}`, RATE_LIMITS.forgotPassword)) {
+    return { error: RATE_LIMIT_ERROR };
+  }
 
   const captchaToken = formData.get("cf-turnstile-response") as string | undefined;
 
@@ -114,6 +140,11 @@ export async function requestPasswordReset(_: unknown, formData: FormData) {
 }
 
 export async function updatePassword(_: unknown, formData: FormData) {
+  const ip = await getClientIp();
+  if (!checkRateLimit(`updatepwd:ip:${ip}`, RATE_LIMITS.updatePassword)) {
+    return { error: RATE_LIMIT_ERROR };
+  }
+
   const parsed = updatePasswordSchema.safeParse({
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
