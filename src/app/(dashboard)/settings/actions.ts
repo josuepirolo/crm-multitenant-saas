@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";
+import { publicError } from "@/lib/security/security-errors";
 import { SupabaseWorkspaceRepository } from "@/repositories/workspace.repository";
 import { SupabaseWorkspaceMemberRepository } from "@/repositories/member.repository";
 import { UpdateWorkspaceUseCase } from "@/usecases/WorkspaceUseCases";
@@ -46,7 +47,7 @@ export async function updateWorkspace(_: unknown, formData: FormData) {
     revalidatePath("/settings");
     return { error: undefined, workspace };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Erro ao atualizar workspace." };
+    return publicError(err, "Erro ao atualizar workspace.");
   }
 }
 
@@ -89,7 +90,7 @@ export async function inviteMember(_: unknown, formData: FormData) {
     revalidatePath("/settings");
     return { error: undefined };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Erro ao convidar membro." };
+    return publicError(err, "Erro ao convidar membro.");
   }
 }
 
@@ -123,7 +124,7 @@ export async function updateMemberRole(_: unknown, formData: FormData) {
     revalidatePath("/settings");
     return { error: undefined };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Erro ao atualizar função." };
+    return publicError(err, "Erro ao atualizar função.");
   }
 }
 
@@ -148,6 +149,6 @@ export async function deactivateMember(formData: FormData) {
     revalidatePath("/settings");
     return { error: undefined };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Erro ao desativar membro." };
+    return publicError(err, "Erro ao desativar membro.");
   }
 }
