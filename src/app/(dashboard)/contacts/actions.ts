@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { SupabaseContactRepository } from "@/repositories/contact.repository";
 import { GetContactsUseCase, CreateContactUseCase, UpdateContactUseCase, SoftDeleteContactUseCase } from "@/usecases/ContactUseCases";
 import { getCurrentWorkspaceId, getWorkspaceContext } from "@/lib/guards";
@@ -68,12 +67,13 @@ export async function createContact(_: unknown, formData: FormData) {
   const docError = validateDocument(parsed.data.personType, parsed.data.document);
   if (docError) return { error: docError };
 
-  const admin = createAdminClient();
-  const { data: ws } = await admin.from("workspaces").select("name").eq("id", ctx.workspaceId).single();
+  const supabaseForWsLookup = await createClient();
+  const { data: ws } = await supabaseForWsLookup.from("workspaces").select("name").eq("id", ctx.workspaceId).single();
   const empresaNome = ws?.name as string | undefined;
 
   try {
-    const contact = await new CreateContactUseCase(new SupabaseContactRepository(admin)).execute({
+    const supabase = await createClient();
+    const contact = await new CreateContactUseCase(new SupabaseContactRepository(supabase)).execute({
       ...parsed.data,
       workspace_id: ctx.workspaceId,
       created_by: ctx.userId,
@@ -100,7 +100,8 @@ export async function updateContact(_: unknown, formData: FormData) {
   if (docError) return { error: docError };
 
   try {
-    const contact = await new UpdateContactUseCase(new SupabaseContactRepository(createAdminClient())).execute(ctx.workspaceId, id, parsed.data);
+    const supabase = await createClient();
+    const contact = await new UpdateContactUseCase(new SupabaseContactRepository(supabase)).execute(ctx.workspaceId, id, parsed.data);
     revalidatePath("/contacts");
     return { error: undefined, contact };
   } catch (err) {
@@ -113,7 +114,8 @@ export async function deleteContact(id: string) {
   if ("error" in ctx) return ctx;
 
   try {
-    await new SoftDeleteContactUseCase(new SupabaseContactRepository(createAdminClient())).execute(ctx.workspaceId, id);
+    const supabase = await createClient();
+    await new SoftDeleteContactUseCase(new SupabaseContactRepository(supabase)).execute(ctx.workspaceId, id);
     revalidatePath("/contacts");
     return { error: undefined };
   } catch {
