@@ -6,7 +6,8 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as "recovery" | "signup" | "magiclink" | null;
-  const next = searchParams.get("next") ?? "/dashboard";
+  const nextRaw = searchParams.get("next") ?? "/dashboard";
+  const next = nextRaw.startsWith("/") ? nextRaw : "/dashboard";
 
   const supabase = await createClient();
 

@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
     }),
     workspaceCreate: vi.fn().mockResolvedValue({ id: "ws-1" }),
     checkRateLimit: vi.fn().mockReturnValue(true),
+    validateTurnstile: vi.fn().mockResolvedValue(true),
     getClientIp: vi.fn().mockResolvedValue("127.0.0.1"),
     getUserAgent: vi.fn().mockResolvedValue("vitest"),
     createAuditLog: vi.fn().mockResolvedValue(undefined),
@@ -39,6 +40,9 @@ vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/security/rate-limit", () => ({
   checkRateLimit: mocks.checkRateLimit,
   RATE_LIMITS: { login: {}, register: {}, forgotPassword: {}, updatePassword: {} },
+}));
+vi.mock("@/lib/security/turnstile", () => ({
+  validateTurnstile: mocks.validateTurnstile,
 }));
 vi.mock("@/lib/security/client-ip", () => ({
   getClientIp: mocks.getClientIp,
@@ -87,6 +91,7 @@ beforeEach(() => {
     throw Object.assign(new Error("NEXT_REDIRECT"), { digest: `NEXT_REDIRECT;${url}` });
   });
   mocks.checkRateLimit.mockReturnValue(true);
+  mocks.validateTurnstile.mockResolvedValue(true);
   mocks.getClientIp.mockResolvedValue("127.0.0.1");
   mocks.getUserAgent.mockResolvedValue("vitest");
   mocks.createAuditLog.mockResolvedValue(undefined);
@@ -389,5 +394,41 @@ describe("signIn — auditoria", () => {
       const metaStr = JSON.stringify(entry.metadata ?? {});
       expect(metaStr).not.toContain("senhaSecreta");
     }
+  });
+});
+
+// ─── Turnstile — captcha bloqueante ──────────────────────────────────────────
+
+describe("signIn — captcha inválido bloqueia antes de qualquer chamada", () => {
+  it("retorna erro genérico quando captcha inválido", async () => {
+    mocks.validateTurnstile.mockResolvedValue(false);
+
+    const result = await signIn(null, fd({ email: "a@b.com", password: "Abc123!" }));
+
+    expect((result as { error: string }).error).toBe("Verificação de segurança falhou. Tente novamente.");
+  });
+
+  it("não chama Supabase quando captcha inválido", async () => {
+    mocks.validateTurnstile.mockResolvedValue(false);
+
+    await signIn(null, fd({ email: "a@b.com", password: "Abc123!" }));
+
+    expect(mocks.mockSupabase.auth.signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("não chama rate limit quando captcha inválido", async () => {
+    mocks.validateTurnstile.mockResolvedValue(false);
+
+    await signIn(null, fd({ email: "a@b.com", password: "Abc123!" }));
+
+    expect(mocks.checkRateLimit).not.toHaveBeenCalled();
+  });
+
+  it("não registra audit log quando captcha inválido", async () => {
+    mocks.validateTurnstile.mockResolvedValue(false);
+
+    await signIn(null, fd({ email: "a@b.com", password: "Abc123!" }));
+
+    expect(mocks.createAuditLog).not.toHaveBeenCalled();
   });
 });

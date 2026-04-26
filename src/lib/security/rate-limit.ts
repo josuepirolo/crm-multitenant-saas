@@ -1,12 +1,4 @@
-// ⚠️  In-memory: resets on restart and does not share state across instances.
-// For multi-instance / serverless production, replace with Redis or Upstash KV.
-
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-const store = new Map<string, RateLimitEntry>();
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface RateLimitConfig {
   windowMs: number;
@@ -21,21 +13,36 @@ export const RATE_LIMITS = {
 } satisfies Record<string, RateLimitConfig>;
 
 /** Returns true when the request is allowed, false when blocked. */
-export function checkRateLimit(key: string, config: RateLimitConfig): boolean {
-  const now = Date.now();
-  const entry = store.get(key);
+export async function checkRateLimit(key: string, config: RateLimitConfig): Promise<boolean> {
+  try {
+    const admin = createAdminClient();
+    const windowStart = new Date(Date.now() - config.windowMs).toISOString();
 
-  if (!entry || now > entry.resetAt) {
-    store.set(key, { count: 1, resetAt: now + config.windowMs });
+    const { count, error } = await admin
+      .from("rate_limits")
+      .select("*", { count: "exact", head: true })
+      .eq("key", key)
+      .gte("created_at", windowStart);
+
+    if (error) {
+      console.error("[rate-limit] DB error:", error.message.slice(0, 100));
+      return true; // fail open — never block on DB error
+    }
+
+    if ((count ?? 0) >= config.max) return false;
+
+    await admin.from("rate_limits").insert({ key });
+
+    // Lazy cleanup — fire-and-forget, does not block response
+    void Promise.resolve(
+      admin.from("rate_limits").delete().eq("key", key).lt("created_at", windowStart)
+    ).catch(() => {});
+
     return true;
+  } catch {
+    return true; // fail open
   }
-
-  if (entry.count >= config.max) return false;
-  entry.count++;
-  return true;
 }
 
-/** Test-only helper — clears the in-memory store between test runs. */
-export function _resetStoreForTesting() {
-  store.clear();
-}
+/** No-op in production — tests mock the admin client directly. */
+export function _resetStoreForTesting(): void {}

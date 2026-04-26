@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { SupabaseContactRepository } from "@/repositories/contact.repository";
 import { GetContactsUseCase, CreateContactUseCase, UpdateContactUseCase, SoftDeleteContactUseCase } from "@/usecases/ContactUseCases";
-import { getCurrentWorkspaceId, getWorkspaceContext } from "@/lib/guards";
+import { getWorkspaceContext } from "@/lib/guards";
 import { revalidatePath } from "next/cache";
 import { contactSchema, toDigits, validateCPF, validateCNPJ } from "@/lib/validations/contact";
 import type { ContactFilters } from "@/repositories/contact.repository";
@@ -42,13 +42,12 @@ function uniqueViolationMessage(err: unknown, empresa?: string): string | null {
 // ─── actions ─────────────────────────────────────────────────────────────────
 
 export async function getContacts(filters: ContactFilters, page: number, pageSize: number) {
-  const supabase = await createClient();
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) return { error: "Workspace não encontrado.", data: [], total: 0 };
+  const ctx = await getWorkspaceContext("contacts", "view");
+  if ("error" in ctx) return { error: ctx.error, data: [], total: 0 };
 
   try {
-    const repo = new SupabaseContactRepository(supabase);
-    const result = await new GetContactsUseCase(repo).execute(workspaceId, filters, page, pageSize);
+    const supabase = await createClient();
+    const result = await new GetContactsUseCase(new SupabaseContactRepository(supabase)).execute(ctx.workspaceId, filters, page, pageSize);
     return { error: undefined, data: result.data, total: result.total };
   } catch (err) {
     console.error("[getContacts]", err);

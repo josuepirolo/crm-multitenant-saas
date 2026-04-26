@@ -218,8 +218,8 @@ describe("deleteContact — proteção de acesso", () => {
 // ─── getContacts ──────────────────────────────────────────────────────────────
 
 describe("getContacts — sem workspace retorna vazio seguro", () => {
-  it("retorna erro e lista vazia quando getCurrentWorkspaceId retorna null", async () => {
-    mocks.getCurrentWorkspaceId.mockResolvedValue(null);
+  it("retorna erro e lista vazia quando getWorkspaceContext retorna erro", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue({ error: "Não autenticado" });
 
     const result = await getContacts({}, 0, 20);
 
@@ -230,7 +230,7 @@ describe("getContacts — sem workspace retorna vazio seguro", () => {
   });
 
   it("chama findAll com workspaceId derivado do servidor", async () => {
-    mocks.getCurrentWorkspaceId.mockResolvedValue(WS_A);
+    mocks.getWorkspaceContext.mockResolvedValue({ workspaceId: WS_A, userId: USER_A });
 
     await getContacts({}, 0, 20);
 
@@ -238,7 +238,7 @@ describe("getContacts — sem workspace retorna vazio seguro", () => {
   });
 
   it("workspaceId nunca vem de parâmetro externo — sempre do guard", async () => {
-    mocks.getCurrentWorkspaceId.mockResolvedValue(WS_A);
+    mocks.getWorkspaceContext.mockResolvedValue({ workspaceId: WS_A, userId: USER_A });
 
     await getContacts({}, 0, 20);
 

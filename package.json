@@ -14,7 +14,8 @@
     "db:diff": "supabase db diff",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
@@ -47,6 +48,7 @@
     "@vitest/coverage-v8": "^4.1.5",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "patch-package": "^8.0.1",
     "supabase": "^2.92.0",
     "tailwindcss": "^4",
     "typescript": "^5",

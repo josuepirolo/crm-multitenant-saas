@@ -10,10 +10,16 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/security/rate-limit";
 import { getClientIp, getUserAgent } from "@/lib/security/client-ip";
 import { RATE_LIMIT_ERROR } from "@/lib/security/security-errors";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
+import { validateTurnstile } from "@/lib/security/turnstile";
 
 export async function signIn(_: unknown, formData: FormData) {
+  const captchaToken = formData.get("cf-turnstile-response") as string | null;
+  if (!await validateTurnstile(captchaToken)) {
+    return { error: "Verificação de segurança falhou. Tente novamente." };
+  }
+
   const ip = await getClientIp();
-  if (!checkRateLimit(`login:ip:${ip}`, RATE_LIMITS.login)) {
+  if (!await checkRateLimit(`login:ip:${ip}`, RATE_LIMITS.login)) {
     await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "login" } });
     return { error: RATE_LIMIT_ERROR };
   }
@@ -28,17 +34,15 @@ export async function signIn(_: unknown, formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
-  if (!checkRateLimit(`login:email:${parsed.data.email}`, RATE_LIMITS.login)) {
+  if (!await checkRateLimit(`login:email:${parsed.data.email}`, RATE_LIMITS.login)) {
     await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "login" } });
     return { error: RATE_LIMIT_ERROR };
   }
 
-  const captchaToken = formData.get("cf-turnstile-response") as string | undefined;
-
   const supabase = await createClient();
   const { data: authData, error } = await supabase.auth.signInWithPassword({
     ...parsed.data,
-    options: captchaToken ? { captchaToken } : undefined,
+    options: { captchaToken: captchaToken ?? undefined },
   });
 
   if (error) {
@@ -59,8 +63,13 @@ export async function signIn(_: unknown, formData: FormData) {
 }
 
 export async function signUp(_: unknown, formData: FormData) {
+  const captchaToken = formData.get("cf-turnstile-response") as string | null;
+  if (!await validateTurnstile(captchaToken)) {
+    return { error: "Verificação de segurança falhou. Tente novamente." };
+  }
+
   const ip = await getClientIp();
-  if (!checkRateLimit(`register:ip:${ip}`, RATE_LIMITS.register)) {
+  if (!await checkRateLimit(`register:ip:${ip}`, RATE_LIMITS.register)) {
     await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "register" } });
     return { error: RATE_LIMIT_ERROR };
   }
@@ -78,15 +87,13 @@ export async function signUp(_: unknown, formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
-  const captchaToken = formData.get("cf-turnstile-response") as string | undefined;
-
   const supabase = await createClient();
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
       data: { name: parsed.data.name },
-      ...(captchaToken ? { captchaToken } : {}),
+      captchaToken: captchaToken ?? undefined,
     },
   });
 
@@ -132,8 +139,13 @@ export async function signUp(_: unknown, formData: FormData) {
 }
 
 export async function requestPasswordReset(_: unknown, formData: FormData) {
+  const captchaToken = formData.get("cf-turnstile-response") as string | null;
+  if (!await validateTurnstile(captchaToken)) {
+    return { error: "Verificação de segurança falhou. Tente novamente." };
+  }
+
   const ip = await getClientIp();
-  if (!checkRateLimit(`forgot:ip:${ip}`, RATE_LIMITS.forgotPassword)) {
+  if (!await checkRateLimit(`forgot:ip:${ip}`, RATE_LIMITS.forgotPassword)) {
     await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "forgot_password" } });
     return { error: RATE_LIMIT_ERROR };
   }
@@ -141,17 +153,15 @@ export async function requestPasswordReset(_: unknown, formData: FormData) {
   const parsed = resetPasswordSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  if (!checkRateLimit(`forgot:email:${parsed.data.email}`, RATE_LIMITS.forgotPassword)) {
+  if (!await checkRateLimit(`forgot:email:${parsed.data.email}`, RATE_LIMITS.forgotPassword)) {
     await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "forgot_password" } });
     return { error: RATE_LIMIT_ERROR };
   }
 
-  const captchaToken = formData.get("cf-turnstile-response") as string | undefined;
-
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/update-password`,
-    captchaToken: captchaToken || undefined,
+    captchaToken: captchaToken ?? undefined,
   });
 
   if (error) return { error: "Não foi possível enviar o e-mail. Tente novamente.", email: parsed.data.email };
@@ -161,7 +171,7 @@ export async function requestPasswordReset(_: unknown, formData: FormData) {
 
 export async function updatePassword(_: unknown, formData: FormData) {
   const ip = await getClientIp();
-  if (!checkRateLimit(`updatepwd:ip:${ip}`, RATE_LIMITS.updatePassword)) {
+  if (!await checkRateLimit(`updatepwd:ip:${ip}`, RATE_LIMITS.updatePassword)) {
     await createAuditLog({ action: AUDIT_ACTIONS.RATE_LIMIT_TRIGGERED, ip_address: ip, metadata: { context: "update_password" } });
     return { error: RATE_LIMIT_ERROR };
   }
