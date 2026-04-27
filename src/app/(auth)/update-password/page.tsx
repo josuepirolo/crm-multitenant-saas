@@ -1,40 +1,22 @@
-"use client";
+import Link from "next/link";
+import { XCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { UpdatePasswordForm } from "./UpdatePasswordForm";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
-import { motion } from "framer-motion";
-import { updatePassword } from "../actions";
-import { PasswordInput } from "@/components/ui/password-input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { MessageSquare, AlertCircle } from "lucide-react";
-import { appleEase } from "@/components/ui/motion";
-
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
-};
-const item = {
-  hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: appleEase } },
-};
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" className="w-full h-11 text-sm font-medium rounded-xl transition-all duration-200" disabled={pending}>
-      {pending ? (
-        <span className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-          Salvando...
-        </span>
-      ) : "Salvar nova senha"}
-    </Button>
-  );
+async function hasRecoverySession(): Promise<boolean> {
+  try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return false;
+    const payload = JSON.parse(atob(session.access_token.split(".")[1]));
+    return Array.isArray(payload.amr) && payload.amr.some((a: { method: string }) => a.method === "recovery");
+  } catch {
+    return false;
+  }
 }
 
-export default function UpdatePasswordPage() {
-  const [state, action] = useActionState(updatePassword, null);
+export default async function UpdatePasswordPage() {
+  const isRecovery = await hasRecoverySession();
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-muted px-4">
@@ -43,60 +25,29 @@ export default function UpdatePasswordPage() {
         <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
       </div>
 
-      <motion.div variants={container} initial="hidden" animate="show" className="relative w-full max-w-[400px]">
-        <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl shadow-xl shadow-black/[0.06] p-8">
-
-          <motion.div variants={item} className="flex flex-col items-center gap-3 mb-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30">
-              <MessageSquare size={26} className="text-white" />
+      {isRecovery ? (
+        <UpdatePasswordForm />
+      ) : (
+        <div className="relative w-full max-w-[400px]">
+          <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl shadow-xl shadow-black/[0.06] p-8 flex flex-col items-center gap-5 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">
+              <XCircle size={26} className="text-destructive" />
             </div>
-            <div className="text-center">
-              <h1 className="text-2xl font-bold tracking-tight">Nova senha</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Escolha uma senha segura</p>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-foreground">Link inválido ou expirado</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                O link de redefinição de senha é inválido ou já expirou. Solicite um novo link para continuar.
+              </p>
             </div>
-          </motion.div>
-
-          <form action={action} className="space-y-5">
-            <motion.div variants={item} className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">Nova senha</Label>
-              <PasswordInput
-                id="password"
-                name="password"
-                placeholder="Mínimo 8 caracteres"
-                autoComplete="new-password"
-                required
-              />
-            </motion.div>
-
-            <motion.div variants={item} className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirmar senha</Label>
-              <PasswordInput
-                id="confirmPassword"
-                name="confirmPassword"
-                placeholder="••••••••"
-                autoComplete="new-password"
-                required
-              />
-            </motion.div>
-
-            {state?.error && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.2, ease: appleEase }}
-                className="flex items-center gap-2.5 rounded-xl bg-destructive/8 border border-destructive/20 px-4 py-3"
-              >
-                <AlertCircle size={15} className="shrink-0 text-destructive" />
-                <p className="text-sm text-destructive">{state.error}</p>
-              </motion.div>
-            )}
-
-            <motion.div variants={item}>
-              <SubmitButton />
-            </motion.div>
-          </form>
+            <Link
+              href="/reset-password"
+              className="w-full inline-flex items-center justify-center h-11 rounded-xl bg-primary text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-primary/90"
+            >
+              Solicitar novo link
+            </Link>
+          </div>
         </div>
-      </motion.div>
+      )}
     </div>
   );
 }
