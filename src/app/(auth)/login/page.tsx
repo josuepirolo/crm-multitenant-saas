@@ -11,8 +11,13 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, AlertCircle, MailCheck } from "lucide-react";
+import dynamic from "next/dynamic";
 import { appleEase } from "@/components/ui/motion";
-import { Turnstile } from "@marsidev/react-turnstile";
+
+const Turnstile = dynamic(
+  () => import("@marsidev/react-turnstile").then((m) => m.Turnstile),
+  { ssr: false }
+);
 
 const container = {
   hidden: { opacity: 0 },
