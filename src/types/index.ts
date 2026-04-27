@@ -51,6 +51,7 @@ export interface WorkspaceWithStats {
   slug: string;
   logo_url: string | null;
   created_at: string;
+  is_active: boolean;
   member_count: number;
   contact_count: number;
   deal_count: number;

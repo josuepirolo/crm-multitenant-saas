@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Search, Building2, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { WorkspaceWithStats } from "@/types";
+import type { AdminTab } from "@/viewmodels/useAdminViewModel";
 
 function WorkspacesTableSkeleton() {
   return (
@@ -40,11 +41,12 @@ interface WorkspacesTableProps {
   onPageChange: (p: number) => void;
   onSelectWorkspace: (ws: WorkspaceWithStats) => void;
   selectedId?: string;
+  activeTab?: AdminTab;
 }
 
 export function WorkspacesTable({
   workspaces, total, page, pageSize, loading,
-  search, onSearchChange, onPageChange, onSelectWorkspace, selectedId,
+  search, onSearchChange, onPageChange, onSelectWorkspace, selectedId, activeTab,
 }: WorkspacesTableProps) {
   const [localSearch, setLocalSearch] = useState(search);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -80,8 +82,9 @@ export function WorkspacesTable({
       </div>
 
       {/* Table header */}
-      <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-4 px-6 py-2.5 bg-muted/30 border-b border-border/50">
+      <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] items-center gap-4 px-6 py-2.5 bg-muted/30 border-b border-border/50">
         <span className="text-xs font-medium text-muted-foreground">Workspace</span>
+        <span className="text-xs font-medium text-muted-foreground w-16 text-center">Status</span>
         <span className="text-xs font-medium text-muted-foreground w-20 text-right">Membros</span>
         <span className="text-xs font-medium text-muted-foreground w-20 text-right">Contatos</span>
         <span className="text-xs font-medium text-muted-foreground w-20 text-right">Deals</span>
@@ -94,7 +97,9 @@ export function WorkspacesTable({
       ) : workspaces.length === 0 ? (
         <div className="px-6 py-16 text-center">
           <Building2 size={32} className="mx-auto mb-3 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">Nenhum workspace encontrado.</p>
+          <p className="text-sm text-muted-foreground">
+            {activeTab === "inactive" ? "Nenhuma empresa inativa." : "Nenhum workspace encontrado."}
+          </p>
         </div>
       ) : (
         <div className="divide-y divide-border/50">
@@ -103,7 +108,7 @@ export function WorkspacesTable({
               key={ws.id}
               onClick={() => onSelectWorkspace(ws)}
               className={cn(
-                "grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-4 w-full px-6 py-4 text-left transition-colors hover:bg-muted/40",
+                "grid grid-cols-[1fr_auto_auto_auto_auto_auto] items-center gap-4 w-full px-6 py-4 text-left transition-colors hover:bg-muted/40",
                 selectedId === ws.id && "bg-primary/5 hover:bg-primary/5"
               )}
             >
@@ -115,6 +120,17 @@ export function WorkspacesTable({
                   <p className="text-sm font-medium truncate">{ws.name}</p>
                   <p className="text-xs text-muted-foreground">{ws.slug}</p>
                 </div>
+              </div>
+              <div className="w-16 flex justify-center">
+                <span className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                  ws.is_active
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    : "bg-destructive/10 text-destructive"
+                )}>
+                  <span className={cn("h-1.5 w-1.5 rounded-full", ws.is_active ? "bg-emerald-500" : "bg-destructive")} />
+                  {ws.is_active ? "Ativa" : "Inativa"}
+                </span>
               </div>
               <span className="text-sm font-medium w-20 text-right tabular-nums">{fmt(ws.member_count)}</span>
               <span className="text-sm font-medium w-20 text-right tabular-nums">{fmt(ws.contact_count)}</span>

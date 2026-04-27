@@ -1,10 +1,13 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { AdminGlobalStats, WorkspaceMemberWithProfile, WorkspaceWithStats } from "@/types";
+import type { AdminGlobalStats, MemberRole, WorkspaceMemberWithProfile, WorkspaceWithStats } from "@/types";
 
 export interface IAdminRepository {
   getStats(): Promise<AdminGlobalStats>;
-  listWorkspaces(search: string, page: number, pageSize: number): Promise<{ data: WorkspaceWithStats[]; total: number }>;
+  listWorkspaces(search: string, page: number, pageSize: number, isActive?: boolean): Promise<{ data: WorkspaceWithStats[]; total: number }>;
   getWorkspaceMembers(workspaceId: string): Promise<WorkspaceMemberWithProfile[]>;
+  updateWorkspace(id: string, data: { name: string }): Promise<void>;
+  setWorkspaceActive(id: string, active: boolean): Promise<void>;
+  changeMemberRole(memberId: string, role: MemberRole): Promise<void>;
 }
 
 export class SupabaseAdminRepository implements IAdminRepository {
@@ -26,17 +29,18 @@ export class SupabaseAdminRepository implements IAdminRepository {
     };
   }
 
-  async listWorkspaces(search: string, page: number, pageSize: number) {
+  async listWorkspaces(search: string, page: number, pageSize: number, isActive?: boolean) {
     const from = page * pageSize;
     const to   = from + pageSize - 1;
 
     let query = this.client
       .from("workspaces")
-      .select("id, name, slug, logo_url, created_at", { count: "exact" })
+      .select("id, name, slug, logo_url, created_at, is_active", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
 
     if (search) query = query.ilike("name", `%${search}%`);
+    if (isActive !== undefined) query = query.eq("is_active", isActive);
 
     const { data: workspaces, count, error } = await query;
     if (error) throw new Error(error.message);
@@ -69,6 +73,21 @@ export class SupabaseAdminRepository implements IAdminRepository {
       })),
       total: count ?? 0,
     };
+  }
+
+  async updateWorkspace(id: string, data: { name: string }): Promise<void> {
+    const { error } = await this.client.from("workspaces").update(data).eq("id", id);
+    if (error) throw new Error(error.message);
+  }
+
+  async setWorkspaceActive(id: string, active: boolean): Promise<void> {
+    const { error } = await this.client.from("workspaces").update({ is_active: active }).eq("id", id);
+    if (error) throw new Error(error.message);
+  }
+
+  async changeMemberRole(memberId: string, role: MemberRole): Promise<void> {
+    const { error } = await this.client.from("workspace_members").update({ role }).eq("id", memberId);
+    if (error) throw new Error(error.message);
   }
 
   async getWorkspaceMembers(workspaceId: string): Promise<WorkspaceMemberWithProfile[]> {

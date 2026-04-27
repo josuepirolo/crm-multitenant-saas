@@ -51,6 +51,123 @@ describe("AdminRepository.getWorkspaceMembers — isolamento por workspace", () 
   });
 });
 
+describe("AdminRepository.updateWorkspace — atualiza por id correto", () => {
+  it("updateWorkspace filtra por id do workspace", async () => {
+    const mock = buildMockClient({ returnData: null });
+    const repo = new SupabaseAdminRepository(mock as never);
+
+    await repo.updateWorkspace(WS_A, { name: "Novo Nome" });
+
+    const q = mock._queries.find(q => q.table === "workspaces" && q.operation === "update");
+    expect(q).toBeDefined();
+    expect(q?.eqFilters["id"]).toBe(WS_A);
+    expect(q?.insertedData).toMatchObject({ name: "Novo Nome" });
+  });
+
+  it("updateWorkspace de WS_A não altera WS_B", async () => {
+    const mock = buildMockClient({ returnData: null });
+    const repo = new SupabaseAdminRepository(mock as never);
+
+    await repo.updateWorkspace(WS_A, { name: "Empresa A" });
+
+    const q = mock._queries.find(q => q.table === "workspaces" && q.operation === "update");
+    expect(q?.eqFilters["id"]).not.toBe(WS_B);
+  });
+});
+
+describe("AdminRepository.setWorkspaceActive — ativa/desativa por id", () => {
+  it("setWorkspaceActive(false) envia is_active=false para o workspace correto", async () => {
+    const mock = buildMockClient({ returnData: null });
+    const repo = new SupabaseAdminRepository(mock as never);
+
+    await repo.setWorkspaceActive(WS_A, false);
+
+    const q = mock._queries.find(q => q.table === "workspaces" && q.operation === "update");
+    expect(q).toBeDefined();
+    expect(q?.eqFilters["id"]).toBe(WS_A);
+    expect(q?.insertedData).toMatchObject({ is_active: false });
+  });
+
+  it("setWorkspaceActive(true) envia is_active=true para o workspace correto", async () => {
+    const mock = buildMockClient({ returnData: null });
+    const repo = new SupabaseAdminRepository(mock as never);
+
+    await repo.setWorkspaceActive(WS_B, true);
+
+    const q = mock._queries.find(q => q.table === "workspaces" && q.operation === "update");
+    expect(q?.eqFilters["id"]).toBe(WS_B);
+    expect(q?.insertedData).toMatchObject({ is_active: true });
+  });
+});
+
+describe("AdminRepository.changeMemberRole — altera role por id do membro", () => {
+  it("changeMemberRole filtra por id do membro, não por workspace", async () => {
+    const mock = buildMockClient({ returnData: null });
+    const repo = new SupabaseAdminRepository(mock as never);
+
+    await repo.changeMemberRole("member-id-123", "admin");
+
+    const q = mock._queries.find(q => q.table === "workspace_members" && q.operation === "update");
+    expect(q).toBeDefined();
+    expect(q?.eqFilters["id"]).toBe("member-id-123");
+    expect(q?.insertedData).toMatchObject({ role: "admin" });
+  });
+
+  it("changeMemberRole não usa workspace_id como filtro (usa id do membro)", async () => {
+    const mock = buildMockClient({ returnData: null });
+    const repo = new SupabaseAdminRepository(mock as never);
+
+    await repo.changeMemberRole("member-id-456", "sales");
+
+    const q = mock._queries.find(q => q.table === "workspace_members" && q.operation === "update");
+    expect(q?.eqFilters["workspace_id"]).toBeUndefined();
+    expect(q?.eqFilters["id"]).toBe("member-id-456");
+  });
+});
+
+describe("AdminRepository.listWorkspaces — filtro is_active", () => {
+  it("listWorkspaces sem filtro retorna todos (sem eq is_active)", async () => {
+    const mock = buildMockClient({ returnData: [], returnCount: 0 });
+    const repo = new SupabaseAdminRepository(mock as never);
+
+    await repo.listWorkspaces("", 0, 20);
+
+    const q = mock._queries.find(q => q.table === "workspaces" && q.operation === "select");
+    expect(q).toBeDefined();
+    expect(q?.eqFilters["is_active"]).toBeUndefined();
+  });
+
+  it("listWorkspaces com isActive=true filtra apenas ativos", async () => {
+    const mock = buildMockClient({ returnData: [], returnCount: 0 });
+    const repo = new SupabaseAdminRepository(mock as never);
+
+    await repo.listWorkspaces("", 0, 20, true);
+
+    const q = mock._queries.find(q => q.table === "workspaces" && q.operation === "select");
+    expect(q?.eqFilters["is_active"]).toBe(true);
+  });
+
+  it("listWorkspaces com isActive=false filtra apenas inativos", async () => {
+    const mock = buildMockClient({ returnData: [], returnCount: 0 });
+    const repo = new SupabaseAdminRepository(mock as never);
+
+    await repo.listWorkspaces("", 0, 20, false);
+
+    const q = mock._queries.find(q => q.table === "workspaces" && q.operation === "select");
+    expect(q?.eqFilters["is_active"]).toBe(false);
+  });
+
+  it("listWorkspaces filtra por is_active independente do search", async () => {
+    const mock = buildMockClient({ returnData: [], returnCount: 0 });
+    const repo = new SupabaseAdminRepository(mock as never);
+
+    await repo.listWorkspaces("empresa", 0, 20, true);
+
+    const q = mock._queries.find(q => q.table === "workspaces" && q.operation === "select");
+    expect(q?.eqFilters["is_active"]).toBe(true);
+  });
+});
+
 describe("AdminRepository.getStats — operação global (exige service_role)", () => {
   it("getStats consulta workspaces sem filtro de tenant — operação global esperada", async () => {
     const mock = buildMockClient({ returnData: null, returnCount: 5 });

@@ -1,10 +1,11 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Users, UserCheck, Briefcase } from "lucide-react";
-import { ROLE_LABELS, ROLE_COLORS } from "@/lib/permissions";
+import { X, Users, UserCheck, Briefcase, Pencil, Check, PowerOff, Power } from "lucide-react";
+import { ROLE_LABELS, ROLE_COLORS, ASSIGNABLE_ROLES } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
-import type { WorkspaceMemberWithProfile, WorkspaceWithStats } from "@/types";
+import type { MemberRole, WorkspaceMemberWithProfile, WorkspaceWithStats } from "@/types";
 import { appleEase } from "@/components/ui/motion";
 
 interface WorkspaceDetailPanelProps {
@@ -12,9 +13,54 @@ interface WorkspaceDetailPanelProps {
   members: WorkspaceMemberWithProfile[];
   loading: boolean;
   onClose: () => void;
+  onUpdateName: (workspaceId: string, name: string) => Promise<void>;
+  onSetActive: (workspaceId: string, active: boolean) => Promise<void>;
+  onChangeMemberRole: (memberId: string, role: MemberRole) => Promise<void>;
 }
 
-export function WorkspaceDetailPanel({ workspace, members, loading, onClose }: WorkspaceDetailPanelProps) {
+const ALL_ROLES: MemberRole[] = ["owner", ...ASSIGNABLE_ROLES];
+
+export function WorkspaceDetailPanel({
+  workspace, members, loading, onClose,
+  onUpdateName, onSetActive, onChangeMemberRole,
+}: WorkspaceDetailPanelProps) {
+  const [editingName, setEditingName]   = useState(false);
+  const [nameValue, setNameValue]       = useState("");
+  const [savingName, setSavingName]     = useState(false);
+  const [togglingActive, setTogglingActive] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingName) inputRef.current?.focus();
+  }, [editingName]);
+
+  useEffect(() => {
+    setEditingName(false);
+  }, [workspace?.id]);
+
+  function startEditName() {
+    setNameValue(workspace?.name ?? "");
+    setEditingName(true);
+  }
+
+  async function commitName() {
+    if (!workspace || !nameValue.trim() || nameValue.trim() === workspace.name) {
+      setEditingName(false);
+      return;
+    }
+    setSavingName(true);
+    await onUpdateName(workspace.id, nameValue);
+    setSavingName(false);
+    setEditingName(false);
+  }
+
+  async function handleToggleActive() {
+    if (!workspace) return;
+    setTogglingActive(true);
+    await onSetActive(workspace.id, !workspace.is_active);
+    setTogglingActive(false);
+  }
+
   const fmt = (n: number) => n.toLocaleString("pt-BR");
 
   return (
@@ -30,13 +76,54 @@ export function WorkspaceDetailPanel({ workspace, members, loading, onClose }: W
         >
           {/* Header */}
           <div className="flex items-start justify-between p-5 border-b border-border/50 gap-3">
-            <div className="min-w-0">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary text-sm font-bold flex items-center justify-center mb-3">
-                {workspace.name.slice(0, 2).toUpperCase()}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary text-sm font-bold flex items-center justify-center shrink-0">
+                  {workspace.name.slice(0, 2).toUpperCase()}
+                </div>
+                {!workspace.is_active && (
+                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive">
+                    Inativa
+                  </span>
+                )}
               </div>
-              <h3 className="font-semibold truncate">{workspace.name}</h3>
-              <p className="text-xs text-muted-foreground">{workspace.slug}</p>
+
+              {editingName ? (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    ref={inputRef}
+                    value={nameValue}
+                    onChange={(e) => setNameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitName();
+                      if (e.key === "Escape") setEditingName(false);
+                    }}
+                    className="h-7 flex-1 rounded-lg border border-primary/40 bg-background px-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    disabled={savingName}
+                  />
+                  <button
+                    onClick={commitName}
+                    disabled={savingName}
+                    className="h-7 w-7 flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    <Check size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 group">
+                  <h3 className="font-semibold truncate">{workspace.name}</h3>
+                  <button
+                    onClick={startEditName}
+                    className="opacity-0 group-hover:opacity-100 h-5 w-5 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                  >
+                    <Pencil size={11} />
+                  </button>
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground mt-0.5">{workspace.slug}</p>
             </div>
+
             <button
               onClick={onClose}
               className="shrink-0 h-7 w-7 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -94,9 +181,18 @@ export function WorkspaceDetailPanel({ workspace, members, loading, onClose }: W
                         <p className="text-sm font-medium truncate">{name}</p>
                         <p className="text-xs text-muted-foreground truncate">{m.profiles?.email ?? "—"}</p>
                       </div>
-                      <span className={cn("shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", ROLE_COLORS[m.role])}>
-                        {ROLE_LABELS[m.role]}
-                      </span>
+                      <select
+                        value={m.role}
+                        onChange={(e) => onChangeMemberRole(m.id, e.target.value as MemberRole)}
+                        className={cn(
+                          "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30",
+                          ROLE_COLORS[m.role]
+                        )}
+                      >
+                        {ALL_ROLES.map((r) => (
+                          <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                        ))}
+                      </select>
                     </div>
                   );
                 })}
@@ -104,9 +200,27 @@ export function WorkspaceDetailPanel({ workspace, members, loading, onClose }: W
             )}
           </div>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-border/50 text-xs text-muted-foreground">
-            Criado em {new Date(workspace.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+          {/* Footer — desativar/reativar + data */}
+          <div className="p-4 border-t border-border/50 space-y-3">
+            <button
+              onClick={handleToggleActive}
+              disabled={togglingActive}
+              className={cn(
+                "w-full flex items-center justify-center gap-2 h-9 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50",
+                workspace.is_active
+                  ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                  : "bg-primary/10 text-primary hover:bg-primary/20"
+              )}
+            >
+              {workspace.is_active ? (
+                <><PowerOff size={14} /> Desativar empresa</>
+              ) : (
+                <><Power size={14} /> Reativar empresa</>
+              )}
+            </button>
+            <p className="text-xs text-muted-foreground text-center">
+              Criado em {new Date(workspace.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+            </p>
           </div>
         </motion.div>
       )}

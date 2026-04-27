@@ -1,9 +1,15 @@
 "use client";
 
-import { useAdminViewModel } from "@/viewmodels/useAdminViewModel";
+import { useAdminViewModel, type AdminTab } from "@/viewmodels/useAdminViewModel";
 import { AdminStatsCards } from "@/components/admin/admin-stats-cards";
 import { WorkspacesTable } from "@/components/admin/workspaces-table";
 import { WorkspaceDetailPanel } from "@/components/admin/workspace-detail-panel";
+import { cn } from "@/lib/utils";
+
+const TABS: { key: AdminTab; label: string }[] = [
+  { key: "active",   label: "Ativos" },
+  { key: "inactive", label: "Inativos" },
+];
 
 export function AdminClient() {
   const vm = useAdminViewModel();
@@ -24,6 +30,24 @@ export function AdminClient() {
           </div>
         )}
 
+        {/* Tabs */}
+        <div className="flex items-center gap-1 rounded-xl border border-border/50 bg-muted/30 p-1 self-start">
+          {TABS.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => vm.switchTab(tab.key)}
+              className={cn(
+                "rounded-lg px-4 py-1.5 text-sm font-medium transition-all duration-150",
+                vm.activeTab === tab.key
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <WorkspacesTable
           workspaces={vm.workspaces}
           total={vm.total}
@@ -35,6 +59,7 @@ export function AdminClient() {
           onPageChange={vm.setPage}
           onSelectWorkspace={vm.openWorkspaceDetail}
           selectedId={vm.selectedWorkspace?.id}
+          activeTab={vm.activeTab}
         />
       </div>
 
@@ -43,6 +68,9 @@ export function AdminClient() {
         members={vm.detailMembers}
         loading={vm.detailLoading}
         onClose={() => vm.setSelectedWorkspace(null)}
+        onUpdateName={vm.handleUpdateWorkspaceName}
+        onSetActive={vm.handleSetWorkspaceActive}
+        onChangeMemberRole={vm.handleChangeMemberRole}
       />
     </div>
   );
