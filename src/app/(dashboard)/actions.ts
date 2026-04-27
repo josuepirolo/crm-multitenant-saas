@@ -2,10 +2,14 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { AUDIT_SID_COOKIE } from "@/lib/audit/audit-log";
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut({ scope: "global" });
+  const cookieStore = await cookies();
+  cookieStore.delete(AUDIT_SID_COOKIE);
   redirect("/login");
 }
 

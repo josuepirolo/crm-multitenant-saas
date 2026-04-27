@@ -9,8 +9,10 @@ import { redirect } from "next/navigation";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/security/rate-limit";
 import { getClientIp, getUserAgent } from "@/lib/security/client-ip";
 import { RATE_LIMIT_ERROR } from "@/lib/security/security-errors";
-import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
+import { createAuditLog, AUDIT_ACTIONS, AUDIT_SID_COOKIE } from "@/lib/audit/audit-log";
 import { validateTurnstile } from "@/lib/security/turnstile";
+import { cookies } from "next/headers";
+import { randomUUID } from "crypto";
 
 export async function signIn(_: unknown, formData: FormData) {
   const captchaToken = formData.get("cf-turnstile-response") as string | null;
@@ -53,11 +55,23 @@ export async function signIn(_: unknown, formData: FormData) {
     return { error: "E-mail ou senha inválidos", email: parsed.data.email };
   }
 
+  // Gera session_id opaco para correlação de auditoria — não contém dados do usuário
+  const sessionId = randomUUID();
+  const cookieStore = await cookies();
+  cookieStore.set(AUDIT_SID_COOKIE, sessionId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+
   await createAuditLog({
     action:     AUDIT_ACTIONS.LOGIN_SUCCESS,
     user_id:    authData.user?.id,
     ip_address: ip,
     user_agent: await getUserAgent(),
+    session_id: sessionId,
   });
   redirect("/dashboard");
 }

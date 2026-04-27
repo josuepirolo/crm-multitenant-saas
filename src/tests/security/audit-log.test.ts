@@ -4,12 +4,21 @@ const mocks = vi.hoisted(() => {
   const insertFn = vi.fn().mockResolvedValue({ error: null });
   const fromFn   = vi.fn().mockReturnValue({ insert: insertFn });
   const mockAdmin = { from: fromFn };
-  return { createAdminClient: vi.fn().mockReturnValue(mockAdmin), mockAdmin, insertFn, fromFn };
+  const cookiesGet = vi.fn().mockReturnValue(undefined);
+  const cookiesStore = { get: cookiesGet };
+  return {
+    createAdminClient: vi.fn().mockReturnValue(mockAdmin),
+    mockAdmin, insertFn, fromFn,
+    cookiesGet, cookiesStore,
+  };
 });
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: mocks.createAdminClient }));
+vi.mock("next/headers", () => ({
+  cookies: vi.fn().mockResolvedValue(mocks.cookiesStore),
+}));
 
-import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
+import { createAuditLog, AUDIT_ACTIONS, buildFingerprint } from "@/lib/audit/audit-log";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -121,6 +130,107 @@ describe("createAuditLog — resiliência", () => {
     await expect(
       createAuditLog({ action: AUDIT_ACTIONS.LOGIN_FAILURE })
     ).resolves.toBeUndefined();
+  });
+});
+
+// ─── fingerprint ─────────────────────────────────────────────────────────────
+
+describe("buildFingerprint", () => {
+  it("retorna string de 24 chars", () => {
+    const fp = buildFingerprint("1.2.3.4", "Mozilla/5.0");
+    expect(fp).toHaveLength(24);
+  });
+
+  it("é estável para os mesmos inputs", () => {
+    const a = buildFingerprint("1.2.3.4", "Mozilla/5.0");
+    const b = buildFingerprint("1.2.3.4", "Mozilla/5.0");
+    expect(a).toBe(b);
+  });
+
+  it("muda quando user_agent muda", () => {
+    const a = buildFingerprint("1.2.3.4", "Mozilla/5.0");
+    const b = buildFingerprint("1.2.3.4", "curl/7.0");
+    expect(a).not.toBe(b);
+  });
+
+  it("muda quando IP muda (diferente /24)", () => {
+    const a = buildFingerprint("1.2.3.4", "Mozilla/5.0");
+    const b = buildFingerprint("5.6.7.8", "Mozilla/5.0");
+    expect(a).not.toBe(b);
+  });
+
+  it("não contém o IP em claro", () => {
+    const fp = buildFingerprint("1.2.3.4", "Mozilla/5.0");
+    expect(fp).not.toContain("1.2.3");
+  });
+
+  it("não contém o user_agent em claro", () => {
+    const fp = buildFingerprint("1.2.3.4", "Mozilla/5.0");
+    expect(fp).not.toContain("Mozilla");
+  });
+
+  it("IPs no mesmo /24 geram mesmo fingerprint", () => {
+    const a = buildFingerprint("1.2.3.1", "Mozilla/5.0");
+    const b = buildFingerprint("1.2.3.99", "Mozilla/5.0");
+    expect(a).toBe(b);
+  });
+
+  it("trata IP 'unknown' sem lançar erro", () => {
+    expect(() => buildFingerprint("unknown", "Mozilla/5.0")).not.toThrow();
+  });
+});
+
+// ─── session_id + fingerprint no audit ───────────────────────────────────────
+
+describe("createAuditLog — session_id e fingerprint", () => {
+  it("inclui fingerprint calculado automaticamente a partir de ip + ua", async () => {
+    await createAuditLog({
+      action:     AUDIT_ACTIONS.LOGIN_SUCCESS,
+      ip_address: "1.2.3.4",
+      user_agent: "Mozilla/5.0",
+    });
+
+    const inserted = mocks.insertFn.mock.calls[0][0];
+    expect(inserted.fingerprint).toBeDefined();
+    expect(typeof inserted.fingerprint).toBe("string");
+    expect(inserted.fingerprint).toHaveLength(24);
+  });
+
+  it("inclui session_id do cookie quando disponível", async () => {
+    mocks.cookiesGet.mockReturnValue({ value: "test-session-uuid" });
+
+    await createAuditLog({ action: AUDIT_ACTIONS.LOGIN_SUCCESS });
+
+    const inserted = mocks.insertFn.mock.calls[0][0];
+    expect(inserted.session_id).toBe("test-session-uuid");
+  });
+
+  it("session_id é null quando cookie não existe", async () => {
+    mocks.cookiesGet.mockReturnValue(undefined);
+
+    await createAuditLog({ action: AUDIT_ACTIONS.LOGIN_SUCCESS });
+
+    const inserted = mocks.insertFn.mock.calls[0][0];
+    expect(inserted.session_id).toBeNull();
+  });
+
+  it("session_id fornecido manualmente tem prioridade sobre cookie", async () => {
+    mocks.cookiesGet.mockReturnValue({ value: "cookie-session" });
+
+    await createAuditLog({
+      action:     AUDIT_ACTIONS.LOGIN_SUCCESS,
+      session_id: "manual-session",
+    });
+
+    const inserted = mocks.insertFn.mock.calls[0][0];
+    expect(inserted.session_id).toBe("manual-session");
+  });
+
+  it("fingerprint não é calculado sem ip_address nem user_agent", async () => {
+    await createAuditLog({ action: AUDIT_ACTIONS.WORKSPACE_UPDATED });
+
+    const inserted = mocks.insertFn.mock.calls[0][0];
+    expect(inserted.fingerprint).toBeUndefined();
   });
 });
 

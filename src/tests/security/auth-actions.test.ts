@@ -53,6 +53,7 @@ vi.mock("@/lib/security/security-errors", () => ({
 }));
 vi.mock("@/lib/audit/audit-log", () => ({
   createAuditLog: mocks.createAuditLog,
+  AUDIT_SID_COOKIE: "audit-sid",
   AUDIT_ACTIONS: {
     LOGIN_SUCCESS:        "login_success",
     LOGIN_FAILURE:        "login_failure",
@@ -63,6 +64,14 @@ vi.mock("@/lib/audit/audit-log", () => ({
     MEMBER_ROLE_UPDATED:  "member_role_updated",
     MEMBER_DEACTIVATED:   "member_deactivated",
   },
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn().mockResolvedValue({
+    get:    vi.fn().mockReturnValue(undefined),
+    set:    vi.fn(),
+    delete: vi.fn(),
+  }),
 }));
 
 vi.mock("@/repositories/workspace.repository", () => ({
