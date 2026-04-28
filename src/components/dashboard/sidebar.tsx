@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Building2,
   ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useTransition } from "react";
@@ -33,9 +34,10 @@ const navItems = [
 interface SidebarProps {
   workspaces: ActiveWorkspace[];
   currentWorkspaceId: string;
+  isSuperAdmin?: boolean;
 }
 
-export function Sidebar({ workspaces, currentWorkspaceId }: SidebarProps) {
+export function Sidebar({ workspaces, currentWorkspaceId, isSuperAdmin = false }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -133,6 +135,23 @@ export function Sidebar({ workspaces, currentWorkspaceId }: SidebarProps) {
           </Link>
         ))}
       </nav>
+
+      {/* Admin SaaS link — apenas para superadmin, validado server-side */}
+      {isSuperAdmin && (
+        <div className="border-t p-3">
+          <Link
+            href="/admin"
+            className={cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "text-primary hover:bg-primary/10",
+              collapsed && "justify-center"
+            )}
+          >
+            <ShieldCheck size={18} className="shrink-0" />
+            {!collapsed && <span>Admin SaaS</span>}
+          </Link>
+        </div>
+      )}
 
       {/* Theme toggle + Sign out */}
       <div className="border-t p-3 space-y-1">
