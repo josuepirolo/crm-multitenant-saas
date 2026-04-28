@@ -62,7 +62,12 @@ export async function requireOwner(): Promise<{ userId: string } | null> {
   return data?.is_owner ? { userId: user.id } : null;
 }
 
-// 2 round-trips: getUser + 1 query com join profiles→workspace_members
+/**
+ * Resolve contexto de workspace + verifica permissão efetiva.
+ * Se o membro tiver workspace_role_id definido → usa RBAC granular (banco).
+ * Caso contrário → fallback para matriz hardcoded (permissions.ts).
+ * Nunca confia em permissão vinda do cliente.
+ */
 export async function getWorkspaceContext(
   module: PermissionModule,
   action: PermissionAction
@@ -74,23 +79,55 @@ export async function getWorkspaceContext(
   const admin = createAdminClient();
   const { data: profile } = await admin
     .from("profiles")
-    .select("current_workspace_id, workspace_members(role, workspace_id, deleted_at)")
+    .select(`
+      current_workspace_id,
+      workspace_members (
+        id, role, workspace_id, deleted_at, workspace_role_id,
+        workspace_roles (
+          workspace_role_permissions (
+            permissions ( key )
+          )
+        )
+      )
+    `)
     .eq("id", user.id)
     .single();
 
   const workspaceId = profile?.current_workspace_id as string | null;
   if (!workspaceId) return { error: "Workspace não encontrado." };
 
-  type MemberRow = { role: string; workspace_id: string; deleted_at: string | null };
+  type PermRow = { permissions: { key: string } };
+  type RoleRow = { workspace_role_permissions: PermRow[] };
+  type MemberRow = {
+    id: string;
+    role: string;
+    workspace_id: string;
+    deleted_at: string | null;
+    workspace_role_id: string | null;
+    workspace_roles: RoleRow | null;
+  };
+
   const members = profile?.workspace_members as MemberRow[] | null;
   const member = members?.find(
     (m) => m.workspace_id === workspaceId && m.deleted_at === null
   );
 
-  if (!can((member?.role as MemberRole) ?? null, module, action)) {
-    return { error: "Você não tem permissão para realizar esta ação." };
+  if (!member) return { error: "Você não tem permissão para realizar esta ação." };
+
+  let allowed: boolean;
+
+  if (member.workspace_role_id && member.workspace_roles) {
+    // RBAC granular: verifica permissão no banco
+    const permKeys = (member.workspace_roles.workspace_role_permissions ?? [])
+      .map((wrp) => wrp.permissions?.key)
+      .filter(Boolean) as string[];
+    allowed = permKeys.includes(`${module}:${action}`);
+  } else {
+    // Fallback: matriz hardcoded
+    allowed = can((member.role as MemberRole) ?? null, module, action);
   }
+
+  if (!allowed) return { error: "Você não tem permissão para realizar esta ação." };
 
   return { workspaceId, userId: user.id };
 }
-

@@ -57,6 +57,28 @@ export interface WorkspaceWithStats {
   deal_count: number;
 }
 
+// ── RBAC ──────────────────────────────────────────────────────────────────────
+
+export interface Permission {
+  id: string;
+  key: string;
+  description: string;
+  module: PermissionModule;
+  action: PermissionAction;
+  created_at: string;
+}
+
+export interface WorkspaceRole {
+  id: string;
+  workspace_id: string;
+  name: string;
+  is_system: boolean;
+  created_at: string;
+  permissions?: Permission[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface AdminGlobalStats {
   total_workspaces: number;
   total_members: number;
