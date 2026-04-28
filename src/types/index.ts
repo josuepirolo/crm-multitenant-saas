@@ -57,6 +57,21 @@ export interface WorkspaceWithStats {
   deal_count: number;
 }
 
+// ── Business Niches ───────────────────────────────────────────────────────────
+
+export interface BusinessNiche {
+  id: string;
+  parent_id: string | null;
+  name: string;
+  slug: string;
+  description: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  children?: BusinessNiche[];
+}
+
 // ── RBAC ──────────────────────────────────────────────────────────────────────
 
 export interface Permission {

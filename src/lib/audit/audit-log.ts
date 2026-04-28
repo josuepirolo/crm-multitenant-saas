@@ -16,10 +16,12 @@ export const AUDIT_ACTIONS = {
   MEMBER_INVITED:        "member_invited",
   MEMBER_ROLE_UPDATED:   "member_role_updated",
   MEMBER_DEACTIVATED:    "member_deactivated",
-  ROLE_CREATED:          "role_created",
-  ROLE_DELETED:          "role_deleted",
-  ROLE_PERMISSIONS_SET:  "role_permissions_set",
-  MEMBER_RBAC_ASSIGNED:  "member_rbac_assigned",
+  ROLE_CREATED:            "role_created",
+  ROLE_DELETED:            "role_deleted",
+  ROLE_PERMISSIONS_SET:    "role_permissions_set",
+  MEMBER_RBAC_ASSIGNED:    "member_rbac_assigned",
+  IMPERSONATION_STARTED:   "impersonation_started",
+  IMPERSONATION_ENDED:     "impersonation_ended",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

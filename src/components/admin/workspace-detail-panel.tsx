@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Users, UserCheck, Briefcase, Pencil, Check, PowerOff, Power } from "lucide-react";
+import { X, Users, UserCheck, Briefcase, Pencil, Check, PowerOff, Power, Eye } from "lucide-react";
 import { ROLE_LABELS, ROLE_COLORS, ASSIGNABLE_ROLES } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import type { MemberRole, WorkspaceMemberWithProfile, WorkspaceWithStats } from "@/types";
 import { appleEase } from "@/components/ui/motion";
+import { startImpersonation } from "@/app/(admin)/admin/impersonation-actions";
 
 interface WorkspaceDetailPanelProps {
   workspace: WorkspaceWithStats | null;
@@ -24,10 +25,11 @@ export function WorkspaceDetailPanel({
   workspace, members, loading, onClose,
   onUpdateName, onSetActive, onChangeMemberRole,
 }: WorkspaceDetailPanelProps) {
-  const [editingName, setEditingName]   = useState(false);
-  const [nameValue, setNameValue]       = useState("");
-  const [savingName, setSavingName]     = useState(false);
+  const [editingName, setEditingName]       = useState(false);
+  const [nameValue, setNameValue]           = useState("");
+  const [savingName, setSavingName]         = useState(false);
   const [togglingActive, setTogglingActive] = useState(false);
+  const [isImpersonating, startImpersonating] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -200,8 +202,18 @@ export function WorkspaceDetailPanel({
             )}
           </div>
 
-          {/* Footer — desativar/reativar + data */}
-          <div className="p-4 border-t border-border/50 space-y-3">
+          {/* Footer — ações + data */}
+          <div className="p-4 border-t border-border/50 space-y-2">
+            {workspace.is_active && (
+              <button
+                onClick={() => startImpersonating(() => startImpersonation(workspace.id))}
+                disabled={isImpersonating}
+                className="w-full flex items-center justify-center gap-2 h-9 rounded-xl text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-200 disabled:opacity-50"
+              >
+                <Eye size={14} />
+                {isImpersonating ? "Entrando..." : "Visualizar como empresa"}
+              </button>
+            )}
             <button
               onClick={handleToggleActive}
               disabled={togglingActive}
@@ -218,7 +230,7 @@ export function WorkspaceDetailPanel({
                 <><Power size={14} /> Reativar empresa</>
               )}
             </button>
-            <p className="text-xs text-muted-foreground text-center">
+            <p className="text-xs text-muted-foreground text-center pt-1">
               Criado em {new Date(workspace.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
             </p>
           </div>
