@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validateDocument, stripDocument } from "@/lib/validations/document";
 
 
 export const updateWorkspaceSchema = z.object({
@@ -25,7 +26,10 @@ export type InviteMemberFormValues = z.infer<typeof inviteMemberSchema>;
 export const updateWorkspaceProfileSchema = z.object({
   display_name:       z.string().trim().max(100).optional(),
   legal_name:         z.string().trim().max(200).optional(),
-  document:           z.string().trim().max(20).optional(),
+  document: z.string().trim().optional().refine(
+    (v) => !v || stripDocument(v).length === 0 || validateDocument(v),
+    { message: "CPF ou CNPJ inválido." }
+  ),
   phone:              z.string().trim().max(20).optional(),
   email:              z.union([z.string().email("E-mail inválido.").toLowerCase().trim(), z.literal("")]).optional(),
   address_street:     z.string().trim().max(200).optional(),

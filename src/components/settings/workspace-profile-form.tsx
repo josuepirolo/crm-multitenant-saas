@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AddressFields, type AddressValue } from "@/components/ui/address-fields";
+import { DocumentField } from "@/components/ui/document-field";
 import type { Workspace } from "@/types";
 
 interface WorkspaceProfileFormProps {
@@ -166,16 +167,12 @@ export function WorkspaceProfileForm({ workspace, canEdit, onUpdated }: Workspac
             <Input {...register("legal_name")} disabled={!canEdit} className="h-10 rounded-xl border-border/60" />
             {errors.legal_name && <p className="text-xs text-destructive">{errors.legal_name.message}</p>}
           </div>
-          <div className="space-y-1.5">
-            <Label>CNPJ / CPF</Label>
-            <Input
-              {...register("document")}
-              disabled={!canEdit}
-              className="h-10 rounded-xl border-border/60"
-              placeholder="00.000.000/0001-00"
-            />
-            {errors.document && <p className="text-xs text-destructive">{errors.document.message}</p>}
-          </div>
+          <DocumentField
+            value={watch("document") ?? ""}
+            onChange={(v) => setValue("document", v, { shouldDirty: true })}
+            disabled={!canEdit}
+            error={errors.document?.message}
+          />
         </div>
 
         {/* Contato */}
