@@ -8,9 +8,10 @@ import { publicError } from "@/lib/security/security-errors";
 import { SupabaseWorkspaceRepository } from "@/repositories/workspace.repository";
 import { SupabaseWorkspaceMemberRepository } from "@/repositories/member.repository";
 import { UpdateWorkspaceUseCase } from "@/usecases/WorkspaceUseCases";
+import { UpdateWorkspaceProfileUseCase } from "@/usecases/WorkspaceProfileUseCases";
 import { ListMembersUseCase, InviteMemberUseCase, UpdateMemberRoleUseCase, DeactivateMemberUseCase } from "@/usecases/MemberUseCases";
 import { getWorkspaceContext } from "@/lib/guards";
-import { updateWorkspaceSchema, inviteMemberSchema, updateMemberRoleSchema } from "@/lib/validations/workspace";
+import { updateWorkspaceSchema, inviteMemberSchema, updateMemberRoleSchema, updateWorkspaceProfileSchema } from "@/lib/validations/workspace";
 import { revalidatePath } from "next/cache";
 
 export async function getSettingsData() {
@@ -48,6 +49,42 @@ export async function updateWorkspace(_: unknown, formData: FormData) {
     return { error: undefined, workspace };
   } catch (err) {
     return publicError(err, "Erro ao atualizar workspace.");
+  }
+}
+
+export async function updateWorkspaceProfile(_: unknown, formData: FormData) {
+  const ctx = await getWorkspaceContext("settings", "edit");
+  if ("error" in ctx) return { error: ctx.error };
+
+  const raw = Object.fromEntries(formData.entries());
+  const parsed = updateWorkspaceProfileSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  // Converte strings vazias em null antes de persistir
+  const cleanData = Object.fromEntries(
+    Object.entries(parsed.data).map(([k, v]) => [k, typeof v === "string" && v.trim() === "" ? null : v ?? null])
+  );
+
+  try {
+    const supabase = await createClient();
+    const workspace = await new UpdateWorkspaceProfileUseCase(
+      new SupabaseWorkspaceRepository(supabase)
+    ).execute(ctx.workspaceId, cleanData);
+
+    await createAuditLog({
+      action:       AUDIT_ACTIONS.WORKSPACE_PROFILE_UPDATED,
+      workspace_id: ctx.workspaceId,
+      user_id:      ctx.userId,
+      entity_type:  "workspace",
+      entity_id:    ctx.workspaceId,
+      ip_address:   await getClientIp(),
+      metadata:     { updated_fields: Object.keys(parsed.data).filter((k) => parsed.data[k as keyof typeof parsed.data] !== undefined) },
+    });
+
+    revalidatePath("/settings");
+    return { error: undefined, workspace };
+  } catch (err) {
+    return publicError(err, "Erro ao atualizar dados da empresa.");
   }
 }
 

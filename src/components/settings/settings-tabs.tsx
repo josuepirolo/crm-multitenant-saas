@@ -1,18 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { Building2, Users, Plus } from "lucide-react";
+import { useRef, useState, useTransition } from "react";
+import { Building2, Users, Plus, UserCircle, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WorkspaceGeneralForm } from "./workspace-general-form";
+import { WorkspaceProfileForm } from "./workspace-profile-form";
 import { MembersTable, MembersTableSkeleton } from "./members-table";
 import { InviteMemberModal } from "./invite-member-modal";
+import { uploadUserAvatar } from "@/app/(dashboard)/settings/upload-actions";
 import { cn } from "@/lib/utils";
 import { can } from "@/lib/permissions";
 import type { MemberRole, Workspace, WorkspaceMemberWithProfile } from "@/types";
 
 const TABS = [
-  { id: "general", label: "Geral",    icon: Building2 },
-  { id: "members", label: "Membros",  icon: Users },
+  { id: "general", label: "Empresa",    icon: Building2 },
+  { id: "members", label: "Membros",    icon: Users },
+  { id: "profile", label: "Meu Perfil", icon: UserCircle },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -31,6 +35,86 @@ interface SettingsTabsProps {
   onMemberDeactivated: (userId: string) => void;
 }
 
+function UserAvatarSection({ currentAvatarUrl }: { currentAvatarUrl: string | null }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(currentAvatarUrl);
+  const [isUploading, startUpload] = useTransition();
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+
+    startUpload(async () => {
+      const fd = new FormData();
+      fd.append("file", file);
+
+      const promise = uploadUserAvatar(null, fd).then((r) => {
+        if (r.error) throw new Error(r.error);
+        return r;
+      });
+
+      toast.promise(promise, {
+        loading: "Enviando...",
+        success: "Avatar atualizado!",
+        error:   (err: Error) => err.message,
+      });
+
+      try {
+        await promise;
+      } catch {
+        URL.revokeObjectURL(url);
+        setPreview(currentAvatarUrl);
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-2xl border border-border/50 bg-card p-6 space-y-5">
+      <div>
+        <h3 className="text-base font-semibold">Meu perfil</h3>
+        <p className="text-sm text-muted-foreground mt-0.5">Foto exibida para os membros da equipe</p>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="h-16 w-16 rounded-full border border-border/60 bg-muted/50 flex items-center justify-center overflow-hidden shrink-0">
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={preview} alt="Avatar" className="h-full w-full object-cover" />
+          ) : (
+            <UserCircle size={32} className="text-muted-foreground" />
+          )}
+        </div>
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={handleChange}
+        />
+
+        <div className="space-y-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-xl gap-1.5"
+            onClick={() => fileRef.current?.click()}
+            disabled={isUploading}
+          >
+            <Upload size={14} />
+            {isUploading ? "Enviando..." : "Alterar foto"}
+          </Button>
+          <p className="text-xs text-muted-foreground">JPG, PNG ou WebP · máx 2 MB</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsTabs({
   workspace, members, currentUserId, userRole, loading,
   inviteOpen, setInviteOpen,
@@ -38,8 +122,11 @@ export function SettingsTabs({
 }: SettingsTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("general");
 
-  const canEditSettings = can(userRole, "settings", "edit");
+  const canEditSettings  = can(userRole, "settings", "edit");
   const canManageMembers = can(userRole, "members", "create");
+
+  const currentMember    = members.find((m) => m.user_id === currentUserId);
+  const currentAvatarUrl = currentMember?.profiles?.avatar_url ?? null;
 
   return (
     <>
@@ -63,11 +150,18 @@ export function SettingsTabs({
 
       <div className="pt-6 space-y-6">
         {activeTab === "general" && (
-          <WorkspaceGeneralForm
-            workspace={workspace}
-            canEdit={canEditSettings}
-            onUpdated={onWorkspaceUpdated}
-          />
+          <>
+            <WorkspaceGeneralForm
+              workspace={workspace}
+              canEdit={canEditSettings}
+              onUpdated={onWorkspaceUpdated}
+            />
+            <WorkspaceProfileForm
+              workspace={workspace}
+              canEdit={canEditSettings}
+              onUpdated={onWorkspaceUpdated}
+            />
+          </>
         )}
 
         {activeTab === "members" && (
@@ -99,6 +193,10 @@ export function SettingsTabs({
               />
             )}
           </div>
+        )}
+
+        {activeTab === "profile" && (
+          <UserAvatarSection currentAvatarUrl={currentAvatarUrl} />
         )}
       </div>
 

@@ -1,11 +1,29 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminGlobalStats, MemberRole, WorkspaceMemberWithProfile, WorkspaceWithStats } from "@/types";
 
+export interface WorkspaceProfileDTO {
+  display_name?: string | null;
+  legal_name?: string | null;
+  document?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address_street?: string | null;
+  address_number?: string | null;
+  address_complement?: string | null;
+  address_district?: string | null;
+  address_city?: string | null;
+  address_state?: string | null;
+  address_zipcode?: string | null;
+  address_country?: string | null;
+  logo_url?: string | null;
+}
+
 export interface IAdminRepository {
   getStats(): Promise<AdminGlobalStats>;
   listWorkspaces(search: string, page: number, pageSize: number, isActive?: boolean): Promise<{ data: WorkspaceWithStats[]; total: number }>;
   getWorkspaceMembers(workspaceId: string): Promise<WorkspaceMemberWithProfile[]>;
   updateWorkspace(id: string, data: { name: string }): Promise<void>;
+  updateWorkspaceProfile(id: string, data: WorkspaceProfileDTO): Promise<void>;
   setWorkspaceActive(id: string, active: boolean): Promise<void>;
   changeMemberRole(memberId: string, role: MemberRole): Promise<void>;
 }
@@ -35,7 +53,7 @@ export class SupabaseAdminRepository implements IAdminRepository {
 
     let query = this.client
       .from("workspaces")
-      .select("id, name, slug, logo_url, created_at, is_active", { count: "exact" })
+      .select("id, name, slug, logo_url, display_name, legal_name, document, phone, email, address_street, address_number, address_complement, address_district, address_city, address_state, address_zipcode, address_country, created_at, is_active", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
 
@@ -77,6 +95,14 @@ export class SupabaseAdminRepository implements IAdminRepository {
 
   async updateWorkspace(id: string, data: { name: string }): Promise<void> {
     const { error } = await this.client.from("workspaces").update(data).eq("id", id);
+    if (error) throw new Error(error.message);
+  }
+
+  async updateWorkspaceProfile(id: string, data: WorkspaceProfileDTO): Promise<void> {
+    const { error } = await this.client
+      .from("workspaces")
+      .update({ ...data, updated_at: new Date().toISOString() })
+      .eq("id", id);
     if (error) throw new Error(error.message);
   }
 

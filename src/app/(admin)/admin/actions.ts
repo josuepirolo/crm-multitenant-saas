@@ -2,8 +2,12 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireSuperAdmin } from "@/lib/guards";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
+import { getClientIp } from "@/lib/security/client-ip";
+import { publicError } from "@/lib/security/security-errors";
 import { SupabaseAdminRepository } from "@/repositories/admin.repository";
 import { GetAdminStatsUseCase, ListAllWorkspacesUseCase, GetWorkspaceMembersAdminUseCase, UpdateWorkspaceAdminUseCase, SetWorkspaceActiveUseCase, ChangeMemberRoleAdminUseCase } from "@/usecases/AdminUseCases";
+import { updateWorkspaceProfileSchema } from "@/lib/validations/workspace";
 import type { MemberRole } from "@/types";
 
 function makeRepo() {
@@ -76,5 +80,36 @@ export async function changeMemberRoleAdmin(memberId: string, role: MemberRole) 
     return { error: undefined };
   } catch {
     return { error: "Erro ao alterar role." };
+  }
+}
+
+export async function updateWorkspaceProfileAdmin(workspaceId: string, _: unknown, formData: FormData) {
+  const sa = await requireSuperAdmin();
+  if (!sa) return { error: "Acesso negado." };
+
+  const raw    = Object.fromEntries(formData.entries());
+  const parsed = updateWorkspaceProfileSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const cleanData = Object.fromEntries(
+    Object.entries(parsed.data).map(([k, v]) => [k, typeof v === "string" && v.trim() === "" ? null : v ?? null])
+  );
+
+  try {
+    await makeRepo().updateWorkspaceProfile(workspaceId, cleanData);
+
+    await createAuditLog({
+      action:       AUDIT_ACTIONS.WORKSPACE_PROFILE_UPDATED,
+      workspace_id: workspaceId,
+      user_id:      sa.userId,
+      entity_type:  "workspace",
+      entity_id:    workspaceId,
+      ip_address:   await getClientIp(),
+      metadata:     { updated_fields: Object.keys(parsed.data), source: "admin" },
+    });
+
+    return { error: undefined };
+  } catch (err) {
+    return publicError(err, "Erro ao atualizar dados da empresa.");
   }
 }

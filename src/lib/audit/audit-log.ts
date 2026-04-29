@@ -20,8 +20,11 @@ export const AUDIT_ACTIONS = {
   ROLE_DELETED:            "role_deleted",
   ROLE_PERMISSIONS_SET:    "role_permissions_set",
   MEMBER_RBAC_ASSIGNED:    "member_rbac_assigned",
-  IMPERSONATION_STARTED:   "impersonation_started",
-  IMPERSONATION_ENDED:     "impersonation_ended",
+  IMPERSONATION_STARTED:       "impersonation_started",
+  IMPERSONATION_ENDED:         "impersonation_ended",
+  WORKSPACE_PROFILE_UPDATED:   "workspace_profile_updated",
+  WORKSPACE_LOGO_UPDATED:      "workspace_logo_updated",
+  USER_AVATAR_UPDATED:         "user_avatar_updated",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

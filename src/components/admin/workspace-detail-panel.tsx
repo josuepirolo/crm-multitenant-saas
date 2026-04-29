@@ -2,12 +2,14 @@
 
 import { useState, useRef, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Users, UserCheck, Briefcase, Pencil, Check, PowerOff, Power, Eye } from "lucide-react";
+import { X, Users, UserCheck, Briefcase, Pencil, Check, PowerOff, Power, Eye, ChevronDown, ChevronUp, Save } from "lucide-react";
 import { ROLE_LABELS, ROLE_COLORS, ASSIGNABLE_ROLES } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import type { MemberRole, WorkspaceMemberWithProfile, WorkspaceWithStats } from "@/types";
 import { appleEase } from "@/components/ui/motion";
 import { startImpersonation } from "@/app/(admin)/admin/impersonation-actions";
+import { updateWorkspaceProfileAdmin } from "@/app/(admin)/admin/actions";
+import { toast } from "sonner";
 
 interface WorkspaceDetailPanelProps {
   workspace: WorkspaceWithStats | null;
@@ -21,14 +23,35 @@ interface WorkspaceDetailPanelProps {
 
 const ALL_ROLES: MemberRole[] = ["owner", ...ASSIGNABLE_ROLES];
 
+const PROFILE_FIELDS = [
+  { key: "display_name",       label: "Nome de exibição",  placeholder: "" },
+  { key: "legal_name",         label: "Razão social",      placeholder: "" },
+  { key: "document",           label: "CNPJ / CPF",        placeholder: "00.000.000/0001-00" },
+  { key: "phone",              label: "Telefone",          placeholder: "(11) 99999-9999" },
+  { key: "email",              label: "E-mail",            placeholder: "" },
+  { key: "address_street",     label: "Rua",               placeholder: "" },
+  { key: "address_number",     label: "Número",            placeholder: "" },
+  { key: "address_complement", label: "Complemento",       placeholder: "" },
+  { key: "address_district",   label: "Bairro",            placeholder: "" },
+  { key: "address_city",       label: "Cidade",            placeholder: "" },
+  { key: "address_state",      label: "Estado",            placeholder: "SP" },
+  { key: "address_zipcode",    label: "CEP",               placeholder: "00000-000" },
+] as const;
+
+type ProfileKey = typeof PROFILE_FIELDS[number]["key"];
+
 export function WorkspaceDetailPanel({
   workspace, members, loading, onClose,
   onUpdateName, onSetActive, onChangeMemberRole,
 }: WorkspaceDetailPanelProps) {
-  const [editingName, setEditingName]       = useState(false);
-  const [nameValue, setNameValue]           = useState("");
-  const [savingName, setSavingName]         = useState(false);
-  const [togglingActive, setTogglingActive] = useState(false);
+  const [editingName, setEditingName]         = useState(false);
+  const [nameValue, setNameValue]             = useState("");
+  const [savingName, setSavingName]           = useState(false);
+  const [togglingActive, setTogglingActive]   = useState(false);
+  const [profileOpen, setProfileOpen]         = useState(false);
+  const [editingProfile, setEditingProfile]   = useState(false);
+  const [profileValues, setProfileValues]     = useState<Partial<Record<ProfileKey, string>>>({});
+  const [savingProfile, startSaveProfile]     = useTransition();
   const [isImpersonating, startImpersonating] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,6 +61,8 @@ export function WorkspaceDetailPanel({
 
   useEffect(() => {
     setEditingName(false);
+    setProfileOpen(false);
+    setEditingProfile(false);
   }, [workspace?.id]);
 
   function startEditName() {
@@ -63,6 +88,42 @@ export function WorkspaceDetailPanel({
     setTogglingActive(false);
   }
 
+  function openProfileEdit() {
+    if (!workspace) return;
+    const vals: Partial<Record<ProfileKey, string>> = {};
+    PROFILE_FIELDS.forEach(({ key }) => {
+      vals[key] = (workspace[key as keyof WorkspaceWithStats] as string | null) ?? "";
+    });
+    setProfileValues(vals);
+    setEditingProfile(true);
+  }
+
+  function saveProfile() {
+    if (!workspace) return;
+    startSaveProfile(async () => {
+      const fd = new FormData();
+      (Object.entries(profileValues) as [string, string][]).forEach(([k, v]) => {
+        fd.append(k, v);
+      });
+
+      const promise = updateWorkspaceProfileAdmin(workspace.id, null, fd).then((r) => {
+        if (r.error) throw new Error(r.error);
+        return r;
+      });
+
+      toast.promise(promise, {
+        loading: "Salvando...",
+        success: "Dados atualizados!",
+        error:   (err: Error) => err.message,
+      });
+
+      try {
+        await promise;
+        setEditingProfile(false);
+      } catch { /* handled by toast */ }
+    });
+  }
+
   const fmt = (n: number) => n.toLocaleString("pt-BR");
 
   return (
@@ -80,8 +141,13 @@ export function WorkspaceDetailPanel({
           <div className="flex items-start justify-between p-5 border-b border-border/50 gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary text-sm font-bold flex items-center justify-center shrink-0">
-                  {workspace.name.slice(0, 2).toUpperCase()}
+                <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary text-sm font-bold flex items-center justify-center shrink-0 overflow-hidden">
+                  {workspace.logo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={workspace.logo_url} alt="Logo" className="h-full w-full object-cover" />
+                  ) : (
+                    workspace.name.slice(0, 2).toUpperCase()
+                  )}
                 </div>
                 {!workspace.is_active && (
                   <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive">
@@ -113,7 +179,9 @@ export function WorkspaceDetailPanel({
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 group">
-                  <h3 className="font-semibold truncate">{workspace.name}</h3>
+                  <h3 className="font-semibold truncate">
+                    {workspace.display_name ?? workspace.name}
+                  </h3>
                   <button
                     onClick={startEditName}
                     className="opacity-0 group-hover:opacity-100 h-5 w-5 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
@@ -149,8 +217,9 @@ export function WorkspaceDetailPanel({
             ))}
           </div>
 
-          {/* Members list */}
+          {/* Scrollable body */}
           <div className="flex-1 overflow-y-auto">
+            {/* Members list */}
             <p className="px-5 py-3 text-xs font-medium text-muted-foreground border-b border-border/50">
               Membros ativos
             </p>
@@ -172,12 +241,15 @@ export function WorkspaceDetailPanel({
             ) : (
               <div className="divide-y divide-border/50">
                 {members.map((m) => {
-                  const name = m.profiles?.name ?? "Sem nome";
+                  const name     = m.profiles?.name ?? "Sem nome";
                   const initials = name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2);
                   return (
                     <div key={m.id} className="flex items-center gap-3 px-5 py-3">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
-                        {initials}
+                      <div className="h-8 w-8 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0 overflow-hidden">
+                        {m.profiles?.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={m.profiles.avatar_url} alt={name} className="h-full w-full object-cover" />
+                        ) : initials}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{name}</p>
@@ -200,6 +272,81 @@ export function WorkspaceDetailPanel({
                 })}
               </div>
             )}
+
+            {/* Dados cadastrais */}
+            <div className="border-t border-border/50">
+              <button
+                onClick={() => setProfileOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-5 py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <span>Dados cadastrais</span>
+                {profileOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+
+              {profileOpen && (
+                <div className="px-5 pb-4 space-y-3">
+                  {!editingProfile ? (
+                    <>
+                      <div className="space-y-1.5">
+                        {PROFILE_FIELDS.map(({ key, label }) => {
+                          const val = workspace[key as keyof WorkspaceWithStats] as string | null;
+                          if (!val) return null;
+                          return (
+                            <div key={key} className="flex gap-2 text-xs">
+                              <span className="text-muted-foreground shrink-0 w-28">{label}</span>
+                              <span className="truncate">{val}</span>
+                            </div>
+                          );
+                        })}
+                        {PROFILE_FIELDS.every(({ key }) => !workspace[key as keyof WorkspaceWithStats]) && (
+                          <p className="text-xs text-muted-foreground">Nenhum dado cadastral preenchido.</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={openProfileEdit}
+                        className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <Pencil size={11} />
+                        Editar dados cadastrais
+                      </button>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      {PROFILE_FIELDS.map(({ key, label, placeholder }) => (
+                        <div key={key} className="space-y-0.5">
+                          <label className="text-xs text-muted-foreground">{label}</label>
+                          <input
+                            value={profileValues[key] ?? ""}
+                            onChange={(e) =>
+                              setProfileValues((prev) => ({ ...prev, [key]: e.target.value }))
+                            }
+                            placeholder={placeholder}
+                            maxLength={key === "address_state" ? 2 : undefined}
+                            className="w-full h-7 rounded-lg border border-border/60 bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          />
+                        </div>
+                      ))}
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          onClick={saveProfile}
+                          disabled={savingProfile}
+                          className="flex-1 flex items-center justify-center gap-1.5 h-7 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                        >
+                          <Save size={11} />
+                          {savingProfile ? "Salvando..." : "Salvar"}
+                        </button>
+                        <button
+                          onClick={() => setEditingProfile(false)}
+                          className="flex-1 h-7 rounded-lg border border-border/60 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Footer — ações + data */}

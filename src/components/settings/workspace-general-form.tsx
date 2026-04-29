@@ -40,7 +40,7 @@ export function WorkspaceGeneralForm({ workspace, canEdit, onUpdated }: Workspac
 
     try {
       const result = await resultPromise;
-      if (result.workspace) onUpdated(result.workspace);
+      if ("workspace" in result && result.workspace) onUpdated(result.workspace);
     } catch { /* handled by toast */ }
   }
 

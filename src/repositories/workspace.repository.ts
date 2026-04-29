@@ -9,6 +9,20 @@ export interface CreateWorkspaceDTO {
 
 export interface UpdateWorkspaceDTO {
   name?: string;
+  logo_url?: string | null;
+  display_name?: string | null;
+  legal_name?: string | null;
+  document?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address_street?: string | null;
+  address_number?: string | null;
+  address_complement?: string | null;
+  address_district?: string | null;
+  address_city?: string | null;
+  address_state?: string | null;
+  address_zipcode?: string | null;
+  address_country?: string | null;
 }
 
 export interface IWorkspaceRepository {
