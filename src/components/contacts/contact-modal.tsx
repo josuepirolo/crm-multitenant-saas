@@ -15,7 +15,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { appleEase } from "@/components/ui/motion";
-import { contactSchema, type ContactFormValues, maskCPF, maskCNPJ, toDigits } from "@/lib/validations/contact";
+import { contactSchema, type ContactFormValues } from "@/lib/validations/contact";
+import { DocumentField } from "@/components/ui/document-field";
+import { maskDocument, stripDocument } from "@/lib/validations/document";
 import type { Contact } from "@/repositories/contact.repository";
 
 const STATUS_OPTIONS = [
@@ -34,7 +36,6 @@ interface ContactModalProps {
 
 export function ContactModal({ open, contact, onClose, onSaved }: ContactModalProps) {
   const isEdit = !!contact;
-  const [docMasked, setDocMasked] = useState("");
 
   const { register, handleSubmit, reset, setError, control, watch, setValue,
     formState: { errors, isSubmitting },
@@ -49,16 +50,12 @@ export function ContactModal({ open, contact, onClose, onSaved }: ContactModalPr
     if (!open) return;
     if (contact) {
       const pType = contact.document
-        ? toDigits(contact.document).length === 14 ? "juridica" : "fisica"
+        ? stripDocument(contact.document).length === 14 ? "juridica" : "fisica"
         : "fisica";
-      const masked = contact.document
-        ? pType === "fisica" ? maskCPF(contact.document) : maskCNPJ(contact.document)
-        : "";
-      setDocMasked(masked);
       reset({
         name:       contact.name,
         personType: pType,
-        document:   masked,
+        document:   contact.document ? maskDocument(contact.document) : "",
         phone:      contact.phone ? `+${contact.phone}` : "",
         email:      contact.email ?? "",
         company:    contact.company ?? "",
@@ -66,7 +63,6 @@ export function ContactModal({ open, contact, onClose, onSaved }: ContactModalPr
         notes:      contact.notes ?? "",
       });
     } else {
-      setDocMasked("");
       reset({ name: "", personType: "fisica", document: "", phone: "", email: "", company: "", status: "lead", notes: "" });
     }
   }, [open, contact, reset]);
@@ -74,15 +70,6 @@ export function ContactModal({ open, contact, onClose, onSaved }: ContactModalPr
   function handlePersonTypeChange(type: "fisica" | "juridica") {
     setValue("personType", type);
     setValue("document", "");
-    setDocMasked("");
-  }
-
-  function handleDocChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const masked = personType === "fisica"
-      ? maskCPF(e.target.value)
-      : maskCNPJ(e.target.value);
-    setDocMasked(masked);
-    setValue("document", masked, { shouldValidate: false });
   }
 
   async function onSubmit(values: ContactFormValues) {
@@ -162,15 +149,13 @@ export function ContactModal({ open, contact, onClose, onSaved }: ContactModalPr
                   </div>
                 </div>
 
-                <div className="sm:col-span-2 space-y-1.5">
-                  <Label className="text-sm font-medium">{personType === "fisica" ? "CPF" : "CNPJ"}</Label>
-                  <Input
-                    value={docMasked}
-                    onChange={handleDocChange}
-                    placeholder={personType === "fisica" ? "000.000.000-00" : "00.000.000/0000-00"}
-                    className={inputCls}
+                <div className="sm:col-span-2">
+                  <DocumentField
+                    value={watch("document") ?? ""}
+                    onChange={(v) => setValue("document", v, { shouldValidate: false })}
+                    label={personType === "fisica" ? "CPF" : "CNPJ"}
+                    error={errors.document?.message}
                   />
-                  {errors.document && <p className="text-xs text-destructive">{errors.document.message}</p>}
                 </div>
 
                 <div className="sm:col-span-2 space-y-1.5">

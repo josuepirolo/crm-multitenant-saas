@@ -18,14 +18,14 @@ export function DocumentField({
 }: DocumentFieldProps) {
   const [touched, setTouched] = useState(false);
 
-  const digits   = stripDocument(value);
-  const type     = documentType(value);
-  const isValid  = digits.length === 0 || validateDocument(value);
-  const showError = touched && digits.length > 0 && !isValid;
+  const digits      = stripDocument(value);
+  const type        = documentType(value);
+  const isValid     = digits.length === 0 || validateDocument(value);
+  const showError   = touched && digits.length > 0 && !isValid;
+  const displayValue = maskDocument(value); // idempotente: funciona com dígitos puros ou mascarados
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw    = e.target.value;
-    const masked = maskDocument(raw);
+    const masked = maskDocument(e.target.value);
     onChange(masked);
   }
 
@@ -41,7 +41,7 @@ export function DocumentField({
       </div>
 
       <Input
-        value={value}
+        value={displayValue}
         onChange={handleChange}
         onBlur={() => setTouched(true)}
         disabled={disabled}
