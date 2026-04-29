@@ -11,6 +11,7 @@ import { updateWorkspaceProfileSchema, type UpdateWorkspaceProfileValues } from 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { AddressFields, type AddressValue } from "@/components/ui/address-fields";
 import type { Workspace } from "@/types";
 
 interface WorkspaceProfileFormProps {
@@ -24,7 +25,7 @@ export function WorkspaceProfileForm({ workspace, canEdit, onUpdated }: Workspac
   const [logoPreview, setLogoPreview] = useState<string | null>(workspace.logo_url);
   const [uploadingLogo, startUploadLogo] = useTransition();
 
-  const { register, handleSubmit, formState: { errors, isSubmitting, isDirty } } =
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting, isDirty } } =
     useForm<UpdateWorkspaceProfileValues>({
       resolver: zodResolver(updateWorkspaceProfileSchema),
       defaultValues: {
@@ -204,58 +205,31 @@ export function WorkspaceProfileForm({ workspace, canEdit, onUpdated }: Workspac
         {/* Endereço */}
         <div className="space-y-2">
           <Label className="text-sm text-muted-foreground">Endereço</Label>
-          <div className="space-y-3 rounded-xl border border-border/40 bg-muted/20 p-4">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2 space-y-1.5">
-                <Label className="text-xs">Rua / Avenida</Label>
-                <Input {...register("address_street")} disabled={!canEdit} className="h-9 rounded-lg border-border/60 text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Número</Label>
-                <Input {...register("address_number")} disabled={!canEdit} className="h-9 rounded-lg border-border/60 text-sm" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Complemento</Label>
-                <Input
-                  {...register("address_complement")}
-                  disabled={!canEdit}
-                  className="h-9 rounded-lg border-border/60 text-sm"
-                  placeholder="Sala, andar..."
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Bairro</Label>
-                <Input {...register("address_district")} disabled={!canEdit} className="h-9 rounded-lg border-border/60 text-sm" />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">CEP</Label>
-                <Input
-                  {...register("address_zipcode")}
-                  disabled={!canEdit}
-                  className="h-9 rounded-lg border-border/60 text-sm"
-                  placeholder="00000-000"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Cidade</Label>
-                <Input {...register("address_city")} disabled={!canEdit} className="h-9 rounded-lg border-border/60 text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Estado</Label>
-                <Input
-                  {...register("address_state")}
-                  disabled={!canEdit}
-                  className="h-9 rounded-lg border-border/60 text-sm"
-                  placeholder="SP"
-                  maxLength={2}
-                />
-              </div>
-            </div>
-          </div>
+          <AddressFields
+            values={{
+              zipcode:    watch("address_zipcode")    ?? "",
+              street:     watch("address_street")     ?? "",
+              number:     watch("address_number")     ?? "",
+              complement: watch("address_complement") ?? "",
+              district:   watch("address_district")   ?? "",
+              city:       watch("address_city")       ?? "",
+              state:      watch("address_state")      ?? "",
+              country:    watch("address_country")    ?? "BR",
+            }}
+            onChange={(field, value) =>
+              setValue(`address_${field}` as keyof UpdateWorkspaceProfileValues, value, { shouldDirty: true })
+            }
+            disabled={!canEdit}
+            errors={{
+              zipcode:    errors.address_zipcode?.message,
+              street:     errors.address_street?.message,
+              number:     errors.address_number?.message,
+              complement: errors.address_complement?.message,
+              district:   errors.address_district?.message,
+              city:       errors.address_city?.message,
+              state:      errors.address_state?.message,
+            }}
+          />
         </div>
 
         {canEdit && (
