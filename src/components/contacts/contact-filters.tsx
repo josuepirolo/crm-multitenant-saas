@@ -24,6 +24,9 @@ export function ContactFiltersBar({ filters, onChange }: ContactFiltersBarProps)
   const [searchValue, setSearchValue] = useState(filters.search ?? "");
 
   useEffect(() => {
+    // Só chama onChange quando o valor realmente diferir do estado atual do filtro
+    // Evita disparo desnecessário no mount (searchValue === filters.search inicialmente)
+    if (searchValue === (filters.search ?? "")) return;
     const timer = setTimeout(() => onChange({ search: searchValue }), 300);
     return () => clearTimeout(timer);
   }, [searchValue]); // eslint-disable-line react-hooks/exhaustive-deps

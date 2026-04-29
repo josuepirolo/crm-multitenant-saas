@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useTransition } from "react";
+import { useState, useEffect, useCallback, useRef, useTransition } from "react";
 import { getContacts } from "@/app/(dashboard)/contacts/actions";
 import type { Contact, ContactFilters } from "@/repositories/contact.repository";
 
@@ -19,6 +19,10 @@ export function useContactsViewModel() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Contact | null>(null);
+
+  // Deduplicação: ref persiste entre ciclos de mount do StrictMode.
+  // Se a mesma chave (page + filters) já foi disparada, a chamada é ignorada.
+  const lastKey = useRef<string | null>(null);
 
   const fetchContacts = useCallback(async (currentPage: number, currentFilters: ContactFilters) => {
     setLoading(true);
@@ -44,6 +48,9 @@ export function useContactsViewModel() {
   }, []);
 
   useEffect(() => {
+    const key = `${page}|${filters.search}|${filters.status}`;
+    if (lastKey.current === key) return;
+    lastKey.current = key;
     fetchContacts(page, filters);
   }, [fetchContacts, page, filters]);
 
@@ -79,16 +86,16 @@ export function useContactsViewModel() {
     startTransition(() => fetchContacts(page, filters));
   }
 
-  function updateFilters(next: Partial<ContactFilters>) {
+  const updateFilters = useCallback((next: Partial<ContactFilters>) => {
     startNavigation(() => {
       setPage(0);
       setFilters((prev) => ({ ...prev, ...next }));
     });
-  }
+  }, []);
 
-  function changePage(newPage: number) {
+  const changePage = useCallback((newPage: number) => {
     startNavigation(() => setPage(newPage));
-  }
+  }, []);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
