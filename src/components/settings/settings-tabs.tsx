@@ -34,7 +34,15 @@ interface SettingsTabsProps {
   onMemberDeactivated: (userId: string) => void;
 }
 
-function UserAvatarSection({ currentAvatarUrl }: { currentAvatarUrl: string | null }) {
+function UserAvatarSection({
+  currentAvatarUrl,
+  name,
+  email,
+}: {
+  currentAvatarUrl: string | null;
+  name: string | null;
+  email: string | null;
+}) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(currentAvatarUrl);
   const [isUploading, startUpload] = useTransition();
@@ -76,6 +84,14 @@ function UserAvatarSection({ currentAvatarUrl }: { currentAvatarUrl: string | nu
         <h3 className="text-base font-semibold">Meu perfil</h3>
         <p className="text-sm text-muted-foreground mt-0.5">Foto exibida para os membros da equipe</p>
       </div>
+
+      {/* Identidade */}
+      {(name || email) && (
+        <div className="space-y-0.5">
+          {name  && <p className="text-sm font-medium">{name}</p>}
+          {email && <p className="text-xs text-muted-foreground">{email}</p>}
+        </div>
+      )}
 
       <div className="flex items-center gap-4">
         <div className="h-16 w-16 rounded-full border border-border/60 bg-muted/50 flex items-center justify-center overflow-hidden shrink-0">
@@ -188,7 +204,11 @@ export function SettingsTabs({
         )}
 
         {activeTab === "profile" && (
-          <UserAvatarSection currentAvatarUrl={currentAvatarUrl} />
+          <UserAvatarSection
+            currentAvatarUrl={currentAvatarUrl}
+            name={currentMember?.profiles?.name ?? null}
+            email={currentMember?.profiles?.email ?? null}
+          />
         )}
       </div>
 
