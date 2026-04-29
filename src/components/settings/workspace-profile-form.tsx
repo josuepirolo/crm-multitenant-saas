@@ -11,8 +11,9 @@ import { updateWorkspaceProfileSchema, type UpdateWorkspaceProfileValues } from 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { AddressFields, type AddressValue } from "@/components/ui/address-fields";
+import { AddressFields } from "@/components/ui/address-fields";
 import { DocumentField } from "@/components/ui/document-field";
+import { cn } from "@/lib/utils";
 import type { Workspace } from "@/types";
 
 interface WorkspaceProfileFormProps {
@@ -21,7 +22,17 @@ interface WorkspaceProfileFormProps {
   onUpdated: (workspace: Workspace) => void;
 }
 
+const SUB_TABS = [
+  { id: "geral",    label: "Geral" },
+  { id: "cadastro", label: "Dados cadastrais" },
+  { id: "endereco", label: "Endereço" },
+  { id: "logo",     label: "Logo" },
+] as const;
+
+type SubTab = typeof SUB_TABS[number]["id"];
+
 export function WorkspaceProfileForm({ workspace, canEdit, onUpdated }: WorkspaceProfileFormProps) {
+  const [subTab, setSubTab] = useState<SubTab>("geral");
   const fileRef = useRef<HTMLInputElement>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(workspace.logo_url);
   const [uploadingLogo, startUploadLogo] = useTransition();
@@ -45,6 +56,17 @@ export function WorkspaceProfileForm({ workspace, canEdit, onUpdated }: Workspac
         address_country:    workspace.address_country    ?? "BR",
       },
     });
+
+  // Mapa de erros por sub-aba para indicador visual
+  const tabErrors: Record<SubTab, boolean> = {
+    geral:    !!(errors.display_name || errors.phone || errors.email),
+    cadastro: !!(errors.legal_name || errors.document),
+    endereco: !!(
+      errors.address_zipcode || errors.address_street  || errors.address_number ||
+      errors.address_city    || errors.address_state   || errors.address_district
+    ),
+    logo: false,
+  };
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -100,143 +122,184 @@ export function WorkspaceProfileForm({ workspace, canEdit, onUpdated }: Workspac
   }
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-card p-6 space-y-6">
-      <div>
+    <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+      {/* Header */}
+      <div className="px-6 pt-5 pb-0">
         <h3 className="text-base font-semibold">Dados da empresa</h3>
-        <p className="text-sm text-muted-foreground mt-0.5">Informações públicas e cadastrais</p>
+        <p className="text-sm text-muted-foreground mt-0.5 mb-4">Informações públicas e cadastrais</p>
+
+        {/* Sub-abas */}
+        <div className="flex gap-1 border-b border-border/50 -mx-6 px-6">
+          {SUB_TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setSubTab(id)}
+              className={cn(
+                "relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors",
+                subTab === id
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {label}
+              {tabErrors[id] && (
+                <span className="h-1.5 w-1.5 rounded-full bg-destructive shrink-0" />
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Logo */}
-      <div className="space-y-2">
-        <Label>Logo</Label>
-        <div className="flex items-center gap-4">
-          <div className="h-16 w-16 rounded-xl border border-border/60 bg-muted/50 flex items-center justify-center overflow-hidden shrink-0">
-            {logoPreview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoPreview} alt="Logo" className="h-full w-full object-cover" />
-            ) : (
-              <ImageOff size={20} className="text-muted-foreground" />
-            )}
-          </div>
-          {canEdit && (
+      {/* Conteúdo */}
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="p-6 space-y-5">
+
+          {/* ── Geral ── */}
+          {subTab === "geral" && (
             <>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              <div className="space-y-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl gap-1.5"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploadingLogo}
-                >
-                  <Upload size={14} />
-                  {uploadingLogo ? "Enviando..." : "Alterar logo"}
-                </Button>
-                <p className="text-xs text-muted-foreground">JPG, PNG ou WebP · máx 5 MB</p>
+              <div className="space-y-1.5">
+                <Label>Nome de exibição</Label>
+                <Input
+                  {...register("display_name")}
+                  disabled={!canEdit}
+                  className="h-10 rounded-xl border-border/60"
+                  placeholder={workspace.name}
+                />
+                {errors.display_name && <p className="text-xs text-destructive">{errors.display_name.message}</p>}
+                <p className="text-xs text-muted-foreground">Exibido para clientes. Se vazio, usa o nome interno.</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Telefone</Label>
+                  <Input
+                    {...register("phone")}
+                    disabled={!canEdit}
+                    className="h-10 rounded-xl border-border/60"
+                    placeholder="(11) 99999-9999"
+                  />
+                  {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label>E-mail da empresa</Label>
+                  <Input
+                    {...register("email")}
+                    type="email"
+                    disabled={!canEdit}
+                    className="h-10 rounded-xl border-border/60"
+                  />
+                  {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                </div>
               </div>
             </>
           )}
-        </div>
-      </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Nome de exibição */}
-        <div className="space-y-1.5">
-          <Label>Nome de exibição</Label>
-          <Input
-            {...register("display_name")}
-            disabled={!canEdit}
-            className="h-10 rounded-xl border-border/60"
-            placeholder={workspace.name}
-          />
-          {errors.display_name && <p className="text-xs text-destructive">{errors.display_name.message}</p>}
-          <p className="text-xs text-muted-foreground">Exibido para clientes. Se vazio, usa o nome interno.</p>
-        </div>
+          {/* ── Dados cadastrais ── */}
+          {subTab === "cadastro" && (
+            <>
+              <div className="space-y-1.5">
+                <Label>Razão social</Label>
+                <Input
+                  {...register("legal_name")}
+                  disabled={!canEdit}
+                  className="h-10 rounded-xl border-border/60"
+                />
+                {errors.legal_name && <p className="text-xs text-destructive">{errors.legal_name.message}</p>}
+              </div>
 
-        {/* Razão social + documento */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label>Razão social</Label>
-            <Input {...register("legal_name")} disabled={!canEdit} className="h-10 rounded-xl border-border/60" />
-            {errors.legal_name && <p className="text-xs text-destructive">{errors.legal_name.message}</p>}
-          </div>
-          <DocumentField
-            value={watch("document") ?? ""}
-            onChange={(v) => setValue("document", v, { shouldDirty: true })}
-            disabled={!canEdit}
-            error={errors.document?.message}
-          />
-        </div>
+              <DocumentField
+                value={watch("document") ?? ""}
+                onChange={(v) => setValue("document", v, { shouldDirty: true })}
+                disabled={!canEdit}
+                error={errors.document?.message}
+              />
+            </>
+          )}
 
-        {/* Contato */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label>Telefone</Label>
-            <Input
-              {...register("phone")}
+          {/* ── Endereço ── */}
+          {subTab === "endereco" && (
+            <AddressFields
+              values={{
+                zipcode:    watch("address_zipcode")    ?? "",
+                street:     watch("address_street")     ?? "",
+                number:     watch("address_number")     ?? "",
+                complement: watch("address_complement") ?? "",
+                district:   watch("address_district")   ?? "",
+                city:       watch("address_city")       ?? "",
+                state:      watch("address_state")      ?? "",
+                country:    watch("address_country")    ?? "BR",
+              }}
+              onChange={(field, value) =>
+                setValue(`address_${field}` as keyof UpdateWorkspaceProfileValues, value, { shouldDirty: true })
+              }
               disabled={!canEdit}
-              className="h-10 rounded-xl border-border/60"
-              placeholder="(11) 99999-9999"
+              errors={{
+                zipcode:    errors.address_zipcode?.message,
+                street:     errors.address_street?.message,
+                number:     errors.address_number?.message,
+                complement: errors.address_complement?.message,
+                district:   errors.address_district?.message,
+                city:       errors.address_city?.message,
+                state:      errors.address_state?.message,
+              }}
             />
-            {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>E-mail da empresa</Label>
-            <Input
-              {...register("email")}
-              type="email"
-              disabled={!canEdit}
-              className="h-10 rounded-xl border-border/60"
-            />
-            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-          </div>
+          )}
+
+          {/* ── Logo ── */}
+          {subTab === "logo" && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="h-20 w-20 rounded-xl border border-border/60 bg-muted/50 flex items-center justify-center overflow-hidden shrink-0">
+                  {logoPreview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={logoPreview} alt="Logo" className="h-full w-full object-cover" />
+                  ) : (
+                    <ImageOff size={22} className="text-muted-foreground" />
+                  )}
+                </div>
+
+                {canEdit && (
+                  <>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                    <div className="space-y-1.5">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl gap-1.5"
+                        onClick={() => fileRef.current?.click()}
+                        disabled={uploadingLogo}
+                      >
+                        <Upload size={14} />
+                        {uploadingLogo ? "Enviando..." : "Alterar logo"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground">JPG, PNG ou WebP · máx 5 MB</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Endereço */}
-        <div className="space-y-2">
-          <Label className="text-sm text-muted-foreground">Endereço</Label>
-          <AddressFields
-            values={{
-              zipcode:    watch("address_zipcode")    ?? "",
-              street:     watch("address_street")     ?? "",
-              number:     watch("address_number")     ?? "",
-              complement: watch("address_complement") ?? "",
-              district:   watch("address_district")   ?? "",
-              city:       watch("address_city")       ?? "",
-              state:      watch("address_state")      ?? "",
-              country:    watch("address_country")    ?? "BR",
-            }}
-            onChange={(field, value) =>
-              setValue(`address_${field}` as keyof UpdateWorkspaceProfileValues, value, { shouldDirty: true })
-            }
-            disabled={!canEdit}
-            errors={{
-              zipcode:    errors.address_zipcode?.message,
-              street:     errors.address_street?.message,
-              number:     errors.address_number?.message,
-              complement: errors.address_complement?.message,
-              district:   errors.address_district?.message,
-              city:       errors.address_city?.message,
-              state:      errors.address_state?.message,
-            }}
-          />
-        </div>
-
-        {canEdit && (
-          <Button
-            type="submit"
-            disabled={isSubmitting || !isDirty}
-            className="rounded-xl"
-          >
-            {isSubmitting ? "Salvando..." : "Salvar dados da empresa"}
-          </Button>
+        {/* Botão de salvar — visível em todas as abas com campos de formulário */}
+        {canEdit && subTab !== "logo" && (
+          <div className="px-6 pb-5">
+            <Button
+              type="submit"
+              disabled={isSubmitting || !isDirty}
+              className="rounded-xl"
+            >
+              {isSubmitting ? "Salvando..." : "Salvar dados da empresa"}
+            </Button>
+          </div>
         )}
       </form>
     </div>
