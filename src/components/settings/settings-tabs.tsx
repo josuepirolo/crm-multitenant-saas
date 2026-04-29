@@ -4,7 +4,6 @@ import { useRef, useState, useTransition } from "react";
 import { Building2, Users, Plus, UserCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { WorkspaceGeneralForm } from "./workspace-general-form";
 import { WorkspaceProfileForm } from "./workspace-profile-form";
 import { MembersTable, MembersTableSkeleton } from "./members-table";
 import { InviteMemberModal } from "./invite-member-modal";
@@ -150,18 +149,11 @@ export function SettingsTabs({
 
       <div className="pt-6 space-y-6">
         {activeTab === "general" && (
-          <>
-            <WorkspaceGeneralForm
-              workspace={workspace}
-              canEdit={canEditSettings}
-              onUpdated={onWorkspaceUpdated}
-            />
-            <WorkspaceProfileForm
-              workspace={workspace}
-              canEdit={canEditSettings}
-              onUpdated={onWorkspaceUpdated}
-            />
-          </>
+          <WorkspaceProfileForm
+            workspace={workspace}
+            canEdit={canEditSettings}
+            onUpdated={onWorkspaceUpdated}
+          />
         )}
 
         {activeTab === "members" && (
