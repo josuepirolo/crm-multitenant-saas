@@ -103,6 +103,14 @@
 - [ ] Integrações (WhatsApp, SMTP)
 - [ ] Plano e billing
 
+## PWA (Progressive Web App)
+- [x] Responsividade: sidebar mobile drawer, grids adaptativos, max-width 4K
+- [ ] Fase 2: `manifest.ts` com nome, cor, ícones (192×192 + 512×512)
+- [ ] Fase 2: Install prompt nativo + splash screen
+- [ ] Fase 3: Service worker — cache APENAS de assets estáticos (JS/CSS/fontes)
+- [ ] Fase 3: Nunca cachear respostas autenticadas ou dados do CRM
+- [ ] Fase 4: Push notifications com opt-in (somente depois de auditoria de segurança)
+
 ## Produção
 - [ ] SMTP próprio configurado no Supabase
 - [ ] Templates de e-mail personalizados
