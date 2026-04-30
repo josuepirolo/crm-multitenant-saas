@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { startMfaEnrollment, activateMfa, disableMfa, getMfaFactors } from "@/app/(dashboard)/settings/mfa-actions";
+import { AppStoreBadges } from "@/components/ui/app-store-badges";
 
 type Factor = { id: string; friendly_name?: string | null; factor_type: string; status: string };
 
@@ -102,8 +103,16 @@ export function TwoFactorSection() {
       {!activeFactor && !enrollData && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Adicione uma camada extra de segurança. Compatível com Google Authenticator, Microsoft Authenticator, Authy e qualquer app TOTP.
+            Adicione uma camada extra de segurança usando qualquer app TOTP.
           </p>
+          <details className="group">
+            <summary className="text-xs text-primary cursor-pointer select-none hover:underline">
+              Não tem um app instalado? Ver como baixar
+            </summary>
+            <div className="mt-3">
+              <AppStoreBadges />
+            </div>
+          </details>
           <Button size="sm" className="rounded-xl gap-1.5" onClick={handleEnroll} disabled={starting}>
             <QrCode size={14} />
             {starting ? "Gerando QR Code..." : "Configurar 2FA"}

@@ -2,104 +2,14 @@
 
 import { useState, useActionState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, ShieldAlert, Copy, Check, QrCode, Users, Lock, Smartphone, ExternalLink } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Copy, Check, QrCode, Users, Lock, Smartphone } from "lucide-react";
 import { toast } from "sonner";
-import { QRCodeSVG } from "qrcode.react";
 import { startMfaEnrollment, activateMfa } from "@/app/(dashboard)/settings/mfa-actions";
+import { AppStoreBadges, detectDevice, type DeviceType } from "@/components/ui/app-store-badges";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-
-// ─── Links das lojas ──────────────────────────────────────────────────────────
-const APPS = [
-  {
-    key: "google",
-    label: "Google Authenticator",
-    letter: "G",
-    color: "text-[#4285F4] bg-[#4285F4]/10",
-    ios: "https://apps.apple.com/app/google-authenticator/id388497605",
-    android: "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
-  },
-  {
-    key: "microsoft",
-    label: "Microsoft Authenticator",
-    letter: "M",
-    color: "text-[#00A4EF] bg-[#00A4EF]/10",
-    ios: "https://apps.apple.com/app/microsoft-authenticator/id983156458",
-    android: "https://play.google.com/store/apps/details?id=com.azure.authenticator",
-  },
-  {
-    key: "authy",
-    label: "Authy / qualquer TOTP",
-    letter: "A",
-    color: "text-[#EC1B24] bg-[#EC1B24]/10",
-    ios: "https://apps.apple.com/app/authy/id494168017",
-    android: "https://play.google.com/store/apps/details?id=com.authy.authy",
-  },
-] as const;
-
-type DeviceType = "ios" | "android" | "desktop" | null;
-
-function detectDevice(): DeviceType {
-  const ua = navigator.userAgent;
-  if (/iPhone|iPad|iPod/.test(ua)) return "ios";
-  if (/Android/.test(ua)) return "android";
-  return "desktop";
-}
-
-function AppDownloadCard({
-  app, device,
-}: {
-  app: (typeof APPS)[number];
-  device: DeviceType;
-}) {
-  const url = device === "ios" ? app.ios : app.android;
-  const isDesktop = device === "desktop";
-
-  return (
-    <div className="rounded-xl border border-border/50 bg-muted/30 p-3 space-y-3">
-      <div className="flex items-center gap-2">
-        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0", app.color)}>
-          {app.letter}
-        </div>
-        <span className="text-xs font-medium">{app.label}</span>
-      </div>
-
-      {isDesktop ? (
-        /* Desktop: QR code para escanear com o celular */
-        <div className="space-y-1.5">
-          <p className="text-[10px] text-muted-foreground">Aponte seu celular para baixar:</p>
-          <div className="flex gap-3">
-            <div className="space-y-1">
-              <div className="rounded-lg border border-border/60 bg-white p-1.5 w-fit">
-                <QRCodeSVG value={app.ios} size={60} />
-              </div>
-              <p className="text-[9px] text-muted-foreground text-center">iOS</p>
-            </div>
-            <div className="space-y-1">
-              <div className="rounded-lg border border-border/60 bg-white p-1.5 w-fit">
-                <QRCodeSVG value={app.android} size={60} />
-              </div>
-              <p className="text-[9px] text-muted-foreground text-center">Android</p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* Mobile: badge clicável direto para a loja */
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 h-8 rounded-lg border border-border/60 bg-background text-xs font-medium text-foreground hover:bg-muted transition-colors"
-        >
-          {device === "ios" ? "🍎 Baixar na App Store" : "▶ Baixar no Google Play"}
-          <ExternalLink size={11} className="text-muted-foreground" />
-        </a>
-      )}
-    </div>
-  );
-}
 
 export default function MfaSetupPage() {
   const router = useRouter();
@@ -204,16 +114,7 @@ export default function MfaSetupPage() {
                 Qualquer app TOTP funciona. Os mais usados:
               </p>
 
-              <div className="space-y-2">
-                {device === "desktop" && (
-                  <p className="text-[10px] text-muted-foreground">
-                    No computador? Escaneie os QR codes com o celular para baixar o app.
-                  </p>
-                )}
-                {APPS.map((app) => (
-                  <AppDownloadCard key={app.key} app={app} device={device} />
-                ))}
-              </div>
+              <AppStoreBadges />
             </div>
 
             <div className="space-y-2 rounded-xl border border-border/40 bg-muted/20 p-3">
