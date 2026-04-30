@@ -56,7 +56,15 @@ export default function LoginPage() {
   const [state, action] = useActionState(signIn, null);
   const searchParams = useSearchParams();
   const confirmPending = searchParams.get("confirm") === "1";
-  const resetSuccess = searchParams.get("reset") === "1";
+  const resetSuccess   = searchParams.get("reset") === "1";
+
+  const REASON_MESSAGES: Record<string, string> = {
+    session_expired:  "Sua sessão expirou por inatividade. Faça login novamente.",
+    session_max:      "Sua sessão expirou por tempo máximo de segurança. Faça login novamente.",
+    session_replaced: "Sua conta foi acessada em outro navegador ou dispositivo. Faça login novamente.",
+  };
+  const reasonMsg = REASON_MESSAGES[searchParams.get("reason") ?? ""] ?? null;
+
   const urlError = searchParams.get("error") === "link_invalido"
     ? "O link de redefinição é inválido ou expirou. Solicite um novo."
     : null;
@@ -85,6 +93,18 @@ export default function LoginPage() {
               <p className="mt-1 text-sm text-muted-foreground">Entre na sua conta para continuar</p>
             </div>
           </motion.div>
+
+          {reasonMsg && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2, ease: appleEase }}
+              className="flex items-center gap-2.5 rounded-xl bg-amber-500/8 border border-amber-500/20 px-4 py-3 mb-6"
+            >
+              <AlertCircle size={15} className="shrink-0 text-amber-600" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">{reasonMsg}</p>
+            </motion.div>
+          )}
 
           {resetSuccess && (
             <motion.div

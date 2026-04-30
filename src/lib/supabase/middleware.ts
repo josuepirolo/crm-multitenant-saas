@@ -77,7 +77,23 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublicAuthRoute && !isMfaRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+
+    // Heurística: se o cookie session-started-at existe e ainda estaria dentro do prazo,
+    // mas o Supabase retornou null (refresh token inválido), a sessão foi substituída
+    // por um login em outro navegador/dispositivo.
+    const startedAt  = request.cookies.get(SESSION_COOKIE_STARTED)?.value;
+    const activityAt = request.cookies.get(SESSION_COOKIE_ACTIVITY)?.value;
+    const notExpiredYet = startedAt && activityAt &&
+      checkSessionExpiry(startedAt, activityAt, USER_LIMITS) === null;
+
+    if (notExpiredYet) {
+      url.searchParams.set("reason", "session_replaced");
+    }
+
+    const redirectRes = NextResponse.redirect(url);
+    redirectRes.cookies.delete(SESSION_COOKIE_STARTED);
+    redirectRes.cookies.delete(SESSION_COOKIE_ACTIVITY);
+    return redirectRes;
   }
 
   // ── Verificação de expiração de sessão (apenas para usuários autenticados, rotas protegidas) ──

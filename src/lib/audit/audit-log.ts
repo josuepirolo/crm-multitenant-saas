@@ -30,6 +30,7 @@ export const AUDIT_ACTIONS = {
   SESSION_EXPIRED_INACTIVITY:    "session_expired_inactivity",
   SESSION_EXPIRED_ABSOLUTE:      "session_expired_absolute",
   SESSION_LOGOUT:                "session_logout",
+  SESSION_REPLACED:              "session_replaced",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

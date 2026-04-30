@@ -58,6 +58,11 @@ export async function signIn(_: unknown, formData: FormData) {
     return { error: "E-mail ou senha inválidos", email: parsed.data.email };
   }
 
+  // Invalida todas as outras sessões ativas deste usuário (single session per user).
+  // scope: 'others' mantém a sessão atual intacta mas invalida refresh tokens anteriores.
+  // Novas abas no mesmo browser continuam válidas (compartilham os mesmos cookies).
+  await supabase.auth.signOut({ scope: "others" }).catch(() => {}); // falha silenciosa — não bloqueia login
+
   // Gera session_id opaco para correlação de auditoria — não contém dados do usuário
   const sessionId = randomUUID();
   const cookieStore = await cookies();
