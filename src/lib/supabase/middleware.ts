@@ -37,6 +37,7 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isUpdatePassword = pathname.startsWith("/update-password");
+  const isMfaRoute       = pathname.startsWith("/mfa");
 
   // Detecta sessão de recovery via JWT (funciona tanto para PKCE quanto implicit/hash flow)
   if (user && !isUpdatePassword) {
@@ -64,10 +65,30 @@ export async function updateSession(request: NextRequest) {
     isUpdatePassword ||
     pathname.startsWith("/auth/callback");
 
-  if (!user && !isPublicAuthRoute) {
+  if (!user && !isPublicAuthRoute && !isMfaRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
+  }
+
+  // MFA: verifica nível de autenticação quando usuário está logado
+  if (user) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const mfaRequired = aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2";
+
+    // Tem 2FA pendente → força /mfa (exceto se já está em rota de auth ou mfa)
+    if (mfaRequired && !isMfaRoute && !isPublicAuthRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/mfa";
+      return NextResponse.redirect(url);
+    }
+
+    // Já passou pelo 2FA → sai do /mfa
+    if (!mfaRequired && isMfaRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
   }
 
   // Usuário já autenticado não precisa de login/register/reset — exceto update-password

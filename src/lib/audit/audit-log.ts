@@ -25,6 +25,8 @@ export const AUDIT_ACTIONS = {
   WORKSPACE_PROFILE_UPDATED:   "workspace_profile_updated",
   WORKSPACE_LOGO_UPDATED:      "workspace_logo_updated",
   USER_AVATAR_UPDATED:         "user_avatar_updated",
+  TWO_FACTOR_ENABLED:          "two_factor_enabled",
+  TWO_FACTOR_DISABLED:         "two_factor_disabled",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

@@ -5,6 +5,7 @@ import { Building2, Users, Plus, UserCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WorkspaceProfileForm } from "./workspace-profile-form";
+import { TwoFactorSection } from "./two-factor-section";
 import { MembersTable, MembersTableSkeleton } from "./members-table";
 import { InviteMemberModal } from "./invite-member-modal";
 import { uploadUserAvatar } from "@/app/(dashboard)/settings/upload-actions";
@@ -204,11 +205,14 @@ export function SettingsTabs({
         )}
 
         {activeTab === "profile" && (
-          <UserAvatarSection
-            currentAvatarUrl={currentAvatarUrl}
-            name={currentMember?.profiles?.name ?? null}
-            email={currentMember?.profiles?.email ?? null}
-          />
+          <>
+            <UserAvatarSection
+              currentAvatarUrl={currentAvatarUrl}
+              name={currentMember?.profiles?.name ?? null}
+              email={currentMember?.profiles?.email ?? null}
+            />
+            <TwoFactorSection />
+          </>
         )}
       </div>
 
