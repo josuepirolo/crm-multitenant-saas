@@ -118,6 +118,7 @@ Antes de criar qualquer input para estes tipos de dado, **use o componente exist
 | E-mail | `<EmailField>` | `@/components/ui/email-field` |
 | CPF / CNPJ | `<DocumentField>` | `@/components/ui/document-field` |
 | Endereço completo + CEP lookup | `<AddressFields>` | `@/components/ui/address-fields` |
+| Download app autenticador (QR/badge) | `<AppStoreBadges>` | `@/components/ui/app-store-badges` |
 
 Todos aceitam `value`, `onChange`, `disabled`, `error` e `label`. Integram com react-hook-form via `watch()`/`setValue()`.
 
