@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AddressFields } from "@/components/ui/address-fields";
 import { DocumentField } from "@/components/ui/document-field";
+import { PhoneField } from "@/components/ui/phone-field";
+import { EmailField } from "@/components/ui/email-field";
 import { cn } from "@/lib/utils";
 import type { Workspace } from "@/types";
 
@@ -194,16 +196,20 @@ export function WorkspaceProfileForm({ workspace, canEdit, onUpdated }: Workspac
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Telefone</Label>
-                  <Input {...register("phone")} disabled={!canEdit} className="h-10 rounded-xl border-border/60" placeholder="(11) 99999-9999" />
-                  {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <Label>E-mail da empresa</Label>
-                  <Input {...register("email")} type="email" disabled={!canEdit} className="h-10 rounded-xl border-border/60" />
-                  {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-                </div>
+                <PhoneField
+                  value={watch("phone") ?? ""}
+                  onChange={(v) => setValue("phone", v, { shouldDirty: true })}
+                  disabled={!canEdit}
+                  error={errors.phone?.message}
+                  label="Telefone"
+                />
+                <EmailField
+                  value={watch("email") ?? ""}
+                  onChange={(v) => setValue("email", v, { shouldDirty: true })}
+                  disabled={!canEdit}
+                  error={errors.email?.message}
+                  label="E-mail da empresa"
+                />
               </div>
             </>
           )}
