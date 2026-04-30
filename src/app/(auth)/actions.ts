@@ -9,6 +9,9 @@ import { redirect } from "next/navigation";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/security/rate-limit";
 import { getClientIp, getUserAgent } from "@/lib/security/client-ip";
 import { RATE_LIMIT_ERROR } from "@/lib/security/security-errors";
+import {
+  SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, sessionCookieOptions, ADMIN_LIMITS, USER_LIMITS,
+} from "@/lib/security/session-policy";
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_SID_COOKIE } from "@/lib/audit/audit-log";
 import { validateTurnstile } from "@/lib/security/turnstile";
 import { cookies } from "next/headers";
@@ -92,6 +95,13 @@ export async function signIn(_: unknown, formData: FormData) {
       });
     }
   }
+
+  // Seta cookies de controle de expiração de sessão (server-side, nunca confia no client)
+  // Usa USER_LIMITS (12h absoluto) — o middleware checa inatividade por role
+  const limits = USER_LIMITS;
+  const now = String(Date.now());
+  cookieStore.set(SESSION_COOKIE_STARTED,  now, sessionCookieOptions(limits.absoluteMs));
+  cookieStore.set(SESSION_COOKIE_ACTIVITY, now, sessionCookieOptions(limits.absoluteMs));
 
   await createAuditLog({
     action:     AUDIT_ACTIONS.LOGIN_SUCCESS,

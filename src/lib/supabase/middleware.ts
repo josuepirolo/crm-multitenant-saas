@@ -1,5 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  SESSION_COOKIE_STARTED,
+  SESSION_COOKIE_ACTIVITY,
+  ADMIN_LIMITS,
+  USER_LIMITS,
+  sessionCookieOptions,
+  checkSessionExpiry,
+} from "@/lib/security/session-policy";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -35,7 +43,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname        = request.nextUrl.pathname;
+  const pathname         = request.nextUrl.pathname;
   const isUpdatePassword = pathname.startsWith("/update-password");
   const isMfaSetupRoute  = pathname === "/mfa/setup";
   const isMfaRoute       = pathname.startsWith("/mfa");
@@ -70,6 +78,46 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
+  }
+
+  // ── Verificação de expiração de sessão (apenas para usuários autenticados, rotas protegidas) ──
+  if (user && !isPublicAuthRoute) {
+    const startedAt  = request.cookies.get(SESSION_COOKIE_STARTED)?.value;
+    const activityAt = request.cookies.get(SESSION_COOKIE_ACTIVITY)?.value;
+
+    // Usa USER_LIMITS por padrão (mais conservador).
+    // Admins têm ADMIN_LIMITS aplicados via cookie setado no signIn.
+    const limits = USER_LIMITS;
+    const expiredReason = checkSessionExpiry(startedAt, activityAt, limits);
+
+    if (expiredReason) {
+      // Encerra sessão no Supabase
+      await supabase.auth.signOut({ scope: "local" });
+
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("reason", expiredReason === "inactivity" ? "session_expired" : "session_max");
+
+      // Limpa cookies de sessão customizados na resposta
+      const redirectResponse = NextResponse.redirect(url);
+      redirectResponse.cookies.delete(SESSION_COOKIE_STARTED);
+      redirectResponse.cookies.delete(SESSION_COOKIE_ACTIVITY);
+      return redirectResponse;
+    }
+
+    // Sessão válida → atualiza timestamp de atividade
+    if (startedAt) {
+      const absMaxAge = parseInt(startedAt, 10) + limits.absoluteMs - Date.now();
+      if (absMaxAge > 0) {
+        supabaseResponse.cookies.set(SESSION_COOKIE_ACTIVITY, String(Date.now()), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: Math.ceil(absMaxAge / 1000),
+        });
+      }
+    }
   }
 
   // MFA: verifica nível de autenticação quando usuário está logado
