@@ -95,7 +95,7 @@ export function AddressFields({ values, onChange, disabled, errors }: AddressFie
   return (
     <div className="space-y-3 rounded-xl border border-border/40 bg-muted/20 p-4">
       {/* CEP */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs">CEP</Label>
           <div className="relative">
@@ -126,8 +126,8 @@ export function AddressFields({ values, onChange, disabled, errors }: AddressFie
       </div>
 
       {/* Rua + Número */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="col-span-2 space-y-1.5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="sm:col-span-2 space-y-1.5">
           <Label className="text-xs">Rua / Avenida</Label>
           <Input {...field("street")} className="h-9 rounded-lg border-border/60 text-sm" />
           {errors?.street && <p className="text-xs text-destructive">{errors.street}</p>}
@@ -140,7 +140,7 @@ export function AddressFields({ values, onChange, disabled, errors }: AddressFie
       </div>
 
       {/* Complemento + Bairro */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs">Complemento</Label>
           <Input {...field("complement")} placeholder="Sala, andar..." className="h-9 rounded-lg border-border/60 text-sm" />
@@ -154,8 +154,8 @@ export function AddressFields({ values, onChange, disabled, errors }: AddressFie
       </div>
 
       {/* Cidade + Estado */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="col-span-2 space-y-1.5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="sm:col-span-2 space-y-1.5">
           <Label className="text-xs">Cidade</Label>
           <Input {...field("city")} className="h-9 rounded-lg border-border/60 text-sm" />
           {errors?.city && <p className="text-xs text-destructive">{errors.city}</p>}

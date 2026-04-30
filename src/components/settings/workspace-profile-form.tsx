@@ -195,7 +195,7 @@ export function WorkspaceProfileForm({ workspace, canEdit, onUpdated }: Workspac
                 <p className="text-xs text-muted-foreground">Exibido para clientes. Se vazio, usa o nome interno.</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <PhoneField
                   value={watch("phone") ?? ""}
                   onChange={(v) => setValue("phone", v, { shouldDirty: true })}

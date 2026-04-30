@@ -129,13 +129,19 @@ export function WorkspaceDetailPanel({
   return (
     <AnimatePresence>
       {workspace && (
+        <>
+          {/* Overlay mobile */}
+          <div
+            className="sm:hidden fixed inset-0 z-40 bg-black/40"
+            onClick={onClose}
+          />
         <motion.div
           key="panel"
           initial={{ x: "100%", opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: "100%", opacity: 0 }}
           transition={{ duration: 0.3, ease: appleEase }}
-          className="w-80 shrink-0 border-l border-border/50 bg-card flex flex-col h-full overflow-hidden"
+          className="fixed inset-y-0 right-0 z-50 w-full max-w-sm sm:w-80 sm:relative sm:inset-auto sm:z-auto shrink-0 border-l border-border/50 bg-card flex flex-col h-full overflow-hidden shadow-2xl sm:shadow-none"
         >
           {/* Header */}
           <div className="flex items-start justify-between p-5 border-b border-border/50 gap-3">
@@ -382,6 +388,7 @@ export function WorkspaceDetailPanel({
             </p>
           </div>
         </motion.div>
+        </>
       )}
     </AnimatePresence>
   );
