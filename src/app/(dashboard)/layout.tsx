@@ -88,7 +88,7 @@ export default async function DashboardLayout({
         {impersonation && (
           <ImpersonationBanner workspaceName={impersonation.workspaceName} />
         )}
-        <main className="flex flex-1 flex-col overflow-y-auto pt-14 md:pt-0">
+        <main className="flex flex-1 flex-col overflow-y-auto pt-14 md:pt-0 w-full max-w-[1920px] mx-auto">
           {/* Banner de recomendação de 2FA para usuários não-admin */}
           <MfaBanner />
           {children}
