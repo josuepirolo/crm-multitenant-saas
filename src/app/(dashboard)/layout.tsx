@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { Toaster } from "sonner";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { ImpersonationBanner } from "@/components/dashboard/impersonation-banner";
+import { MfaBanner } from "@/components/ui/mfa-banner";
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getImpersonationContext, clearImpersonation } from "@/lib/impersonation";
 import { requireSuperAdmin } from "@/lib/guards";
@@ -72,6 +74,13 @@ export default async function DashboardLayout({
     redirect("/no-workspace");
   }
 
+  // Admin/owner sem 2FA → obriga a configurar antes de acessar qualquer rota.
+  // O flag é gravado no login (auth/actions.ts) via cookie para evitar DB em toda requisição.
+  const cookieStore = await cookies();
+  if (!impersonation && cookieStore.get("require-mfa-setup")?.value === "1") {
+    redirect("/mfa/setup");
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar workspaces={workspaces} currentWorkspaceId={currentWorkspaceId!} isSuperAdmin={isSuperAdmin} />
@@ -80,6 +89,8 @@ export default async function DashboardLayout({
           <ImpersonationBanner workspaceName={impersonation.workspaceName} />
         )}
         <main className="flex flex-1 flex-col overflow-y-auto">
+          {/* Banner de recomendação de 2FA para usuários não-admin */}
+          <MfaBanner />
           {children}
         </main>
       </div>

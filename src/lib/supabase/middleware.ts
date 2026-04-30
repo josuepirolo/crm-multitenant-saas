@@ -35,8 +35,9 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
+  const pathname        = request.nextUrl.pathname;
   const isUpdatePassword = pathname.startsWith("/update-password");
+  const isMfaSetupRoute  = pathname === "/mfa/setup";
   const isMfaRoute       = pathname.startsWith("/mfa");
 
   // Detecta sessão de recovery via JWT (funciona tanto para PKCE quanto implicit/hash flow)
@@ -83,8 +84,8 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Já passou pelo 2FA → sai do /mfa
-    if (!mfaRequired && isMfaRoute) {
+    // Já passou pelo 2FA → sai de /mfa (mas não de /mfa/setup — enrollments são válidos)
+    if (!mfaRequired && isMfaRoute && !isMfaSetupRoute) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);

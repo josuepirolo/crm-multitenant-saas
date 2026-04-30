@@ -66,6 +66,33 @@ export async function signIn(_: unknown, formData: FormData) {
     maxAge: 60 * 60 * 24 * 7,
   });
 
+  // Verifica se admin/owner sem 2FA → seta flag de setup obrigatório
+  const userId = authData.user?.id;
+  if (userId) {
+    const [memberResult, factorsResult] = await Promise.all([
+      supabase
+        .from("workspace_members")
+        .select("role, workspace_id")
+        .eq("user_id", userId)
+        .is("deleted_at", null)
+        .limit(1)
+        .single(),
+      supabase.auth.mfa.listFactors(),
+    ]);
+    const role     = memberResult.data?.role;
+    const isAdmin  = role === "owner" || role === "admin";
+    const enrolled = factorsResult.data?.totp?.some((f: { status: string }) => f.status === "verified") ?? false;
+    if (isAdmin && !enrolled) {
+      cookieStore.set("require-mfa-setup", "1", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24, // 24h — expira se o usuário demorar para configurar
+      });
+    }
+  }
+
   await createAuditLog({
     action:     AUDIT_ACTIONS.LOGIN_SUCCESS,
     user_id:    authData.user?.id,

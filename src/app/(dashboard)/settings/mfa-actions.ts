@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";
 import { publicError } from "@/lib/security/security-errors";
+import { cookies } from "next/headers";
 import { z } from "zod";
 
 const codeSchema = z.string().regex(/^\d{6}$/, "Código deve ter 6 dígitos.");
@@ -61,6 +62,10 @@ export async function activateMfa(_: unknown, formData: FormData) {
     entity_id:   user.id,
     ip_address:  await getClientIp(),
   });
+
+  // Limpa o cookie de setup obrigatório se existir
+  const cookieStore = await cookies();
+  cookieStore.delete("require-mfa-setup");
 
   return { success: true };
 }
