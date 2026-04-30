@@ -108,6 +108,21 @@ src/
 - `npm run lint`      — verifica lint
 - `npm run typecheck` — verifica tipos TypeScript
 
+## Componentes reutilizáveis obrigatórios (`src/components/ui/`)
+
+Antes de criar qualquer input para estes tipos de dado, **use o componente existente**. Nunca duplique lógica de máscara, validação ou formatação.
+
+| Campo | Componente | Importação |
+|---|---|---|
+| Telefone BR (fixo/celular + WhatsApp) | `<PhoneField>` | `@/components/ui/phone-field` |
+| E-mail | `<EmailField>` | `@/components/ui/email-field` |
+| CPF / CNPJ | `<DocumentField>` | `@/components/ui/document-field` |
+| Endereço completo + CEP lookup | `<AddressFields>` | `@/components/ui/address-fields` |
+
+Todos aceitam `value`, `onChange`, `disabled`, `error` e `label`. Integram com react-hook-form via `watch()`/`setValue()`.
+
+---
+
 ## Convenções do projeto
 - Nomenclatura: PascalCase para componentes, camelCase para hooks e utilitários
 - Imports absolutos a partir de `src/`
