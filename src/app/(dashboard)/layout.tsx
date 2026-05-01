@@ -4,6 +4,10 @@ import { Toaster } from "sonner";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { ImpersonationBanner } from "@/components/dashboard/impersonation-banner";
 import { MfaBanner } from "@/components/ui/mfa-banner";
+import { SessionTimer } from "@/components/ui/session-timer";
+import {
+  SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, USER_LIMITS, computeSessionExpiry,
+} from "@/lib/security/session-policy";
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getImpersonationContext, clearImpersonation } from "@/lib/impersonation";
 import { requireSuperAdmin } from "@/lib/guards";
@@ -81,6 +85,13 @@ export default async function DashboardLayout({
     redirect("/mfa/setup");
   }
 
+  // Calcula expiry de sessão server-side para passar ao SessionTimer (sem expor cookies ao client)
+  const sessionExpiry = computeSessionExpiry(
+    cookieStore.get(SESSION_COOKIE_STARTED)?.value,
+    cookieStore.get(SESSION_COOKIE_ACTIVITY)?.value,
+    USER_LIMITS,
+  );
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar workspaces={workspaces} currentWorkspaceId={currentWorkspaceId!} isSuperAdmin={isSuperAdmin} />
@@ -93,6 +104,13 @@ export default async function DashboardLayout({
           <MfaBanner />
           {children}
         </main>
+        {/* Timer de sessão — só renderiza se os cookies de expiração existirem */}
+        {sessionExpiry.effectiveExpiresAt && sessionExpiry.absoluteExpiresAt && (
+          <SessionTimer
+            inactivityExpiresAt={sessionExpiry.inactivityExpiresAt!}
+            absoluteExpiresAt={sessionExpiry.absoluteExpiresAt}
+          />
+        )}
       </div>
       <Toaster position="bottom-right" richColors />
     </div>

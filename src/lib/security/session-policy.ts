@@ -51,6 +51,39 @@ export function checkSessionExpiry(
   return null;
 }
 
+export interface SessionExpiry {
+  /** Epoch ms em que a sessão expira por inatividade (ou null se cookie ausente) */
+  inactivityExpiresAt: number | null;
+  /** Epoch ms em que a sessão expira absolutamente (ou null se cookie ausente) */
+  absoluteExpiresAt:   number | null;
+  /** O menor dos dois — expiração efetiva */
+  effectiveExpiresAt:  number | null;
+}
+
+/** Calcula os timestamps de expiração a partir dos cookies (server-side only). */
+export function computeSessionExpiry(
+  startedAt: string | undefined,
+  activityAt: string | undefined,
+  limits: SessionLimits,
+): SessionExpiry {
+  if (!startedAt || !activityAt) {
+    return { inactivityExpiresAt: null, absoluteExpiresAt: null, effectiveExpiresAt: null };
+  }
+
+  const started  = parseInt(startedAt, 10);
+  const activity = parseInt(activityAt, 10);
+
+  if (isNaN(started) || isNaN(activity)) {
+    return { inactivityExpiresAt: null, absoluteExpiresAt: null, effectiveExpiresAt: null };
+  }
+
+  const inactivityExpiresAt = activity + limits.inactivityMs;
+  const absoluteExpiresAt   = started  + limits.absoluteMs;
+  const effectiveExpiresAt  = Math.min(inactivityExpiresAt, absoluteExpiresAt);
+
+  return { inactivityExpiresAt, absoluteExpiresAt, effectiveExpiresAt };
+}
+
 /** Retorna opções base de cookie seguro para os cookies de sessão */
 export function sessionCookieOptions(maxAgeMs: number) {
   return {
