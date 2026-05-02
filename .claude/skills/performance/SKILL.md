@@ -40,7 +40,7 @@ Use para ações CRUD simples onde a chance de erro é baixa:
 **Padrão:** Atualizar o estado local imediatamente → enviar ao servidor → reverter em caso de erro.
 
 ```ts
-// Exemplo com useOptimistic (Next.js 15)
+// Exemplo com useOptimistic (Next.js App Router)
 const [optimisticContacts, addOptimistic] = useOptimistic(contacts);
 
 async function handleDelete(id: string) {

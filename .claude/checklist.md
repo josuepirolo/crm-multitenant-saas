@@ -1,7 +1,7 @@
 # Checklist do Projeto — CRM Vendas WhatsApp
 
 ## Fundação
-- [x] Scaffold Next.js 15 + TypeScript + Tailwind + shadcn/ui
+- [x] Scaffold Next.js 16 + TypeScript + Tailwind + shadcn/ui
 - [x] Clean Architecture + MVVM documentado nas regras
 - [x] Design system com tokens CSS (sem hardcode)
 - [x] Padrão Apple documentado como regra
@@ -26,7 +26,7 @@
 - [x] Cloudflare Turnstile (proteção contra bots)
 - [x] Sessão única por usuário (sessions_single_per_user)
 - [x] Sign out com invalidação de sessão no servidor (scope: global)
-- [ ] Convite de membros para o workspace
+- [x] Convite de membros para o workspace (usuário já cadastrado — ver `docs/settings-admin.md`)
 
 ## UI / Design
 - [x] Tema light forçado nas telas de auth
@@ -39,6 +39,11 @@
 - [x] Página de redefinição de senha
 - [x] Página 404 customizada
 - [x] Skeleton loading do dashboard
+
+## Testes e CI local
+- [x] Vitest configurado — `npm test`, `npm run test:watch`
+- [x] Cobertura ampla: segurança (rate limit, auditoria, headers), isolamento tenant, RLS, actions
+- [ ] Garantir suíte 100% verde após cada mudança grande (corrigir deriva teste ↔ código quando aparecer)
 
 ## Dashboard
 - [x] Página inicial com métricas (4 cards — leads, deals, conversas, conversão)
@@ -96,11 +101,11 @@
 - [ ] Performance por usuário
 - [ ] Exportar relatório (PDF / CSV)
 
-## Configurações
-- [ ] Perfil do usuário (nome, avatar, senha)
-- [ ] Configurações do workspace (nome, logo, slug)
-- [ ] Membros da equipe (convidar, remover, alterar role)
-- [ ] Integrações (WhatsApp, SMTP)
+## Configurações (`/settings`)
+- [x] Aba **Empresa** — `WorkspaceProfileForm`: nome do workspace; slug somente leitura; dados cadastrais/endereço; upload de logo
+- [x] Aba **Membros** — convidar (usuário já cadastrado), alterar perfil RBAC, desativar membro
+- [x] Aba **Meu perfil** — avatar (upload validado), seção MFA (`TwoFactorSection`)
+- [ ] Integrações na aplicação (WhatsApp / Z-API; SMTP é configuração do projeto Supabase — ver checklist de produção)
 - [ ] Plano e billing
 
 ## PWA (Progressive Web App)

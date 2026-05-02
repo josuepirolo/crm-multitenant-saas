@@ -8,7 +8,7 @@ description: Guia de arquitetura Clean Architecture + MVVM do CRM Vendas WhatsAp
 Este projeto segue **Clean Architecture + MVVM** com separação total de responsabilidades. Antes de escrever qualquer código, produza um plano explícito mostrando como cada camada será implementada.
 
 ## Stack do projeto
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **Linguagem:** TypeScript
 - **Estilo:** Tailwind CSS + tokens CSS (sem hardcode)
 - **Componentes:** shadcn/ui + Radix UI

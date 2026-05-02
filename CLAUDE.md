@@ -65,7 +65,7 @@ A skill de `arquitetura` sempre precede a de `performance`. Nenhuma linha de có
 **CRM Vendas WhatsApp** — plataforma SaaS para gestão de vendas via WhatsApp. Permite gerenciar leads, contatos, conversas, funis de vendas e análise de performance. Público-alvo: empresas e equipes de vendas que usam WhatsApp como canal principal.
 
 ## Stack
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** Next.js 16 (App Router) — conferir `package.json` para versão exata; APIs podem divergir do material antigo de Next 15
 - **Linguagem:** TypeScript
 - **Estilo:** Tailwind CSS
 - **Componentes:** shadcn/ui + Radix UI
@@ -107,6 +107,7 @@ src/
 - `npm run build`     — build de produção
 - `npm run lint`      — verifica lint
 - `npm run typecheck` — verifica tipos TypeScript
+- `npm test`          — suíte Vitest (segurança, RLS, isolamento, etc.)
 
 ## Componentes reutilizáveis obrigatórios (`src/components/ui/`)
 
