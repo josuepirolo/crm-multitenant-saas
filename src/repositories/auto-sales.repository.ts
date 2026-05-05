@@ -57,7 +57,7 @@ export interface IAutoSalesRepository {
   createInventory(data: CreateInventoryDTO): Promise<AutoSalesInventory>;
   updateInventory(id: string, workspaceId: string, data: Partial<CreateInventoryDTO>): Promise<AutoSalesInventory>;
   updateStatus(id: string, workspaceId: string, status: AutoSalesInventory['status']): Promise<void>;
-  upsertPricing(data: Omit<AutoSalesInventoryPricing, 'markup_pct' | 'margin_pct' | 'updated_at'>): Promise<AutoSalesInventoryPricing>;
+  upsertPricing(data: Omit<AutoSalesInventoryPricing, 'markup_pct' | 'margin_pct' | 'updated_at'> & { workspace_id: string }): Promise<AutoSalesInventoryPricing>;
   listOptionals(inventoryId: string): Promise<AutoSalesOptionalItem[]>;
   addOptional(data: Omit<AutoSalesOptionalItem, 'id'>): Promise<AutoSalesOptionalItem>;
   removeOptional(id: string): Promise<void>;
@@ -115,9 +115,18 @@ export class SupabaseAutoSalesRepository implements IAutoSalesRepository {
     if (error) throw new Error(error.message);
   }
 
-  async upsertPricing(data: Omit<AutoSalesInventoryPricing, 'markup_pct' | 'margin_pct' | 'updated_at'>): Promise<AutoSalesInventoryPricing> {
+  async upsertPricing(data: Omit<AutoSalesInventoryPricing, 'markup_pct' | 'margin_pct' | 'updated_at'> & { workspace_id: string }): Promise<AutoSalesInventoryPricing> {
+    // Valida ownership: inventory_id deve pertencer ao workspace antes do upsert
+    const { data: inv } = await this.client
+      .from("auto_sales_inventory")
+      .select("id")
+      .eq("id", data.inventory_id)
+      .eq("workspace_id", data.workspace_id)
+      .single();
+    if (!inv) throw new Error("Veículo não encontrado neste workspace.");
+    const { workspace_id: _, ...pricingData } = data;
     const { data: row, error } = await this.client
-      .from("auto_sales_inventory_pricing").upsert(data, { onConflict: "inventory_id" }).select().single();
+      .from("auto_sales_inventory_pricing").upsert(pricingData, { onConflict: "inventory_id" }).select().single();
     if (error) throw new Error(error.message);
     return row as AutoSalesInventoryPricing;
   }

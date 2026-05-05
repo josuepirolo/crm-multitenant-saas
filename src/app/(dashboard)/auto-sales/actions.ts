@@ -107,6 +107,7 @@ export async function upsertInventoryPricing(_: unknown, formData: FormData) {
     await new UpsertInventoryPricingUseCase(repo).execute({
       ...parsed.data,
       max_discount_price: parsed.data.max_discount_price ?? null,
+      workspace_id: ctx.workspaceId,
     });
     revalidatePath("/auto-sales");
     return { error: undefined };

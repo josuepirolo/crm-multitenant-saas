@@ -43,7 +43,8 @@ export class UpdateInventoryStatusUseCase {
 
 export class UpsertInventoryPricingUseCase {
   constructor(private readonly repo: IAutoSalesRepository) {}
-  async execute(data: Omit<AutoSalesInventoryPricing, 'markup_pct' | 'margin_pct' | 'updated_at'>): Promise<AutoSalesInventoryPricing> {
+  async execute(data: Omit<AutoSalesInventoryPricing, 'markup_pct' | 'margin_pct' | 'updated_at'> & { workspace_id: string }): Promise<AutoSalesInventoryPricing> {
+    if (!data.workspace_id)    throw new Error("Workspace é obrigatório.");
     if (data.cost_price < 0)  throw new Error("Preço de custo não pode ser negativo.");
     if (data.offer_price < 0) throw new Error("Preço de oferta não pode ser negativo.");
     if (data.max_discount_price !== null && data.max_discount_price !== undefined && data.max_discount_price > data.offer_price) {
