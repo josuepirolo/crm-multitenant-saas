@@ -48,12 +48,23 @@ export async function updateSession(request: NextRequest) {
   const isMfaSetupRoute  = pathname === "/mfa/setup";
   const isMfaRoute       = pathname.startsWith("/mfa");
 
-  // Detecta sessão de recovery via JWT (funciona tanto para PKCE quanto implicit/hash flow)
-  if (user && !isUpdatePassword) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
+  // Paraleliza as duas verificações independentes após getUser():
+  // - recovery check via JWT (getSession)
+  // - nível de autenticação MFA (getAuthenticatorAssuranceLevel)
+  let aal: Awaited<ReturnType<typeof supabase.auth.mfa.getAuthenticatorAssuranceLevel>>['data'] | null = null;
+
+  if (user) {
+    const [sessionResult, aalResult] = await Promise.all([
+      isUpdatePassword ? Promise.resolve({ data: { session: null } }) : supabase.auth.getSession(),
+      supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+    ]);
+
+    aal = aalResult.data ?? null;
+
+    // Detecta sessão de recovery via JWT
+    if (!isUpdatePassword && sessionResult.data.session?.access_token) {
       try {
-        const payload = JSON.parse(atob(session.access_token.split(".")[1]));
+        const payload = JSON.parse(atob(sessionResult.data.session.access_token.split(".")[1]));
         const isRecovery = Array.isArray(payload.amr) &&
           payload.amr.some((a: { method: string }) => a.method === "recovery");
         if (isRecovery) {
@@ -136,9 +147,8 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // MFA: verifica nível de autenticação quando usuário está logado
+  // MFA: usa resultado já buscado em paralelo acima
   if (user) {
-    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     const mfaRequired = aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2";
 
     // Tem 2FA pendente → força /mfa (exceto se já está em rota de auth ou mfa)
