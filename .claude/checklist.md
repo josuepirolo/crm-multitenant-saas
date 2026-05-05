@@ -108,6 +108,23 @@
 - [ ] Integrações na aplicação (WhatsApp / Z-API; SMTP é configuração do projeto Supabase — ver checklist de produção)
 - [ ] Plano e billing
 
+## Módulos de Nicho (multi-nicho)
+- [x] Hierarquia de nichos: `automotive → auto-parts / auto-sales`, `moda` e subnichos
+- [x] UI dinâmica por nicho: CSS tokens + `niche-themes.ts` + injeção no layout
+- [x] `ActiveWorkspace.nicheSlug` via JOIN `business_niches`
+- [x] Sidebar com nav condicional por nicho
+- [x] 8 migrations aplicadas e sincronizadas
+- [x] Repositories + UseCases: vehicle-catalog, auto-parts, auto-sales, fashion
+- [x] Server Actions com validação de workspace_id para os 3 módulos
+- [x] Pages de listagem: `/auto-parts`, `/auto-parts/quotes`, `/auto-sales`, `/auto-sales/proposals`, `/fashion`, `/fashion/stock`
+- [x] Testes de isolamento tenant (23 testes)
+- [ ] **UI: formulário "Adicionar veículo"** em `/auto-sales` (hoje somente leitura)
+- [ ] **UI: formulário "Novo orçamento"** em `/auto-parts/quotes` (hoje somente leitura)
+- [ ] **UI: formulário "Novo produto + variantes"** em `/fashion` (hoje somente leitura)
+- [ ] **UI: integrar `ContactNicheFields`** no modal de contato existente (`contact-modal.tsx`)
+- [ ] **Admin: UI para cadastrar marcas e modelos** de veículos em `/admin` (hoje só via SQL/seed)
+- [ ] Testes de integração com banco real para RLS dos novos módulos
+
 ## PWA (Progressive Web App)
 - [x] Responsividade: sidebar mobile drawer, grids adaptativos, max-width 4K
 - [ ] Fase 2: `manifest.ts` com nome, cor, ícones (192×192 + 512×512)
