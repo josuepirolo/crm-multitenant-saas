@@ -9,6 +9,7 @@ import {
   SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, USER_LIMITS, computeSessionExpiry,
 } from "@/lib/security/session-policy";
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
+import { getNicheThemeClass } from "@/lib/themes/niche-themes";
 import { getImpersonationContext, clearImpersonation } from "@/lib/impersonation";
 import { requireSuperAdmin } from "@/lib/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -56,7 +57,7 @@ async function resolveContext() {
       .single();
 
     return {
-      workspaces: ws ? [{ id: ws.id, name: ws.name, slug: ws.slug }] : [],
+      workspaces: ws ? [{ id: ws.id, name: ws.name, slug: ws.slug, nicheSlug: null }] : [],
       currentWorkspaceId: impersonation.workspaceId,
       impersonation,
       isSuperAdmin: true,
@@ -92,8 +93,11 @@ export default async function DashboardLayout({
     USER_LIMITS,
   );
 
+  const currentWorkspace = workspaces.find(w => w.id === currentWorkspaceId);
+  const themeClass = getNicheThemeClass(currentWorkspace?.nicheSlug);
+
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className={`flex h-screen overflow-hidden bg-background${themeClass ? ` ${themeClass}` : ''}`}>
       <Sidebar workspaces={workspaces} currentWorkspaceId={currentWorkspaceId!} isSuperAdmin={isSuperAdmin} />
       <div className="flex flex-1 flex-col overflow-hidden">
         {impersonation && (

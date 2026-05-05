@@ -17,6 +17,12 @@ import {
   ShieldCheck,
   Menu,
   X,
+  Wrench,
+  FileText,
+  Car,
+  ClipboardList,
+  Shirt,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useTransition, useEffect } from "react";
@@ -24,14 +30,47 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { signOut, switchWorkspace } from "@/app/(dashboard)/actions";
 import type { ActiveWorkspace } from "@/lib/workspace-context";
 
-const navItems = [
+const BASE_NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/contacts", label: "Contatos", icon: Users },
-  { href: "/chat", label: "Chat", icon: MessageSquare },
-  { href: "/kanban", label: "Kanban", icon: KanbanSquare },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/settings", label: "Configurações", icon: Settings },
+  { href: "/contacts",  label: "Contatos",  icon: Users },
+  { href: "/chat",      label: "Chat",       icon: MessageSquare },
+  { href: "/kanban",    label: "Kanban",     icon: KanbanSquare },
+  { href: "/analytics", label: "Analytics",  icon: BarChart3 },
 ];
+
+const NICHE_NAV: Record<string, { href: string; label: string; icon: React.ElementType }[]> = {
+  'auto-parts': [
+    { href: "/auto-parts",        label: "Peças",       icon: Wrench },
+    { href: "/auto-parts/quotes", label: "Orçamentos",  icon: FileText },
+  ],
+  'auto-sales': [
+    { href: "/auto-sales",            label: "Estoque",   icon: Car },
+    { href: "/auto-sales/proposals",  label: "Propostas", icon: ClipboardList },
+  ],
+  'automotive': [
+    { href: "/auto-parts",            label: "Peças",     icon: Wrench },
+    { href: "/auto-parts/quotes",     label: "Orçamentos",icon: FileText },
+    { href: "/auto-sales",            label: "Estoque",   icon: Car },
+    { href: "/auto-sales/proposals",  label: "Propostas", icon: ClipboardList },
+  ],
+  'moda': [
+    { href: "/fashion",       label: "Produtos", icon: Shirt },
+    { href: "/fashion/stock", label: "Estoque",  icon: Package },
+  ],
+};
+
+function getNicheNav(nicheSlug?: string | null) {
+  if (!nicheSlug) return [];
+  // tenta match exato, depois por prefixo (sub-nichos herdam do pai)
+  if (NICHE_NAV[nicheSlug]) return NICHE_NAV[nicheSlug];
+  if (nicheSlug.startsWith('auto-parts')) return NICHE_NAV['auto-parts'];
+  if (nicheSlug.startsWith('auto-sales')) return NICHE_NAV['auto-sales'];
+  if (nicheSlug.startsWith('auto'))       return NICHE_NAV['automotive'];
+  if (nicheSlug.startsWith('moda'))       return NICHE_NAV['moda'];
+  return [];
+}
+
+const SETTINGS_NAV = { href: "/settings", label: "Configurações", icon: Settings };
 
 interface SidebarProps {
   workspaces: ActiveWorkspace[];
@@ -120,7 +159,8 @@ function SidebarContent({
 
       {/* Nav */}
       <nav className="flex flex-1 flex-col gap-1 p-3 overflow-y-auto">
-        {navItems.map(({ href, label, icon: Icon }) => (
+        {/* Itens universais */}
+        {BASE_NAV.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
@@ -128,15 +168,44 @@ function SidebarContent({
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               "hover:bg-accent hover:text-accent-foreground",
-              pathname === href
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground"
+              pathname === href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
             )}
           >
             <Icon size={18} className="shrink-0" />
             {!collapsed && <span>{label}</span>}
           </Link>
         ))}
+
+        {/* Itens de nicho */}
+        {getNicheNav(currentWorkspace?.nicheSlug).map(({ href, label, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "hover:bg-accent hover:text-accent-foreground",
+              pathname.startsWith(href) ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+            )}
+          >
+            <Icon size={18} className="shrink-0" />
+            {!collapsed && <span>{label}</span>}
+          </Link>
+        ))}
+
+        {/* Configurações sempre no final da nav */}
+        <Link
+          href={SETTINGS_NAV.href}
+          onClick={onNavigate}
+          className={cn(
+            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors mt-auto",
+            "hover:bg-accent hover:text-accent-foreground",
+            pathname.startsWith("/settings") ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+          )}
+        >
+          <SETTINGS_NAV.icon size={18} className="shrink-0" />
+          {!collapsed && <span>{SETTINGS_NAV.label}</span>}
+        </Link>
       </nav>
 
       {/* Admin SaaS */}

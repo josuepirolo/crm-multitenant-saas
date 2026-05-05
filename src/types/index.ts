@@ -207,3 +207,242 @@ export interface Message {
   sent_by: string | null;
   created_at: string;
 }
+
+// ── Vehicle Global Catalog ────────────────────────────────────────────────────
+
+export interface VehicleCategory {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+}
+
+export interface VehicleBrand {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface VehicleModel {
+  id: string;
+  brand_id: string;
+  category_id: string;
+  name: string;
+  slug: string;
+  year_from: number | null;
+  year_to: number | null;
+  engine_cc: number | null;
+  notes: string | null;
+  created_at: string;
+  // joins opcionais
+  brand?: VehicleBrand;
+  category?: VehicleCategory;
+}
+
+// ── Auto Parts ────────────────────────────────────────────────────────────────
+
+export interface AutoPartsCatalog {
+  id: string;
+  part_number: string;
+  name: string;
+  description: string | null;
+  category: string;
+  color: string | null;
+  unit: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AutoPartsCompatibility {
+  part_id: string;
+  model_id: string;
+  notes: string | null;
+  // joins opcionais
+  model?: VehicleModel;
+}
+
+export interface AutoPartsWorkspacePricing {
+  part_id: string;
+  workspace_id: string;
+  cost_price: number;
+  sale_price: number;
+  markup_pct: number | null;
+  margin_pct: number | null;
+  updated_at: string;
+}
+
+export type AutoPartsQuoteStatus = 'draft' | 'sent' | 'approved' | 'rejected' | 'expired';
+
+export interface AutoPartsQuote {
+  id: string;
+  workspace_id: string;
+  contact_id: string | null;
+  status: AutoPartsQuoteStatus;
+  notes: string | null;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AutoPartsQuoteItem {
+  id: string;
+  quote_id: string;
+  part_id: string | null;
+  part_number_snap: string;
+  name_snap: string;
+  color_snap: string | null;
+  unit_snap: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+}
+
+// ── Auto Sales ────────────────────────────────────────────────────────────────
+
+export type VehicleCondition = 'new' | 'used' | 'certified';
+export type VehicleStatus = 'available' | 'reserved' | 'sold' | 'inactive';
+export type ProposalStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+
+export interface AutoSalesInventory {
+  id: string;
+  workspace_id: string;
+  model_id: string;
+  plate: string | null;
+  color: string;
+  year_manufacture: number;
+  year_model: number;
+  trim: string | null;
+  mileage_km: number;
+  fuel: string | null;
+  transmission: string | null;
+  chassis: string | null;
+  renavam: string | null;
+  condition: VehicleCondition;
+  has_sinistro: boolean;
+  has_cautelar_issue: boolean;
+  accepts_trade_in: boolean;
+  requires_down_pay: boolean;
+  accepts_financing: boolean;
+  status: VehicleStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  // joins opcionais
+  model?: VehicleModel;
+  pricing?: AutoSalesInventoryPricing;
+}
+
+export interface AutoSalesInventoryPricing {
+  inventory_id: string;
+  cost_price: number;
+  offer_price: number;
+  max_discount_price: number | null;
+  markup_pct: number | null;
+  margin_pct: number | null;
+  updated_at: string;
+}
+
+export interface AutoSalesOptionalItem {
+  id: string;
+  inventory_id: string;
+  name: string;
+  price: number;
+  is_included: boolean;
+}
+
+export interface AutoSalesProposal {
+  id: string;
+  workspace_id: string;
+  contact_id: string | null;
+  deal_id: string | null;
+  inventory_id: string | null;
+  trade_in_plate: string | null;
+  trade_in_model_id: string | null;
+  trade_in_year: number | null;
+  trade_in_mileage_km: number | null;
+  trade_in_estimated_value: number | null;
+  final_price: number | null;
+  down_payment: number | null;
+  financing_months: number | null;
+  financing_institution: string | null;
+  status: ProposalStatus;
+  notes: string | null;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Fashion ───────────────────────────────────────────────────────────────────
+
+export type FashionGender = 'feminino' | 'masculino' | 'infantil' | 'unissex';
+
+export interface FashionProduct {
+  id: string;
+  workspace_id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  gender: FashionGender;
+  brand: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FashionProductVariant {
+  id: string;
+  product_id: string;
+  color: string;
+  size: string;
+  sku: string;
+  is_active: boolean;
+  // joins opcionais
+  pricing?: FashionVariantPricing;
+  stock?: FashionVariantStock;
+}
+
+export interface FashionVariantPricing {
+  variant_id: string;
+  workspace_id: string;
+  cost_price: number;
+  sale_price: number;
+  markup_pct: number | null;
+  margin_pct: number | null;
+  updated_at: string;
+}
+
+export interface FashionVariantStock {
+  variant_id: string;
+  workspace_id: string;
+  quantity: number;
+  min_stock: number;
+  updated_at: string;
+}
+
+// ── Contact Niche Profiles ────────────────────────────────────────────────────
+
+export interface ContactProfileAutoParts {
+  contact_id: string;
+  workspace_id: string;
+  company_type: string | null;
+  fleet_size: number | null;
+  segment: 'heavy' | 'light' | 'agro' | 'moto' | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContactProfileFashion {
+  contact_id: string;
+  workspace_id: string;
+  shirt_size: string | null;
+  pants_size: string | null;
+  shoe_size: string | null;
+  preferences: string[] | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}

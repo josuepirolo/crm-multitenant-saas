@@ -4,6 +4,7 @@ export interface ActiveWorkspace {
   id: string;
   name: string;
   slug: string;
+  nicheSlug?: string | null;
 }
 
 export interface WorkspaceContext {
@@ -22,11 +23,16 @@ export async function getActiveWorkspaceContext(): Promise<WorkspaceContext> {
   if (!user) return { workspaces: [], currentWorkspaceId: null };
 
   const [workspacesResult, profileResult] = await Promise.all([
-    supabase.from("workspaces").select("id, name, slug").order("name"),
+    supabase.from("workspaces").select("id, name, slug, business_niches(slug)").order("name"),
     supabase.from("profiles").select("current_workspace_id").eq("id", user.id).single(),
   ]);
 
-  const workspaces = (workspacesResult.data ?? []) as ActiveWorkspace[];
+  const workspaces: ActiveWorkspace[] = (workspacesResult.data ?? []).map((w: any) => ({
+    id: w.id,
+    name: w.name,
+    slug: w.slug,
+    nicheSlug: (w.business_niches as { slug: string } | null)?.slug ?? null,
+  }));
   let currentWorkspaceId = profileResult.data?.current_workspace_id ?? null;
 
   // Auto-corrige: se current_workspace_id não está na lista de ativos, troca para o primeiro ativo
