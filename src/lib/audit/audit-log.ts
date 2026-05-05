@@ -33,6 +33,7 @@ export const AUDIT_ACTIONS = {
   SESSION_REPLACED:              "session_replaced",
   SESSION_REFRESHED:             "session_refreshed",
   SESSION_EXPIRY_WARNING_SHOWN:  "session_expiry_warning_shown",
+  AREA_VIEWED:                   "area_viewed",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

@@ -11,6 +11,7 @@ import {
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getNicheThemeClass } from "@/lib/themes/niche-themes";
 import { getCachedUser } from "@/lib/supabase/cached-auth";
+import { AreaTracker } from "@/components/dashboard/area-tracker";
 import { getImpersonationContext, clearImpersonation } from "@/lib/impersonation";
 import { requireSuperAdmin } from "@/lib/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -117,6 +118,7 @@ export default async function DashboardLayout({
           />
         )}
       </div>
+      <AreaTracker />
       <Toaster position="bottom-right" richColors />
     </div>
   );
