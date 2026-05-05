@@ -8,6 +8,7 @@ import {
   sessionCookieOptions,
   checkSessionExpiry,
 } from "@/lib/security/session-policy";
+import { createAuditLog, AUDIT_ACTIONS, AUDIT_SID_COOKIE } from "@/lib/audit/audit-log";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -118,6 +119,19 @@ export async function updateSession(request: NextRequest) {
     const expiredReason = checkSessionExpiry(startedAt, activityAt, limits);
 
     if (expiredReason) {
+      // Registra expiração no audit log (não bloqueia o redirect)
+      const action = expiredReason === "inactivity"
+        ? AUDIT_ACTIONS.SESSION_EXPIRED_INACTIVITY
+        : AUDIT_ACTIONS.SESSION_EXPIRED_ABSOLUTE;
+      createAuditLog({
+        action,
+        user_id:    user.id,
+        ip_address: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown",
+        user_agent: request.headers.get("user-agent") ?? undefined,
+        session_id: request.cookies.get(AUDIT_SID_COOKIE)?.value ?? undefined,
+        metadata:   { path: request.nextUrl.pathname },
+      }).catch(() => {});
+
       // Encerra sessão no Supabase
       await supabase.auth.signOut({ scope: "local" });
 

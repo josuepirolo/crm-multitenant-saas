@@ -3,11 +3,26 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { AUDIT_SID_COOKIE } from "@/lib/audit/audit-log";
+import { AUDIT_SID_COOKIE, createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 import { SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY } from "@/lib/security/session-policy";
+import { getClientIp, getUserAgent } from "@/lib/security/client-ip";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
 
 export async function signOut() {
   const supabase = await createClient();
+  const { data: { user } } = await getCachedUser();
+
+  // Registra logout antes de invalidar a sessão
+  if (user) {
+    const [ip, ua] = await Promise.all([getClientIp(), getUserAgent()]);
+    await createAuditLog({
+      action:     AUDIT_ACTIONS.SESSION_LOGOUT,
+      user_id:    user.id,
+      ip_address: ip,
+      user_agent: ua,
+    });
+  }
+
   await supabase.auth.signOut({ scope: "global" });
   const cookieStore = await cookies();
   cookieStore.delete(AUDIT_SID_COOKIE);
