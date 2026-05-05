@@ -15,7 +15,7 @@ import { requireSuperAdmin } from "@/lib/guards";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-/** Verifica is_superadmin via anon key + RLS — sem service_role, zero overhead. */
+// Verifica is_superadmin via anon key + RLS — sem service_role, zero overhead.
 async function checkIsSuperAdmin(): Promise<boolean> {
   try {
     const supabase = await createClient();
