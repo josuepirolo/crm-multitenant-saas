@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
 import { getCurrentWorkspaceId } from "@/lib/guards";
 import { SupabaseDashboardRepository } from "@/repositories/dashboard.repository";
 import { GetDashboardStatsUseCase } from "@/usecases/GetDashboardStatsUseCase";
@@ -23,12 +24,11 @@ function getGreeting() {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getCachedUser();
   if (!user) redirect("/login");
 
   const workspaceId = await getCurrentWorkspaceId();
+  const supabase = await createClient();
   if (!workspaceId) redirect("/login");
 
   // Nome do usuário via auth metadata — sem query direta a profiles

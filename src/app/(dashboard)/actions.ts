@@ -4,12 +4,15 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { AUDIT_SID_COOKIE } from "@/lib/audit/audit-log";
+import { SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY } from "@/lib/security/session-policy";
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut({ scope: "global" });
   const cookieStore = await cookies();
   cookieStore.delete(AUDIT_SID_COOKIE);
+  cookieStore.delete(SESSION_COOKIE_STARTED);
+  cookieStore.delete(SESSION_COOKIE_ACTIVITY);
   redirect("/login");
 }
 

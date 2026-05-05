@@ -10,6 +10,7 @@ import {
 } from "@/lib/security/session-policy";
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getNicheThemeClass } from "@/lib/themes/niche-themes";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
 import { getImpersonationContext, clearImpersonation } from "@/lib/impersonation";
 import { requireSuperAdmin } from "@/lib/guards";
 import { createClient } from "@/lib/supabase/server";

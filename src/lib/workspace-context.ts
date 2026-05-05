@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
 
 export interface ActiveWorkspace {
   id: string;
@@ -18,9 +19,10 @@ export interface WorkspaceContext {
  * Usa anon key + RLS — my_workspace_ids() já filtra is_active = true.
  */
 export async function getActiveWorkspaceContext(): Promise<WorkspaceContext> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getCachedUser();
   if (!user) return { workspaces: [], currentWorkspaceId: null };
+
+  const supabase = await createClient();
 
   const [workspacesResult, profileResult] = await Promise.all([
     supabase.from("workspaces").select("id, name, slug, business_niches(slug)").order("name"),

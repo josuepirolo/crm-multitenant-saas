@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { can } from "@/lib/permissions";
 import { getUserRole } from "@/lib/user-role";
@@ -19,10 +20,10 @@ export async function requirePermission(
 }
 
 export async function getCurrentWorkspaceId(): Promise<string | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getCachedUser();
   if (!user) return null;
 
+  const supabase = await createClient();
   const { data } = await supabase
     .from("profiles")
     .select("current_workspace_id")
@@ -33,8 +34,7 @@ export async function getCurrentWorkspaceId(): Promise<string | null> {
 }
 
 export async function requireSuperAdmin(): Promise<{ userId: string } | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getCachedUser();
   if (!user) return null;
 
   const admin = createAdminClient();
@@ -48,8 +48,7 @@ export async function requireSuperAdmin(): Promise<{ userId: string } | null> {
 }
 
 export async function requireOwner(): Promise<{ userId: string } | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getCachedUser();
   if (!user) return null;
 
   const admin = createAdminClient();
@@ -72,8 +71,7 @@ export async function getWorkspaceContext(
   module: PermissionModule,
   action: PermissionAction
 ): Promise<{ workspaceId: string; userId: string } | { error: string }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await getCachedUser();
   if (!user) return { error: "Não autenticado." };
 
   const admin = createAdminClient();
