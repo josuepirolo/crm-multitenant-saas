@@ -61,6 +61,7 @@ export function buildMockClient(opts: {
       insert: vi.fn((data: unknown) => makeBuilder(table, "insert", data)),
       update: vi.fn((data: unknown) => makeBuilder(table, "update", data)),
       delete: vi.fn(() => makeBuilder(table, "delete")),
+      upsert: vi.fn((data: unknown, _opts?: unknown) => makeBuilder(table, "insert", data)),
     })),
     /** Todas as queries capturadas na ordem de execução */
     _queries: captured,
