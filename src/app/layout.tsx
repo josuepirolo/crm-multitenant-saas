@@ -38,7 +38,8 @@ export default function RootLayout({
     >
       <head>
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* suppressHydrationWarning: browser extensions (ex: Kaspersky) may replace this script before hydration */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} suppressHydrationWarning />
       </head>
       <body className="min-h-full flex flex-col antialiased" suppressHydrationWarning>
         <Providers>{children}</Providers>
