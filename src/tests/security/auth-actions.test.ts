@@ -8,7 +8,17 @@ const mocks = vi.hoisted(() => {
       resetPasswordForEmail: vi.fn(),
       updateUser: vi.fn(),
       signOut: vi.fn().mockResolvedValue({}),
+      mfa: {
+        listFactors: vi.fn().mockResolvedValue({ data: { totp: [] }, error: null }),
+      },
     },
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }),
   };
   const mockAdmin = {
     from: vi.fn().mockReturnValue({

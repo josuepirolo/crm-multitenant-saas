@@ -70,7 +70,6 @@ const ERR_PERM = { error: "Você não tem permissão para realizar esta ação."
 const PROFILE_DATA = {
   display_name: "Empresa XYZ",
   legal_name:   "Empresa XYZ Ltda",
-  document:     "12.345.678/0001-99",
   phone:        "(11) 99999-9999",
   email:        "contato@empresa.com",
   address_city:  "São Paulo",
