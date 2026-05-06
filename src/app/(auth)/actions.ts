@@ -133,6 +133,7 @@ export async function signUp(_: unknown, formData: FormData) {
   const raw = {
     name: formData.get("name") as string,
     workspaceName: formData.get("workspaceName") as string,
+    nicheId: formData.get("nicheId") as string,
     email: formData.get("email") as string,
     password: formData.get("password") as string,
     confirmPassword: formData.get("confirmPassword") as string,
@@ -140,7 +141,7 @@ export async function signUp(_: unknown, formData: FormData) {
 
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
+    return { error: parsed.error.issues[0].message, name: raw.name, workspaceName: raw.workspaceName, nicheId: raw.nicheId, email: raw.email };
   }
 
   const supabase = await createClient();
@@ -155,9 +156,9 @@ export async function signUp(_: unknown, formData: FormData) {
 
   if (authError) {
     if (authError.message.toLowerCase().includes("already registered")) {
-      return { error: "Este e-mail já está cadastrado.", email: parsed.data.email, name: parsed.data.name, workspaceName: parsed.data.workspaceName };
+      return { error: "Este e-mail já está cadastrado.", email: parsed.data.email, name: parsed.data.name, workspaceName: parsed.data.workspaceName, nicheId: parsed.data.nicheId };
     }
-    return { error: authError.message, email: parsed.data.email, name: parsed.data.name, workspaceName: parsed.data.workspaceName };
+    return { error: authError.message, email: parsed.data.email, name: parsed.data.name, workspaceName: parsed.data.workspaceName, nicheId: parsed.data.nicheId };
   }
 
   if (!authData.user) {
@@ -174,6 +175,7 @@ export async function signUp(_: unknown, formData: FormData) {
       name: parsed.data.workspaceName,
       slug: uniqueSlug(parsed.data.workspaceName),
       owner_id: authData.user.id,
+      business_niche_id: parsed.data.nicheId,
     });
   } catch (err) {
     console.error("[signUp] Erro ao criar workspace:", err);

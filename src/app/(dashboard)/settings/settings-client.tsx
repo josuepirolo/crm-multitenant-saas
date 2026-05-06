@@ -2,6 +2,7 @@
 
 import { useSettingsViewModel } from "@/viewmodels/useSettingsViewModel";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { can } from "@/lib/permissions";
 import type { MemberRole } from "@/types";
 
@@ -25,8 +26,8 @@ export function SettingsClient() {
   if (vm.loading && !vm.workspace) {
     return (
       <div className="flex flex-col gap-6 p-6">
-        <div className="h-8 w-48 rounded-xl bg-muted animate-pulse" />
-        <div className="h-48 rounded-2xl bg-muted animate-pulse" />
+        <Skeleton className="h-8 w-48 rounded-xl" />
+        <Skeleton className="h-48 rounded-2xl" />
       </div>
     );
   }

@@ -7,6 +7,7 @@ import { ROLE_LABELS, ROLE_COLORS, ASSIGNABLE_ROLES } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import type { MemberRole, WorkspaceMemberWithProfile, WorkspaceWithStats } from "@/types";
 import { appleEase } from "@/components/ui/motion";
+import { Skeleton } from "@/components/ui/skeleton";
 import { startImpersonation } from "@/app/(admin)/admin/impersonation-actions";
 import { updateWorkspaceProfileAdmin } from "@/app/(admin)/admin/actions";
 import { toast } from "sonner";
@@ -234,10 +235,10 @@ export function WorkspaceDetailPanel({
               <div className="divide-y divide-border/50">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-3 px-5 py-3">
-                    <div className="h-8 w-8 rounded-full bg-muted animate-pulse shrink-0" />
+                    <Skeleton className="h-8 w-8 rounded-full shrink-0" />
                     <div className="flex-1 space-y-1.5">
-                      <div className="h-3 w-28 rounded bg-muted animate-pulse" />
-                      <div className="h-2.5 w-16 rounded bg-muted animate-pulse" />
+                      <Skeleton className="h-3 w-28" />
+                      <Skeleton className="h-2.5 w-16" />
                     </div>
                   </div>
                 ))}

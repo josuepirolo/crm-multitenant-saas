@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { ImpersonationBanner } from "@/components/dashboard/impersonation-banner";
 import { MfaBanner } from "@/components/ui/mfa-banner";
 import { SessionTimer } from "@/components/ui/session-timer";
+import { NicheSetupWall } from "@/components/dashboard/niche-setup-wall";
 import {
   SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, USER_LIMITS, computeSessionExpiry,
 } from "@/lib/security/session-policy";
@@ -16,6 +17,7 @@ import { getImpersonationContext, clearImpersonation } from "@/lib/impersonation
 import { requireSuperAdmin } from "@/lib/guards";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { BusinessNiche } from "@/types";
 
 // Verifica is_superadmin via anon key + RLS — sem service_role, zero overhead.
 async function checkIsSuperAdmin(): Promise<boolean> {
@@ -54,12 +56,17 @@ async function resolveContext() {
     const admin = createAdminClient();
     const { data: ws } = await admin
       .from("workspaces")
-      .select("id, name, slug")
+      .select("id, name, slug, business_niches(slug)")
       .eq("id", impersonation.workspaceId)
       .single();
 
     return {
-      workspaces: ws ? [{ id: ws.id, name: ws.name, slug: ws.slug, nicheSlug: null }] : [],
+      workspaces: ws ? [{
+        id: ws.id,
+        name: ws.name,
+        slug: ws.slug,
+        nicheSlug: ((ws.business_niches as unknown) as { slug: string } | null)?.slug ?? null,
+      }] : [],
       currentWorkspaceId: impersonation.workspaceId,
       impersonation,
       isSuperAdmin: true,
@@ -97,6 +104,30 @@ export default async function DashboardLayout({
 
   const currentWorkspace = workspaces.find(w => w.id === currentWorkspaceId);
   const themeClass = getNicheThemeClass(currentWorkspace?.nicheSlug);
+
+  // Workspace sem nicho definido — obriga configuração (superadmin dispensado)
+  if (!currentWorkspace?.nicheSlug && !isSuperAdmin) {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("business_niches")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("name");
+    const niches: BusinessNiche[] = (data ?? []) as BusinessNiche[];
+
+    return (
+      <div className="relative overflow-hidden">
+        {impersonation && (
+          <div className="fixed top-0 left-0 right-0 z-50">
+            <ImpersonationBanner workspaceName={impersonation.workspaceName} />
+          </div>
+        )}
+        <NicheSetupWall niches={niches} />
+        <Toaster position="bottom-right" richColors />
+      </div>
+    );
+  }
 
   return (
     <div className={`flex h-screen overflow-hidden bg-background${themeClass ? ` ${themeClass}` : ''}`}>

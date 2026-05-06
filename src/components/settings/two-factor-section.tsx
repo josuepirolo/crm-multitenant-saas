@@ -6,6 +6,7 @@ import { ShieldCheck, ShieldOff, QrCode, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { startMfaEnrollment, activateMfa, disableMfa, getMfaFactors } from "@/app/(dashboard)/settings/mfa-actions";
 import { AppStoreBadges } from "@/components/ui/app-store-badges";
 
@@ -13,9 +14,13 @@ type Factor = { id: string; friendly_name?: string | null; factor_type: string; 
 
 export function TwoFactorSection() {
   const [factors, setFactors] = useState<Factor[]>([]);
+  const [loadingFactors, setLoadingFactors] = useState(true);
 
   useEffect(() => {
-    getMfaFactors().then(({ factors: f }) => setFactors(f as Factor[]));
+    getMfaFactors().then(({ factors: f }) => {
+      setFactors(f as Factor[]);
+      setLoadingFactors(false);
+    });
   }, []);
 
   const activeFactor = factors.find((f) => f.status === "verified");
@@ -25,6 +30,14 @@ export function TwoFactorSection() {
   const [starting, startEnroll] = useTransition();
 
   const [activateState, activateAction, activatePending] = useActionState(activateMfa, null);
+
+  useEffect(() => {
+    if (activateState && "success" in activateState && activateState.success) {
+      toast.success("Verificação em 2 etapas ativada!");
+      setEnrollData(null);
+      window.location.reload();
+    }
+  }, [activateState]);
 
   function handleEnroll() {
     startEnroll(async () => {
@@ -56,13 +69,6 @@ export function TwoFactorSection() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  // Ativação com sucesso → limpa setup e recarrega
-  if (activateState && "success" in activateState && activateState.success) {
-    toast.success("Verificação em 2 etapas ativada!");
-    setEnrollData(null);
-    window.location.reload();
-  }
-
   return (
     <div className="rounded-2xl border border-border/50 bg-card p-6 space-y-5">
       <div className="flex items-start justify-between gap-4">
@@ -72,16 +78,20 @@ export function TwoFactorSection() {
             Proteja sua conta com um código gerado pelo seu app autenticador.
           </p>
         </div>
-        <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-          activeFactor ? "bg-green-500/10 text-green-600" : "bg-muted text-muted-foreground"
-        }`}>
-          {activeFactor ? <ShieldCheck size={12} /> : <ShieldOff size={12} />}
-          {activeFactor ? "Ativo" : "Inativo"}
-        </div>
+        {loadingFactors ? (
+          <Skeleton className="h-6 w-16 rounded-full" />
+        ) : (
+          <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+            activeFactor ? "bg-green-500/10 text-green-600" : "bg-muted text-muted-foreground"
+          }`}>
+            {activeFactor ? <ShieldCheck size={12} /> : <ShieldOff size={12} />}
+            {activeFactor ? "Ativo" : "Inativo"}
+          </div>
+        )}
       </div>
 
       {/* 2FA ativo — opção para desativar */}
-      {activeFactor && !enrollData && (
+      {!loadingFactors && activeFactor && !enrollData && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             Seu app autenticador está configurado. A cada login, você precisará inserir o código de 6 dígitos.
@@ -99,8 +109,16 @@ export function TwoFactorSection() {
         </div>
       )}
 
+      {/* skeleton do conteúdo enquanto carrega */}
+      {loadingFactors && (
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-8 w-28 rounded-xl" />
+        </div>
+      )}
+
       {/* 2FA inativo — botão para ativar */}
-      {!activeFactor && !enrollData && (
+      {!loadingFactors && !activeFactor && !enrollData && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             Adicione uma camada extra de segurança usando qualquer app TOTP.

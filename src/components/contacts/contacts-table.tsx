@@ -1,6 +1,7 @@
 "use client";
 
 import { Edit2, Trash2, Phone, Mail, Building2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CONTACT_STATUS_LABELS, CONTACT_STATUS_STYLES } from "@/lib/constants/contact-status";
@@ -170,24 +171,24 @@ function ContactsTableSkeleton() {
             <tr key={i}>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
-                  <div className="h-3.5 animate-pulse rounded bg-muted" style={{ width: `${60 + (i % 3) * 20}%`, maxWidth: 160 }} />
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-3.5" style={{ width: `${60 + (i % 3) * 20}%`, maxWidth: 160 }} />
                 </div>
               </td>
               <td className="hidden px-4 py-3 sm:table-cell">
                 <div className="space-y-1.5">
-                  <div className="h-2.5 w-28 animate-pulse rounded bg-muted" />
-                  <div className="h-2.5 w-36 animate-pulse rounded bg-muted" />
+                  <Skeleton className="h-2.5 w-28" />
+                  <Skeleton className="h-2.5 w-36" />
                 </div>
               </td>
               <td className="hidden px-4 py-3 md:table-cell">
-                <div className="h-2.5 w-24 animate-pulse rounded bg-muted" />
+                <Skeleton className="h-2.5 w-24" />
               </td>
               <td className="px-4 py-3">
-                <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+                <Skeleton className="h-5 w-16 rounded-full" />
               </td>
               <td className="hidden px-4 py-3 lg:table-cell">
-                <div className="h-2.5 w-20 animate-pulse rounded bg-muted" />
+                <Skeleton className="h-2.5 w-20" />
               </td>
               <td className="px-4 py-3" />
             </tr>

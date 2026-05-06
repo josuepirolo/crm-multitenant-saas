@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Search, Building2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { WorkspaceWithStats } from "@/types";
 import type { AdminTab } from "@/viewmodels/useAdminViewModel";
@@ -11,16 +12,16 @@ function WorkspacesTableSkeleton() {
     <div className="divide-y divide-border/50">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 px-6 py-4">
-          <div className="h-9 w-9 rounded-xl bg-muted animate-pulse shrink-0" />
+          <Skeleton className="h-9 w-9 rounded-xl shrink-0" />
           <div className="flex-1 space-y-1.5">
-            <div className="h-3.5 w-40 rounded bg-muted animate-pulse" />
-            <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+            <Skeleton className="h-3.5 w-40" />
+            <Skeleton className="h-3 w-24" />
           </div>
           <div className="flex gap-6">
             {[1,2,3].map((j) => (
               <div key={j} className="space-y-1 text-right">
-                <div className="h-4 w-8 rounded bg-muted animate-pulse ml-auto" />
-                <div className="h-3 w-12 rounded bg-muted animate-pulse" />
+                <Skeleton className="h-4 w-8 ml-auto" />
+                <Skeleton className="h-3 w-12" />
               </div>
             ))}
           </div>

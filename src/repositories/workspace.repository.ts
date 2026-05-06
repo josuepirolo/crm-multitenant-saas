@@ -5,6 +5,7 @@ export interface CreateWorkspaceDTO {
   name: string;
   slug: string;
   owner_id: string;
+  business_niche_id: string;
 }
 
 export interface UpdateWorkspaceDTO {
@@ -34,10 +35,10 @@ export interface IWorkspaceRepository {
 export class SupabaseWorkspaceRepository implements IWorkspaceRepository {
   constructor(private readonly client: SupabaseClient) {}
 
-  async create({ name, slug, owner_id }: CreateWorkspaceDTO): Promise<Workspace> {
+  async create({ name, slug, owner_id, business_niche_id }: CreateWorkspaceDTO): Promise<Workspace> {
     const { data: workspace, error: wError } = await this.client
       .from("workspaces")
-      .insert({ name, slug })
+      .insert({ name, slug, business_niche_id })
       .select()
       .single();
 

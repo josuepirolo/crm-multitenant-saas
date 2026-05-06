@@ -1,6 +1,7 @@
 "use client";
 
 import { Building2, Users, UserCheck, Briefcase } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { AdminGlobalStats } from "@/types";
 
 const CARDS = [
@@ -14,10 +15,10 @@ function StatCardSkeleton() {
   return (
     <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
       <div className="flex items-center justify-between">
-        <div className="h-3.5 w-20 rounded bg-muted animate-pulse" />
-        <div className="h-9 w-9 rounded-xl bg-muted animate-pulse" />
+        <Skeleton className="h-3.5 w-20" />
+        <Skeleton className="h-9 w-9 rounded-xl" />
       </div>
-      <div className="h-8 w-16 rounded bg-muted animate-pulse" />
+      <Skeleton className="h-8 w-16" />
     </div>
   );
 }
