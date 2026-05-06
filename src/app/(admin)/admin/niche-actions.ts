@@ -34,7 +34,7 @@ export async function createNiche(_: unknown, formData: FormData) {
     const niche = await new CreateNicheUseCase(makeRepo()).execute({
       parent_id:   (formData.get("parent_id") as string) || null,
       name:        formData.get("name") as string,
-      slug:        (formData.get("slug") as string) || undefined,
+      slug:        (formData.get("slug") as string) || "",
       description: (formData.get("description") as string) || undefined,
       sort_order:  Number(formData.get("sort_order") ?? 0),
     });

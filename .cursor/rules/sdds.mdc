@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 # SDDS RUNTIME ENTRYPOINT
 
 Before any task, read and follow:
@@ -8,9 +12,3 @@ Before any task, read and follow:
 Do not bypass SDDS.
 Do not implement before specs/contracts/harness.
 Use `.sdds/` as public project memory (sanitized, operational). SDDS runtime and governance live in `_sdds_private/`.
-
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->

@@ -9,6 +9,7 @@ export interface IRbacRepository {
   deleteRole(roleId: string): Promise<void>;
   setRolePermissions(roleId: string, permissionIds: string[]): Promise<void>;
   assignRoleToMember(memberId: string, roleId: string): Promise<void>;
+  hasActiveRbac(workspaceId: string, userId: string): Promise<boolean>;
 }
 
 export class SupabaseRbacRepository implements IRbacRepository {

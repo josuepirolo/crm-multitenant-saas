@@ -1,3 +1,14 @@
+# SDDS RUNTIME ENTRYPOINT
+
+Before any task, read and follow:
+
+- `_sdds_private/00A_SDDS_LLM_RUNTIME_ADAPTER.md`
+- `_sdds_private/00_SDDS_SESSION_ORCHESTRATOR.md`
+
+Do not bypass SDDS.
+Do not implement before specs/contracts/harness.
+Use `.sdds/` as public project memory (sanitized, operational). SDDS runtime and governance live in `_sdds_private/`.
+
 # CLAUDE.md
 
 <available_skills>

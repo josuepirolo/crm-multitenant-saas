@@ -53,7 +53,7 @@ export class SupabaseAdminRepository implements IAdminRepository {
 
     let query = this.client
       .from("workspaces")
-      .select("id, name, slug, logo_url, display_name, legal_name, document, phone, email, address_street, address_number, address_complement, address_district, address_city, address_state, address_zipcode, address_country, created_at, is_active", { count: "exact" })
+      .select("id, name, slug, business_niche_id, logo_url, display_name, legal_name, document, phone, email, address_street, address_number, address_complement, address_district, address_city, address_state, address_zipcode, address_country, created_at, is_active, business_niches(name, slug, parent:parent_id(name, slug))", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
 
@@ -83,12 +83,18 @@ export class SupabaseAdminRepository implements IAdminRepository {
     const dc = toCountMap(deals.data ?? []);
 
     return {
-      data: workspaces.map((w) => ({
-        ...w,
-        member_count:  mc[w.id] ?? 0,
-        contact_count: cc[w.id] ?? 0,
-        deal_count:    dc[w.id] ?? 0,
-      })),
+      data: workspaces.map((w: any) => {
+        const bn = w.business_niches as { name: string; slug: string; parent: { name: string; slug: string } | null } | null;
+        return {
+          ...w,
+          business_niches: undefined,
+          niche_name:        bn?.name ?? null,
+          parent_niche_name: bn?.parent?.name ?? null,
+          member_count:  mc[w.id] ?? 0,
+          contact_count: cc[w.id] ?? 0,
+          deal_count:    dc[w.id] ?? 0,
+        };
+      }),
       total: count ?? 0,
     };
   }

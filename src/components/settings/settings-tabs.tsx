@@ -5,6 +5,7 @@ import { Building2, Users, Plus, UserCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WorkspaceProfileForm } from "./workspace-profile-form";
+import { WorkspaceNicheForm } from "./workspace-niche-form";
 import { TwoFactorSection } from "./two-factor-section";
 import { MembersTable, MembersTableSkeleton } from "./members-table";
 import { InviteMemberModal } from "./invite-member-modal";
@@ -131,12 +132,15 @@ function UserAvatarSection({
   );
 }
 
+type GeneralSubTab = "dados" | "segmento";
+
 export function SettingsTabs({
   workspace, members, currentUserId, userRole, loading,
   inviteOpen, setInviteOpen,
   onWorkspaceUpdated, onMemberInvited, onMemberRoleUpdated, onMemberDeactivated,
 }: SettingsTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("general");
+  const [generalSubTab, setGeneralSubTab] = useState<GeneralSubTab>("dados");
 
   const canEditSettings  = can(userRole, "settings", "edit");
   const canManageMembers = can(userRole, "members", "create");
@@ -166,11 +170,40 @@ export function SettingsTabs({
 
       <div className="pt-6 space-y-6">
         {activeTab === "general" && (
-          <WorkspaceProfileForm
-            workspace={workspace}
-            canEdit={canEditSettings}
-            onUpdated={onWorkspaceUpdated}
-          />
+          <>
+            {/* Sub-abas: Dados gerais | Segmento */}
+            <div className="flex gap-1 border-b border-border/40">
+              {(["dados", "segmento"] as const).map((sub) => (
+                <button
+                  key={sub}
+                  onClick={() => setGeneralSubTab(sub)}
+                  className={cn(
+                    "px-3 py-2 text-sm font-medium border-b-2 transition-colors capitalize",
+                    generalSubTab === sub
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {sub === "dados" ? "Dados gerais" : "Segmento"}
+                </button>
+              ))}
+            </div>
+
+            {generalSubTab === "dados" && (
+              <WorkspaceProfileForm
+                workspace={workspace}
+                canEdit={canEditSettings}
+                onUpdated={onWorkspaceUpdated}
+              />
+            )}
+            {generalSubTab === "segmento" && (
+              <WorkspaceNicheForm
+                workspace={workspace}
+                canEdit={canEditSettings}
+                onUpdated={onWorkspaceUpdated}
+              />
+            )}
+          </>
         )}
 
         {activeTab === "members" && (

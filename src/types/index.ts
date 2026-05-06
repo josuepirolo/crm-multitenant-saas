@@ -11,6 +11,7 @@ export interface Workspace {
   id: string;
   name: string;
   slug: string;
+  business_niche_id: string | null;
   logo_url: string | null;
   display_name: string | null;
   legal_name: string | null;
@@ -62,6 +63,9 @@ export interface WorkspaceWithStats {
   id: string;
   name: string;
   slug: string;
+  business_niche_id: string | null;
+  niche_name: string | null;
+  parent_niche_name: string | null;
   logo_url: string | null;
   display_name: string | null;
   legal_name: string | null;

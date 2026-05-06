@@ -105,7 +105,7 @@ export async function getWorkspaceContext(
     workspace_roles: RoleRow | null;
   };
 
-  const members = profile?.workspace_members as MemberRow[] | null;
+  const members = profile?.workspace_members as unknown as MemberRow[] | null;
   const member = members?.find(
     (m) => m.workspace_id === workspaceId && m.deleted_at === null
   );

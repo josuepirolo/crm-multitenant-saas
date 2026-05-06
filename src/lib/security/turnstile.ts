@@ -13,9 +13,13 @@ export async function validateTurnstile(token: string | null | undefined): Promi
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ secret, response: token }),
     });
-    const { success } = await res.json() as { success: boolean };
-    return success === true;
-  } catch {
+    const body = await res.json() as { success: boolean; "error-codes"?: string[] };
+    if (!body.success) {
+      console.warn("[turnstile] validation failed:", body["error-codes"]);
+    }
+    return body.success === true;
+  } catch (err) {
+    console.error("[turnstile] fetch error:", err);
     return false;
   }
 }

@@ -199,6 +199,13 @@ export function WorkspaceDetailPanel({
               )}
 
               <p className="text-xs text-muted-foreground mt-0.5">{workspace.slug}</p>
+              {(workspace.niche_name || workspace.parent_niche_name) && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {workspace.parent_niche_name
+                    ? `${workspace.parent_niche_name} › ${workspace.niche_name}`
+                    : workspace.niche_name}
+                </p>
+              )}
             </div>
 
             <button
