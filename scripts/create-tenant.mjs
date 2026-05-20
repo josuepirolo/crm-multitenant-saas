@@ -88,6 +88,34 @@ function generatePassword() {
   return randomBytes(12).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 16)
 }
 
+function onlyDigits(str) {
+  return str.replace(/\D/g, '')
+}
+
+async function checkUniqueness(document, email) {
+  const errors = []
+
+  if (document) {
+    const { data } = await supabase
+      .from('workspaces')
+      .select('id, name')
+      .eq('document', document)
+      .limit(1)
+    if (data?.length) errors.push(`CNPJ/CPF já cadastrado na empresa "${data[0].name}"`)
+  }
+
+  if (email) {
+    const { data } = await supabase
+      .from('workspaces')
+      .select('id, name')
+      .eq('email', email)
+      .limit(1)
+    if (data?.length) errors.push(`E-mail corporativo já cadastrado na empresa "${data[0].name}"`)
+  }
+
+  return errors
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
   console.log('\n╔════════════════════════════════════════════════════╗')
@@ -100,8 +128,9 @@ async function main() {
 
   const displayName  = await askRequired('Nome fantasia (exibido no sistema)')
   const legalName    = await ask('Razão social')
-  const document     = await ask('CNPJ (somente números)')
-  const companyPhone = await ask('Telefone da empresa (ex: 11999990000)')
+  const documentRaw  = await ask('CNPJ ou CPF (com ou sem máscara)')
+  const document     = onlyDigits(documentRaw)
+  const companyPhone = onlyDigits(await ask('Telefone da empresa (com ou sem máscara)'))
   const companyEmail = await ask('E-mail da empresa')
 
   const slugBase     = toSlug(displayName)
@@ -111,7 +140,7 @@ async function main() {
   // ── 2. Endereço ───────────────────────────────────────────────────────────
   section('2 / 4  —  Endereço')
 
-  const zipcode      = await ask('CEP (somente números)')
+  const zipcode      = onlyDigits(await ask('CEP (com ou sem máscara)'))
   const street       = await ask('Logradouro')
   const number       = await ask('Número')
   const complement   = await ask('Complemento')
@@ -178,6 +207,18 @@ async function main() {
     `Senha (deixe em branco para gerar automaticamente: ${autoPassword})`
   )
   const ownerPassword = ownerPasswordInput || autoPassword
+
+  // ── Validação de unicidade ────────────────────────────────────────────────
+  process.stdout.write('\n  Verificando duplicatas...')
+  const uniqueErrors = await checkUniqueness(document || null, companyEmail || null)
+  if (uniqueErrors.length) {
+    console.log(' ❌\n')
+    for (const e of uniqueErrors) console.error(`  ⛔  ${e}`)
+    console.log('\n  Corrija os dados e rode o script novamente.\n')
+    rl.close()
+    process.exit(1)
+  }
+  console.log(' ✓')
 
   // ── Confirmação ───────────────────────────────────────────────────────────
   section('Confirmação — revise os dados antes de continuar')
