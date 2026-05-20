@@ -1,0 +1,56 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node _sdds_private/scripts/inject-session-context.js" }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "node _sdds_private/scripts/check-file-size.js" },
+          { "type": "command", "command": "node _sdds_private/scripts/validate-spec.js" },
+          { "type": "command", "command": "node _sdds_private/scripts/enforce-guardrails.js" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "node _sdds_private/scripts/enforce-guardrails.js" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "node _sdds_private/scripts/update-index.js" }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node _sdds_private/scripts/handle-compact.js" }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node _sdds_private/scripts/handle-compact.js" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node _sdds_private/scripts/update-last-session.js" }
+        ]
+      }
+    ]
+  }
+}

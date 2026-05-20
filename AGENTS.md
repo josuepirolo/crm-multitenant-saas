@@ -1,16 +1,54 @@
-# SDDS RUNTIME ENTRYPOINT
+# SDDS — Agent Instructions
 
-Before any task, read and follow:
+This project uses the **SDDS (Software Development Spec Driven)** framework
+for persistent context across sessions.
 
-- `_sdds_private/00A_SDDS_LLM_RUNTIME_ADAPTER.md`
-- `_sdds_private/00_SDDS_SESSION_ORCHESTRATOR.md`
+## Before executing any task
 
-Do not bypass SDDS.
-Do not implement before specs/contracts/harness.
-Use `.sdds/` as public project memory (sanitized, operational). SDDS runtime and governance live in `_sdds_private/`.
+1. Read `.sdds/CURRENT_STATE.md` — consolidated current state of the project
+2. Read `.sdds/INDEX.md` — router: what to read first and where everything is
+3. Read the relevant spec in `.sdds/specs/` for the module you are about to touch
 
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+If `.sdds/` does not exist, this project needs bootstrapping. Run `/sdds-init`.
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+## Runtime version constraint
+
+Before writing any code, check `.sdds/TECH_STACK.md` for confirmed runtime versions.
+
+If any version is marked `A_CONFIRMAR_OPERACIONAL` or is absent:
+- Ask the developer explicitly before generating code with version-specific syntax or APIs
+- Never assume the latest version — the project may be running PHP 7.2, Node 14, Python 3.8, etc.
+
+Generating code for the wrong version causes silent breakage in production.
+
+## Rules
+
+- Never create files or directories outside the structure in `.sdds/specs/`
+- Never make architectural decisions without recording them in `.sdds/decisions/`
+- Do not expose `_sdds_private/` content as product documentation
+
+## Large files (> 300 lines)
+
+Read in chunks — never attempt to process a large file in a single read.
+
+**Before doing anything else**, report to the developer:
+- File name and exact line count
+- Responsibilities already identifiable from the file name / imports / top-level structure
+- That you are reading in chunks and will report findings before touching any code
+
+If after reading you find mixed responsibilities (violates Clean Arch / MVVM / separation of concerns):
+1. List each responsibility and the line ranges where it lives
+2. Map the correct split to `.sdds/ARCHITECTURE.md` and `.sdds/TECH_STACK.md`
+3. Create specs in `.sdds/specs/` for each new module before any code change
+4. Wait for developer confirmation before implementing the split
+
+Never go silent on a large file — it is a blocker. Report at every chunk, keep the developer informed.
+
+## After completing work
+
+Summarize:
+- Files created or modified
+- Decisions made (architecture, scope, trade-offs)
+- Open questions or blockers
+
+This enables the developer to run `/sdds-update` and preserve the session.

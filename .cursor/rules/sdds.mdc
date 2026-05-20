@@ -2,13 +2,18 @@
 alwaysApply: true
 ---
 
-# SDDS RUNTIME ENTRYPOINT
+**Comandos:** `/sdds-init`, `/sdds-update`, `/sdds-status` (em `.cursor/commands/`).
 
-Before any task, read and follow:
+**Início:** leia `.sdds/CURRENT_STATE.md` e `.sdds/INDEX.md` antes de agir na tarefa.
 
-- `_sdds_private/00A_SDDS_LLM_RUNTIME_ADAPTER.md`
-- `_sdds_private/00_SDDS_SESSION_ORCHESTRATOR.md`
+**Antes de codar:** localize o módulo no `INDEX` e leia o spec em `.sdds/specs/`.
 
-Do not bypass SDDS.
-Do not implement before specs/contracts/harness.
-Use `.sdds/` as public project memory (sanitized, operational). SDDS runtime and governance live in `_sdds_private/`.
+**Versões de runtime:** antes de gerar qualquer código, verifique as versões confirmadas em `.sdds/TECH_STACK.md`. Se alguma versão estiver marcada como `A_CONFIRMAR_OPERACIONAL` ou ausente, pergunte ao usuário antes de escrever código com sintaxe ou APIs específicas de versão. Nunca assuma versão recente — o projeto pode rodar PHP 7.2, Node 14, Python 3.8, etc.
+
+**Estrutura:** não crie arquivos fora do que os specs autorizam.
+
+**Fim:** informe lista objetiva dos arquivos alterados e decisões tomadas, para o dev rodar `/sdds-update`.
+
+**README:** se funcionalidade do projeto foi adicionada, alterada ou removida nesta sessão, atualize `README.md`.
+
+**Arquivos grandes (> 300 linhas):** antes de qualquer ação, informe ao usuário: nome do arquivo, quantidade exata de linhas, e responsabilidades já identificáveis. Leia em chunks (offset + limit) e reporte o progresso a cada chunk. Se o arquivo mistura responsabilidades (viola Clean Arch / MVVM / separação de concerns), liste cada responsabilidade e o intervalo de linhas onde ela vive, proponha o split conforme `.sdds/ARCHITECTURE.md` e `.sdds/TECH_STACK.md`, crie specs em `.sdds/specs/` para cada novo módulo, e aguarde confirmação do dev antes de implementar. Jamais trave silenciosamente — arquivo grande é bloqueador, sinalize sempre.
