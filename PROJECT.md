@@ -64,6 +64,143 @@ src/
 
 ---
 
+## Banco de Dados — Mapa de Tabelas
+
+O banco é compartilhado entre dois domínios: **CRM** (este projeto) e **WhatsApp API** (backend externo). A separação é feita por prefixo de nome.
+
+### Domínio CRM (este projeto)
+
+**Core**
+
+| Tabela | Finalidade |
+|---|---|
+| `workspaces` | Tenant — cada empresa |
+| `workspace_members` | Usuários por workspace + role |
+| `workspace_roles` | Roles customizadas por workspace |
+| `workspace_role_permissions` | Relação role ↔ permissão |
+| `workspace_integrations` | Integrações ativas por workspace (ponte CRM ↔ WA API) |
+| `profiles` | Perfil do usuário (espelha auth.users) |
+| `permissions` | Permissões do sistema |
+| `plans` | Planos de assinatura |
+| `audit_logs` | Log de auditoria de ações críticas |
+| `rate_limits` | Controle de rate limit por IP/email |
+
+**Vendas / CRM**
+
+| Tabela | Finalidade |
+|---|---|
+| `pipelines` | Funis de vendas |
+| `stages` | Etapas de cada funil |
+| `deals` | Negociações (cards do kanban) |
+| `deal_activities` | Histórico de atividades por deal |
+| `contacts` | Leads e contatos |
+| `contact_tags` | Relação contato ↔ tag |
+| `tags` | Tags livres por workspace |
+
+**Nichos**
+
+| Tabela | Finalidade |
+|---|---|
+| `business_niches` | Catálogo de nichos (hierárquico) |
+
+**Módulo Autopeças**
+
+| Tabela | Finalidade |
+|---|---|
+| `vehicle_brands` | Marcas de veículos (catálogo global) |
+| `vehicle_categories` | Categorias de veículos |
+| `vehicle_models` | Modelos de veículos |
+| `auto_parts_catalog` | Catálogo de peças por workspace |
+| `auto_parts_compatibility` | Peça ↔ veículo compatível |
+| `auto_parts_workspace_pricing` | Precificação por workspace |
+| `auto_parts_quotes` | Orçamentos de peças |
+| `auto_parts_quote_items` | Itens de cada orçamento |
+| `contact_profiles_auto_parts` | Perfil de contato p/ autopeças |
+
+**Módulo Auto Sales**
+
+| Tabela | Finalidade |
+|---|---|
+| `auto_sales_inventory` | Estoque de veículos |
+| `auto_sales_inventory_pricing` | Precificação do estoque |
+| `auto_sales_optional_items` | Opcionais dos veículos |
+| `auto_sales_proposals` | Propostas de venda |
+
+**Módulo Moda**
+
+| Tabela | Finalidade |
+|---|---|
+| `fashion_products` | Produtos de moda |
+| `fashion_product_variants` | Variantes (cor, tamanho) |
+| `fashion_variant_pricing` | Precificação por variante |
+| `fashion_variant_stock` | Estoque por variante |
+| `contact_profiles_fashion` | Perfil de contato p/ moda |
+
+---
+
+### Domínio WhatsApp API (backend externo — prefixo `wa_`)
+
+Gerenciado pelo backend da API WhatsApp. O CRM **não escreve** nessas tabelas — apenas lê via joins autorizados.
+
+| Tabela | Finalidade |
+|---|---|
+| `wa_tenants` | Tenants do backend WA (1 por integração) |
+| `wa_tenant_members` | Membros por tenant WA |
+| `wa_tenant_users` | Usuários por tenant WA |
+| `wa_providers` | Providers disponíveis (Z-API, Evolution, Meta...) |
+| `wa_instances` | Instâncias WhatsApp (números conectados) |
+| `wa_conversations` | Conversas (fonte de verdade no WA backend) |
+| `wa_messages` | Mensagens das conversas |
+| `wa_contacts` | Contatos do WhatsApp |
+| `wa_labels` | Labels de conversas |
+| `wa_conversation_labels` | Relação conversa ↔ label |
+| `wa_conversation_status_history` | Histórico de status de conversa |
+| `wa_media` | Arquivos de mídia |
+| `wa_message_events` | Eventos de mensagem (entrega, leitura...) |
+| `wa_reactions` | Reações a mensagens |
+| `wa_polls` | Enquetes |
+| `wa_poll_votes` | Votos em enquetes |
+| `wa_templates` | Templates de mensagem |
+| `wa_automation_rules` | Regras de automação |
+| `wa_call_logs` | Histórico de chamadas |
+| `wa_presence_events` | Eventos de presença (online/offline) |
+| `wa_raw_events` | Eventos brutos do webhook |
+| `wa_pending_events` | Fila de eventos pendentes |
+| `wa_webhook_metrics` | Métricas de webhook |
+| `wa_daily_reports` | Relatórios diários |
+| `wa_insights` | Insights e analytics |
+| `wa_error_logs` | Log de erros do WA backend |
+| `wa_subscriptions` | Assinaturas/planos WA |
+
+---
+
+### Ponte CRM ↔ WhatsApp API
+
+```
+workspaces  ──→  workspace_integrations  ──→  wa_tenants
+                  (workspace_id)               (wa_tenant_id)
+                                                    ↓
+                                              wa_instances
+                                              wa_conversations
+                                              wa_messages
+```
+
+O frontend CRM consulta a integração ativa do workspace e usa o `wa_tenant_id` para navegar até instâncias, conversas e mensagens no domínio WA.
+
+---
+
+## Decisões Arquiteturais
+
+| Decisão | Motivo |
+|---|---|
+| `conversations` e `messages` removidas do CRM | WhatsApp API é a fonte de verdade; armazenar localmente seria duplicação com risco de inconsistência |
+| Tabelas WA prefixadas com `wa_` | Separação clara de domínios no banco compartilhado |
+| `workspace_integrations` no CRM (não no WA backend) | O dono da relação negocial é o admin do workspace; ativar/desativar é responsabilidade do CRM |
+| Frontend agnóstico ao provider | O CRM fala com abstração única — o provider (Z-API, Evolution, Meta) é configurado por workspace |
+| Sem prefixo `crm_` nas tabelas | Prefixos por módulo já organizam (`auto_parts_`, `fashion_`, `wa_`); adicionar `crm_` seria ruído |
+
+---
+
 ## Telas Implementadas
 
 ### Autenticação (`/auth`)
@@ -81,8 +218,7 @@ src/
 
 | Rota | Descrição |
 |---|---|
-| `/dashboard` | Home — métricas, resumo de atividade |
-| `/chat` | Inbox de conversas WhatsApp |
+| `/dashboard` | Home — métricas de leads, deals e performance |
 | `/contacts` | Lista de leads e contatos |
 | `/kanban` | Board de negociações (drag & drop) |
 | `/analytics` | Dashboards e relatórios de performance |
@@ -172,7 +308,7 @@ src/
 
 | Item | Status |
 |---|---|
-| RLS em todas as tabelas | ✅ |
+| RLS em todas as tabelas CRM | ✅ |
 | Rate limit (login, register, reset) | ✅ |
 | Cloudflare Turnstile | ✅ |
 | 2FA obrigatório para admin | ✅ |
@@ -180,8 +316,28 @@ src/
 | Headers de segurança (CSP, HSTS) | ✅ |
 | Cookies seguros | ✅ |
 | service_role isolado (nunca no cliente) | ✅ |
-| Integração Z-API (WhatsApp real) | ⏳ Pendente |
-| Webhooks (HMAC) | ⏳ Pendente |
+| Integração WhatsApp (via provider externo) | ⏳ Pendente |
+| Webhooks CRM (HMAC) | ⏳ Pendente |
+
+---
+
+## Integração WhatsApp — Status
+
+O backend da API WhatsApp já está provisionado no mesmo banco Supabase com 27 tabelas `wa_*`. A integração com o CRM está pendente:
+
+- [ ] Tela de configuração de integração WA no CRM (`/settings/integrations`)
+- [ ] Listar providers disponíveis (`wa_providers`)
+- [ ] Criar `workspace_integrations` ao onboarding WA
+- [ ] Exibir conversas e mensagens via WA API (leitura das tabelas `wa_*`)
+- [ ] Linkar deal do kanban a uma conversa WA (`wa_conversations`)
+
+---
+
+## Scripts Utilitários
+
+| Script | Uso |
+|---|---|
+| `node scripts/create-tenant.mjs` | Cria empresa + owner completo interativamente (onboarding manual) |
 
 ---
 
