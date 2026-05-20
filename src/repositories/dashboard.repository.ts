@@ -5,7 +5,6 @@ export interface DashboardStats {
   totalLeadsThisMonth: number;
   openDealsValue: number;
   openDealsCount: number;
-  openConversations: number;
   wonDealsCount: number;
   totalDealsCount: number;
 }
@@ -49,7 +48,6 @@ export class SupabaseDashboardRepository implements IDashboardRepository {
       { count: totalLeads },
       { count: totalLeadsThisMonth },
       { data: openDeals },
-      { count: openConversations },
       { count: wonDealsCount },
       { count: totalDealsCount },
     ] = await Promise.all([
@@ -59,8 +57,6 @@ export class SupabaseDashboardRepository implements IDashboardRepository {
         .eq("workspace_id", workspaceId).is("deleted_at", null)
         .gte("created_at", startOfMonth.toISOString()),
       this.client.from("deals").select("value")
-        .eq("workspace_id", workspaceId).eq("status", "open").is("deleted_at", null),
-      this.client.from("conversations").select("*", { count: "exact", head: true })
         .eq("workspace_id", workspaceId).eq("status", "open").is("deleted_at", null),
       this.client.from("deals").select("*", { count: "exact", head: true })
         .eq("workspace_id", workspaceId).eq("status", "won").is("deleted_at", null),
@@ -75,7 +71,6 @@ export class SupabaseDashboardRepository implements IDashboardRepository {
       totalLeadsThisMonth: totalLeadsThisMonth ?? 0,
       openDealsValue,
       openDealsCount: openDeals?.length ?? 0,
-      openConversations: openConversations ?? 0,
       wonDealsCount: wonDealsCount ?? 0,
       totalDealsCount: totalDealsCount ?? 0,
     };

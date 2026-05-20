@@ -7,7 +7,7 @@ import { MetricCard } from "@/components/dashboard/metric-card";
 import { LeadsChart } from "@/components/dashboard/leads-chart";
 import { DealsChart } from "@/components/dashboard/deals-chart";
 import { RecentContactsTable } from "@/components/dashboard/recent-contacts-table";
-import { Users, DollarSign, MessageSquare, TrendingUp } from "lucide-react";
+import { Users, DollarSign, TrendingUp } from "lucide-react";
 import { redirect } from "next/navigation";
 
 function formatCurrency(value: number) {
@@ -69,13 +69,7 @@ export default async function DashboardPage() {
           icon={DollarSign}
           accent="green"
         />
-        <MetricCard
-          title="Conversas ativas"
-          value={stats.openConversations.toLocaleString("pt-BR")}
-          subtitle="Aguardando resposta"
-          icon={MessageSquare}
-          accent="amber"
-        />
+
         <MetricCard
           title="Taxa de conversão"
           value={`${conversionRate}%`}
