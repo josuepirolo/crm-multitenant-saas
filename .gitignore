@@ -3,6 +3,9 @@
 # Claude Code local settings (may contain tokens/secrets)
 .claude/settings.local.json
 
+# SDDS private runtime (never expose)
+_sdds_private/
+
 # dependencies
 /node_modules
 /.pnp
