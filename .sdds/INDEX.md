@@ -1,7 +1,7 @@
 # INDEX.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-05-20
+Atualizado: 2026-05-22
 
 ## Ler primeiro
 1. `CURRENT_STATE.md` — estado atual
@@ -27,9 +27,9 @@ Atualizado: 2026-05-20
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-05-22 | Revisão de estado — documentação de pendências e riscos atualizados |
 | 2026-05-20 | Setup GitHub, limpeza banco, arquitetura WA, PROJECT.md |
 | 2026-05-13 | Bootstrap SDDS v1.3.1 — recuperação de estado |
-| 2026-05-13 | Spec Chat/Inbox criada (02_CREATE_MODULE_SPEC) |
 
 ## Indexes
 - `indexes/modules.index.md`
