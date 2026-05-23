@@ -36,3 +36,19 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-05-22 22:21 | `C:/Projetos/CRM WhatsApp/specs/11-como-recriar-o-projeto-do-zero.md` |
 | 2026-05-22 22:22 | `C:/Projetos/CRM WhatsApp/specs/12-checklist-de-evolucao.md` |
 | 2026-05-22 22:22 | `C:/Projetos/CRM WhatsApp/specs/13-decisoes-arquiteturais.md` |
+| 2026-05-22 22:22 | `skills_criar_especificao.md` |
+| 2026-05-22 22:22 | `specs/00-visao-geral-do-projeto.md` |
+| 2026-05-22 22:22 | `specs/01-stack-tecnologica.md` |
+| 2026-05-22 22:22 | `specs/02-arquitetura-do-sistema.md` |
+| 2026-05-22 22:22 | `specs/03-estrutura-de-diretorios.md` |
+| 2026-05-22 22:22 | `specs/04-modelagem-e-dados.md` |
+| 2026-05-22 22:22 | `specs/05-autenticacao-e-seguranca.md` |
+| 2026-05-22 22:22 | `specs/06-fluxos-principais.md` |
+| 2026-05-22 22:22 | `specs/07-integracoes.md` |
+| 2026-05-22 22:22 | `specs/08-padroes-de-codigo.md` |
+| 2026-05-22 22:22 | `specs/09-regras-de-negocio.md` |
+| 2026-05-22 22:22 | `specs/10-roadmap-tecnico.md` |
+| 2026-05-22 22:22 | `specs/11-como-recriar-o-projeto-do-zero.md` |
+| 2026-05-22 22:22 | `specs/12-checklist-de-evolucao.md` |
+| 2026-05-22 22:22 | `specs/13-decisoes-arquiteturais.md` |
+| 2026-05-22 22:22 | `specs/README.md` |
