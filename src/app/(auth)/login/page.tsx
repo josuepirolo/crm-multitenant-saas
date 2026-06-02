@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -54,7 +54,12 @@ function SubmitButton() {
 
 export default function LoginPage() {
   const [state, action] = useActionState(signIn, null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (state?.error) setTurnstileKey((k) => k + 1);
+  }, [state?.error]);
   const confirmPending = searchParams.get("confirm") === "1";
   const resetSuccess   = searchParams.get("reset") === "1";
 
@@ -178,7 +183,7 @@ export default function LoginPage() {
             )}
 
             <motion.div variants={item} className="flex justify-center">
-              <Turnstile siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} />
+              <Turnstile key={turnstileKey} siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} />
             </motion.div>
 
             <motion.div variants={item}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -37,6 +37,11 @@ function SubmitButton() {
 
 export default function ResetPasswordPage() {
   const [state, action] = useActionState(requestPasswordReset, null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
+
+  useEffect(() => {
+    if (state?.error) setTurnstileKey((k) => k + 1);
+  }, [state?.error]);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-muted px-4">
@@ -108,7 +113,7 @@ export default function ResetPasswordPage() {
               )}
 
               <motion.div variants={item} className="flex justify-center">
-                <Turnstile siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} />
+                <Turnstile key={turnstileKey} siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} />
               </motion.div>
 
               <motion.div variants={item}>

@@ -222,7 +222,16 @@ export async function requestPasswordReset(_: unknown, formData: FormData) {
     captchaToken: captchaToken ?? undefined,
   });
 
-  if (error) return { error: "Não foi possível enviar o e-mail. Tente novamente.", email: parsed.data.email };
+  if (error) {
+    console.error("[requestPasswordReset] Supabase error:", error.message, error.status);
+    const isRateLimit = error.status === 429 || error.message.toLowerCase().includes("security purposes") || error.message.toLowerCase().includes("rate limit");
+    return {
+      error: isRateLimit
+        ? "Por segurança, aguarde alguns minutos antes de tentar novamente."
+        : "Não foi possível enviar o e-mail. Tente novamente.",
+      email: parsed.data.email,
+    };
+  }
 
   return { success: true };
 }

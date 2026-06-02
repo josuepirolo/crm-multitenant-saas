@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -63,6 +63,11 @@ interface Props {
 export function RegisterForm({ niches }: Props) {
   const [state, action] = useActionState(signUp, null);
   const [selectedNiche, setSelectedNiche] = useState<string>(state?.nicheId ?? "");
+  const [turnstileKey, setTurnstileKey] = useState(0);
+
+  useEffect(() => {
+    if (state?.error) setTurnstileKey((k) => k + 1);
+  }, [state?.error]);
 
   const parents = niches.filter((n) => !n.parent_id);
 
@@ -239,7 +244,7 @@ export function RegisterForm({ niches }: Props) {
             )}
 
             <motion.div variants={item} className="flex justify-center">
-              <Turnstile siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} />
+              <Turnstile key={turnstileKey} siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} />
             </motion.div>
 
             <motion.div variants={item}>

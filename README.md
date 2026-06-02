@@ -62,7 +62,7 @@ Abra [http://localhost:3000](http://localhost:3000).
 
 ## Estado atual do produto (alto nível)
 
-Implementado com mais profundidade: autenticação (incl. Turnstile), dashboard com métricas e gráficos, **módulo de contatos**, **configurações do workspace** (empresa, membros, perfil do usuário com avatar, MFA na UI conforme `settings`), **RBAC**, **painel super-admin**, camadas de **rate limit**, **auditoria** e **headers de segurança** descritas em `docs/security.md`.
+Implementado com mais profundidade: autenticação (incl. Turnstile com reset automático após falha, mensagens específicas por tipo de erro), dashboard com métricas e gráficos, **módulo de contatos**, **configurações do workspace** (empresa, membros, perfil do usuário com avatar, MFA na UI conforme `settings`), **RBAC**, **painel super-admin**, camadas de **rate limit**, **auditoria** e **headers de segurança** descritas em `docs/security.md`.
 
 Ainda em estágio inicial (placeholders ou não iniciado): **Kanban**, **inbox/chat WhatsApp**, integração **Z-API** / webhooks, **analytics** avançado — ver `.claude/checklist.md`.
 
