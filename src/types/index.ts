@@ -143,9 +143,17 @@ export interface Contact {
   avatar_url: string | null;
   notes: string | null;
   custom_fields: Record<string, unknown>;
+  assigned_to: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ContactAccess {
+  contact_id: string;
+  user_id: string;
+  granted_by: string | null;
+  created_at: string;
 }
 
 export interface Pipeline {

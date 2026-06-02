@@ -38,3 +38,31 @@ export class SoftDeleteContactUseCase {
     return this.repo.softDelete(workspaceId, id);
   }
 }
+
+export class AssignContactUseCase {
+  constructor(private readonly repo: IContactRepository) {}
+  execute(workspaceId: string, contactId: string, userId: string | null) {
+    return this.repo.assign(workspaceId, contactId, userId);
+  }
+}
+
+export class GrantContactAccessUseCase {
+  constructor(private readonly repo: IContactRepository) {}
+  execute(contactId: string, userId: string, grantedBy: string) {
+    return this.repo.grantAccess(contactId, userId, grantedBy);
+  }
+}
+
+export class RevokeContactAccessUseCase {
+  constructor(private readonly repo: IContactRepository) {}
+  execute(contactId: string, userId: string) {
+    return this.repo.revokeAccess(contactId, userId);
+  }
+}
+
+export class ListContactAccessUseCase {
+  constructor(private readonly repo: IContactRepository) {}
+  execute(contactId: string) {
+    return this.repo.listAccess(contactId);
+  }
+}

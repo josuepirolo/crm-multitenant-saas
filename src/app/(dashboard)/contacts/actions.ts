@@ -2,11 +2,18 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { SupabaseContactRepository } from "@/repositories/contact.repository";
-import { GetContactsUseCase, CreateContactUseCase, UpdateContactUseCase, SoftDeleteContactUseCase } from "@/usecases/ContactUseCases";
-import { getWorkspaceContext } from "@/lib/guards";
+import { SupabaseWorkspaceMemberRepository } from "@/repositories/member.repository";
+import {
+  GetContactsUseCase, CreateContactUseCase, UpdateContactUseCase, SoftDeleteContactUseCase,
+  AssignContactUseCase, GrantContactAccessUseCase, RevokeContactAccessUseCase, ListContactAccessUseCase,
+} from "@/usecases/ContactUseCases";
+import { getWorkspaceContext, getCurrentWorkspaceId } from "@/lib/guards";
+import { getUserRole } from "@/lib/user-role";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
 import { revalidatePath } from "next/cache";
 import { contactSchema, toDigits, validateCPF, validateCNPJ } from "@/lib/validations/contact";
 import type { ContactFilters } from "@/repositories/contact.repository";
+import type { MemberRole } from "@/types";
 
 // ─── normalização ────────────────────────────────────────────────────────────
 function normalizeInput(raw: Record<string, string>) {
@@ -120,4 +127,105 @@ export async function deleteContact(id: string) {
   } catch {
     return { error: "Erro ao remover contato." };
   }
+}
+
+// ─── carteira de clientes ────────────────────────────────────────────────────
+
+const MANAGER_ROLES: MemberRole[] = ["owner", "admin", "manager"];
+
+async function requireManagerContext() {
+  const ctx = await getWorkspaceContext("contacts", "edit");
+  if ("error" in ctx) return ctx;
+  const role = await getUserRole(ctx.workspaceId);
+  if (!role || !MANAGER_ROLES.includes(role)) {
+    return { error: "Apenas gerentes podem realizar esta ação." };
+  }
+  return ctx;
+}
+
+export async function assignContact(contactId: string, userId: string | null) {
+  const ctx = await requireManagerContext();
+  if ("error" in ctx) return ctx;
+
+  try {
+    const supabase = await createClient();
+    const contact = await new AssignContactUseCase(new SupabaseContactRepository(supabase))
+      .execute(ctx.workspaceId, contactId, userId);
+    revalidatePath("/contacts");
+    return { error: undefined, contact };
+  } catch {
+    return { error: "Erro ao atribuir responsável." };
+  }
+}
+
+export async function grantContactAccess(contactId: string, targetUserId: string) {
+  const ctx = await requireManagerContext();
+  if ("error" in ctx) return ctx;
+
+  try {
+    const supabase = await createClient();
+    await new GrantContactAccessUseCase(new SupabaseContactRepository(supabase))
+      .execute(contactId, targetUserId, ctx.userId);
+    revalidatePath("/contacts");
+    return { error: undefined };
+  } catch {
+    return { error: "Erro ao conceder acesso." };
+  }
+}
+
+export async function revokeContactAccess(contactId: string, targetUserId: string) {
+  const ctx = await requireManagerContext();
+  if ("error" in ctx) return ctx;
+
+  try {
+    const supabase = await createClient();
+    await new RevokeContactAccessUseCase(new SupabaseContactRepository(supabase))
+      .execute(contactId, targetUserId);
+    revalidatePath("/contacts");
+    return { error: undefined };
+  } catch {
+    return { error: "Erro ao revogar acesso." };
+  }
+}
+
+export async function listContactAccess(contactId: string) {
+  const ctx = await getWorkspaceContext("contacts", "view");
+  if ("error" in ctx) return { error: ctx.error, data: [] };
+
+  try {
+    const supabase = await createClient();
+    const data = await new ListContactAccessUseCase(new SupabaseContactRepository(supabase))
+      .execute(contactId);
+    return { error: undefined, data };
+  } catch {
+    return { error: "Erro ao buscar acessos.", data: [] };
+  }
+}
+
+export async function getWorkspaceMembersForContacts() {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!workspaceId) return { error: "Workspace não encontrado.", data: [] };
+
+  try {
+    const supabase = await createClient();
+    const data = await new SupabaseWorkspaceMemberRepository(supabase).findByWorkspace(workspaceId);
+    return { error: undefined, data };
+  } catch {
+    return { error: "Erro ao buscar membros.", data: [] };
+  }
+}
+
+export async function getContactsPageContext() {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!workspaceId) return { role: null, members: [] };
+
+  const { data: { user } } = await getCachedUser();
+  if (!user) return { role: null, members: [] };
+
+  const [role, supabase] = await Promise.all([getUserRole(workspaceId), createClient()]);
+  const members = await new SupabaseWorkspaceMemberRepository(supabase)
+    .findByWorkspace(workspaceId)
+    .catch(() => []);
+
+  return { role, members, userId: user.id };
 }

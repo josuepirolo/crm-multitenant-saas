@@ -23,6 +23,7 @@ const makeContact = (ws = WS_A): Contact => ({
   avatar_url: null,
   notes: null,
   custom_fields: {},
+  assigned_to: null,
   created_by: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
@@ -30,11 +31,15 @@ const makeContact = (ws = WS_A): Contact => ({
 
 function makeRepoMock(): IContactRepository {
   return {
-    findAll: vi.fn().mockResolvedValue({ data: [makeContact()], total: 1 }),
-    findById: vi.fn().mockResolvedValue(makeContact()),
-    create: vi.fn().mockResolvedValue(makeContact()),
-    update: vi.fn().mockResolvedValue(makeContact()),
-    softDelete: vi.fn().mockResolvedValue(undefined),
+    findAll:      vi.fn().mockResolvedValue({ data: [makeContact()], total: 1 }),
+    findById:     vi.fn().mockResolvedValue(makeContact()),
+    create:       vi.fn().mockResolvedValue(makeContact()),
+    update:       vi.fn().mockResolvedValue(makeContact()),
+    softDelete:   vi.fn().mockResolvedValue(undefined),
+    assign:       vi.fn().mockResolvedValue(makeContact()),
+    listAccess:   vi.fn().mockResolvedValue([]),
+    grantAccess:  vi.fn().mockResolvedValue(undefined),
+    revokeAccess: vi.fn().mockResolvedValue(undefined),
   };
 }
 

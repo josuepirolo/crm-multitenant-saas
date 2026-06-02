@@ -3,8 +3,11 @@
 import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import type { ContactFilters } from "@/repositories/contact.repository";
-import type { ContactStatus } from "@/types";
+import type { ContactStatus, WorkspaceMemberWithProfile } from "@/types";
 
 const STATUSES: { value: ContactStatus | "all"; label: string }[] = [
   { value: "all",      label: "Todos" },
@@ -17,15 +20,15 @@ const STATUSES: { value: ContactStatus | "all"; label: string }[] = [
 interface ContactFiltersBarProps {
   filters: ContactFilters;
   onChange: (next: Partial<ContactFilters>) => void;
+  isManager?: boolean;
+  members?: WorkspaceMemberWithProfile[];
 }
 
-export function ContactFiltersBar({ filters, onChange }: ContactFiltersBarProps) {
+export function ContactFiltersBar({ filters, onChange, isManager, members = [] }: ContactFiltersBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchValue, setSearchValue] = useState(filters.search ?? "");
 
   useEffect(() => {
-    // Só chama onChange quando o valor realmente diferir do estado atual do filtro
-    // Evita disparo desnecessário no mount (searchValue === filters.search inicialmente)
     if (searchValue === (filters.search ?? "")) return;
     const timer = setTimeout(() => onChange({ search: searchValue }), 300);
     return () => clearTimeout(timer);
@@ -37,7 +40,7 @@ export function ContactFiltersBar({ filters, onChange }: ContactFiltersBarProps)
   }
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
       <div className="relative flex-1 max-w-sm">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -74,6 +77,29 @@ export function ContactFiltersBar({ filters, onChange }: ContactFiltersBarProps)
           </button>
         ))}
       </div>
+
+      {isManager && members.length > 0 && (
+        <Select
+          value={filters.assignedTo ?? "all"}
+          onValueChange={(v) => onChange({ assignedTo: (v ?? "all") as ContactFilters["assignedTo"] })}
+        >
+          <SelectTrigger className="h-9 w-44 rounded-xl border-border/60 text-sm focus:ring-primary/30">
+            <SelectValue placeholder="Responsável..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="unassigned">Sem responsável</SelectItem>
+            {members.map((m) => {
+              const name = m.profiles?.name ?? m.profiles?.email ?? "Membro";
+              return (
+                <SelectItem key={m.user_id} value={m.user_id}>
+                  {name}
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 }

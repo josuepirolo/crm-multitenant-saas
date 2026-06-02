@@ -1,16 +1,25 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useTransition } from "react";
-import { getContacts } from "@/app/(dashboard)/contacts/actions";
-import type { Contact, ContactFilters } from "@/repositories/contact.repository";
+import { toast } from "sonner";
+import { getContacts, assignContact, grantContactAccess, revokeContactAccess, listContactAccess } from "@/app/(dashboard)/contacts/actions";
+import type { Contact, ContactAccess, MemberRole, WorkspaceMemberWithProfile } from "@/types";
+import type { ContactFilters } from "@/repositories/contact.repository";
 
 const PAGE_SIZE = 20;
+const MANAGER_ROLES: MemberRole[] = ["owner", "admin", "manager"];
 
-export function useContactsViewModel() {
+export interface ContactsViewModelProps {
+  initialRole: MemberRole | null;
+  initialMembers: WorkspaceMemberWithProfile[];
+  currentUserId: string;
+}
+
+export function useContactsViewModel({ initialRole, initialMembers, currentUserId }: ContactsViewModelProps) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
-  const [filters, setFilters] = useState<ContactFilters>({ search: "", status: "all" });
+  const [filters, setFilters] = useState<ContactFilters>({ search: "", status: "all", assignedTo: "all" });
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -20,8 +29,12 @@ export function useContactsViewModel() {
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Contact | null>(null);
 
-  // Deduplicação: ref persiste entre ciclos de mount do StrictMode.
-  // Se a mesma chave (page + filters) já foi disparada, a chamada é ignorada.
+  const [assignModal, setAssignModal] = useState<{ open: boolean; contact: Contact | null }>({ open: false, contact: null });
+  const [accessSheet, setAccessSheet] = useState<{ open: boolean; contact: Contact | null; grants: ContactAccess[] }>({ open: false, contact: null, grants: [] });
+
+  const isManager = !!initialRole && MANAGER_ROLES.includes(initialRole);
+  const members = initialMembers;
+
   const lastKey = useRef<string | null>(null);
 
   const fetchContacts = useCallback(async (currentPage: number, currentFilters: ContactFilters) => {
@@ -48,7 +61,7 @@ export function useContactsViewModel() {
   }, []);
 
   useEffect(() => {
-    const key = `${page}|${filters.search}|${filters.status}`;
+    const key = `${page}|${filters.search}|${filters.status}|${filters.assignedTo}`;
     if (lastKey.current === key) return;
     lastKey.current = key;
     fetchContacts(page, filters);
@@ -77,7 +90,6 @@ export function useContactsViewModel() {
       setContacts((prev) => [contact, ...prev]);
       setTotal((prev) => prev + 1);
     }
-    // reconcilia em background sem bloquear a UI
     startTransition(() => fetchContacts(page, filters));
   }
 
@@ -97,6 +109,61 @@ export function useContactsViewModel() {
     startNavigation(() => setPage(newPage));
   }, []);
 
+  // ─── carteira ────────────────────────────────────────────────────────────
+
+  function openAssign(contact: Contact) {
+    setAssignModal({ open: true, contact });
+  }
+
+  function closeAssign() {
+    setAssignModal({ open: false, contact: null });
+  }
+
+  async function onAssign(contactId: string, userId: string | null) {
+    const result = await assignContact(contactId, userId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Responsável atribuído!");
+    const updated = "contact" in result ? result.contact : undefined;
+    if (updated) setContacts((prev) => prev.map((c) => (c.id === contactId ? updated : c)));
+    closeAssign();
+  }
+
+  async function openAccess(contact: Contact) {
+    const result = await listContactAccess(contact.id);
+    setAccessSheet({ open: true, contact, grants: result.data ?? [] });
+  }
+
+  function closeAccess() {
+    setAccessSheet({ open: false, contact: null, grants: [] });
+  }
+
+  async function onGrantAccess(contactId: string, userId: string) {
+    const result = await grantContactAccess(contactId, userId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    const updated = await listContactAccess(contactId);
+    setAccessSheet((prev) => ({ ...prev, grants: updated.data ?? [] }));
+    toast.success("Acesso concedido.");
+  }
+
+  async function onRevokeAccess(contactId: string, userId: string) {
+    const result = await revokeContactAccess(contactId, userId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    setAccessSheet((prev) => ({
+      ...prev,
+      grants: prev.grants.filter((g) => g.user_id !== userId),
+    }));
+    toast.success("Acesso removido.");
+  }
+
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return {
@@ -108,5 +175,11 @@ export function useContactsViewModel() {
     modalOpen, editingContact, openCreate, openEdit, closeModal, onSaved, isEdit: !!editingContact,
     deleteConfirm, setDeleteConfirm, onDeleted,
     pageSize: PAGE_SIZE,
+    // carteira
+    isManager,
+    members,
+    currentUserId,
+    assignModal, openAssign, closeAssign, onAssign,
+    accessSheet, openAccess, closeAccess, onGrantAccess, onRevokeAccess,
   };
 }

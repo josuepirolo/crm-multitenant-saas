@@ -6,10 +6,19 @@ import { ContactFiltersBar } from "@/components/contacts/contact-filters";
 import { ContactsTable } from "@/components/contacts/contacts-table";
 import { ContactModal } from "@/components/contacts/contact-modal";
 import { DeleteConfirmDialog } from "@/components/contacts/delete-confirm-dialog";
+import { AssignContactDialog } from "@/components/contacts/assign-contact-dialog";
+import { ContactAccessSheet } from "@/components/contacts/contact-access-sheet";
 import { useContactsViewModel } from "@/viewmodels/useContactsViewModel";
+import type { MemberRole, WorkspaceMemberWithProfile } from "@/types";
 
-export function ContactsClient() {
-  const vm = useContactsViewModel();
+interface ContactsClientProps {
+  initialRole: MemberRole | null;
+  initialMembers: WorkspaceMemberWithProfile[];
+  currentUserId: string;
+}
+
+export function ContactsClient({ initialRole, initialMembers, currentUserId }: ContactsClientProps) {
+  const vm = useContactsViewModel({ initialRole, initialMembers, currentUserId });
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -26,7 +35,12 @@ export function ContactsClient() {
         </Button>
       </div>
 
-      <ContactFiltersBar filters={vm.filters} onChange={vm.updateFilters} />
+      <ContactFiltersBar
+        filters={vm.filters}
+        onChange={vm.updateFilters}
+        isManager={vm.isManager}
+        members={vm.members}
+      />
 
       {vm.fetchError && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
@@ -40,8 +54,12 @@ export function ContactsClient() {
         page={vm.page}
         pageSize={vm.pageSize}
         loading={vm.loading}
+        isManager={vm.isManager}
+        members={vm.members}
         onEdit={vm.openEdit}
         onDelete={vm.setDeleteConfirm}
+        onAssign={vm.openAssign}
+        onAccess={vm.openAccess}
         onPageChange={vm.changePage}
       />
 
@@ -56,6 +74,24 @@ export function ContactsClient() {
         contact={vm.deleteConfirm}
         onClose={() => vm.setDeleteConfirm(null)}
         onDeleted={vm.onDeleted}
+      />
+
+      <AssignContactDialog
+        open={vm.assignModal.open}
+        contact={vm.assignModal.contact}
+        members={vm.members}
+        onClose={vm.closeAssign}
+        onAssign={vm.onAssign}
+      />
+
+      <ContactAccessSheet
+        open={vm.accessSheet.open}
+        contact={vm.accessSheet.contact}
+        grants={vm.accessSheet.grants}
+        members={vm.members}
+        onClose={vm.closeAccess}
+        onGrant={vm.onGrantAccess}
+        onRevoke={vm.onRevokeAccess}
       />
     </div>
   );

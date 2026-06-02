@@ -1,11 +1,11 @@
 "use client";
 
-import { Edit2, Trash2, Phone, Mail, Building2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit2, Trash2, Phone, Mail, Building2, ChevronLeft, ChevronRight, UserCheck, Shield } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CONTACT_STATUS_LABELS, CONTACT_STATUS_STYLES } from "@/lib/constants/contact-status";
-import type { Contact } from "@/repositories/contact.repository";
+import type { Contact, WorkspaceMemberWithProfile } from "@/types";
 
 function getInitials(name: string) {
   return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
@@ -21,19 +21,27 @@ interface ContactsTableProps {
   page: number;
   pageSize: number;
   loading: boolean;
+  isManager: boolean;
+  members: WorkspaceMemberWithProfile[];
   onEdit: (contact: Contact) => void;
   onDelete: (contact: Contact) => void;
+  onAssign: (contact: Contact) => void;
+  onAccess: (contact: Contact) => void;
   onPageChange: (page: number) => void;
 }
 
-export function ContactsTable({ contacts, total, page, pageSize, loading, onEdit, onDelete, onPageChange }: ContactsTableProps) {
+export function ContactsTable({
+  contacts, total, page, pageSize, loading,
+  isManager, members,
+  onEdit, onDelete, onAssign, onAccess, onPageChange,
+}: ContactsTableProps) {
   const totalPages = Math.ceil(total / pageSize);
   const from = page * pageSize + 1;
   const to = Math.min((page + 1) * pageSize, total);
 
-  if (loading) {
-    return <ContactsTableSkeleton />;
-  }
+  const memberMap = new Map(members.map((m) => [m.user_id, m]));
+
+  if (loading) return <ContactsTableSkeleton isManager={isManager} />;
 
   if (!loading && contacts.length === 0) {
     return (
@@ -56,80 +64,131 @@ export function ContactsTable({ contacts, total, page, pageSize, loading, onEdit
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Contato</th>
               <th className="hidden px-4 py-3 text-left text-xs font-medium text-muted-foreground sm:table-cell">Informações</th>
               <th className="hidden px-4 py-3 text-left text-xs font-medium text-muted-foreground md:table-cell">Empresa</th>
+              {isManager && (
+                <th className="hidden px-4 py-3 text-left text-xs font-medium text-muted-foreground lg:table-cell">Responsável</th>
+              )}
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
-              <th className="hidden px-4 py-3 text-left text-xs font-medium text-muted-foreground lg:table-cell">Criado em</th>
+              <th className="hidden px-4 py-3 text-left text-xs font-medium text-muted-foreground xl:table-cell">Criado em</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
-            {contacts.map((contact) => (
-              <tr key={contact.id} className="group transition-colors hover:bg-muted/20">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                      {getInitials(contact.name)}
+            {contacts.map((contact) => {
+              const assignedMember = contact.assigned_to ? memberMap.get(contact.assigned_to) : null;
+              const assignedName = assignedMember?.profiles?.name ?? assignedMember?.profiles?.email ?? null;
+
+              return (
+                <tr key={contact.id} className="group transition-colors hover:bg-muted/20">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                        {getInitials(contact.name)}
+                      </div>
+                      <span className="font-medium leading-tight">{contact.name}</span>
                     </div>
-                    <span className="font-medium leading-tight">{contact.name}</span>
-                  </div>
-                </td>
+                  </td>
 
-                <td className="hidden px-4 py-3 sm:table-cell">
-                  <div className="flex flex-col gap-0.5">
-                    {contact.phone && (
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Phone size={11} className="shrink-0" />
-                        {contact.phone}
-                      </span>
-                    )}
-                    {contact.email && (
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Mail size={11} className="shrink-0" />
-                        {contact.email}
-                      </span>
-                    )}
-                    {!contact.phone && !contact.email && (
-                      <span className="text-xs text-muted-foreground/50">—</span>
-                    )}
-                  </div>
-                </td>
+                  <td className="hidden px-4 py-3 sm:table-cell">
+                    <div className="flex flex-col gap-0.5">
+                      {contact.phone && (
+                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Phone size={11} className="shrink-0" />
+                          {contact.phone}
+                        </span>
+                      )}
+                      {contact.email && (
+                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Mail size={11} className="shrink-0" />
+                          {contact.email}
+                        </span>
+                      )}
+                      {!contact.phone && !contact.email && (
+                        <span className="text-xs text-muted-foreground/50">—</span>
+                      )}
+                    </div>
+                  </td>
 
-                <td className="hidden px-4 py-3 md:table-cell">
-                  <span className="text-sm text-muted-foreground">{contact.company ?? "—"}</span>
-                </td>
+                  <td className="hidden px-4 py-3 md:table-cell">
+                    <span className="text-sm text-muted-foreground">{contact.company ?? "—"}</span>
+                  </td>
 
-                <td className="px-4 py-3">
-                  <span className={cn(
-                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    CONTACT_STATUS_STYLES[contact.status] ?? CONTACT_STATUS_STYLES.lead
-                  )}>
-                    {CONTACT_STATUS_LABELS[contact.status] ?? contact.status}
-                  </span>
-                </td>
+                  {isManager && (
+                    <td className="hidden px-4 py-3 lg:table-cell">
+                      {assignedMember ? (
+                        <div className="flex items-center gap-2">
+                          {assignedMember.profiles?.avatar_url ? (
+                            <img
+                              src={assignedMember.profiles.avatar_url}
+                              alt={assignedName ?? ""}
+                              className="h-6 w-6 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
+                              {getInitials(assignedName ?? "?")}
+                            </div>
+                          )}
+                          <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                            {assignedName}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/40">—</span>
+                      )}
+                    </td>
+                  )}
 
-                <td className="hidden px-4 py-3 lg:table-cell">
-                  <span className="text-xs text-muted-foreground">{formatDate(contact.created_at)}</span>
-                </td>
+                  <td className="px-4 py-3">
+                    <span className={cn(
+                      "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                      CONTACT_STATUS_STYLES[contact.status] ?? CONTACT_STATUS_STYLES.lead
+                    )}>
+                      {CONTACT_STATUS_LABELS[contact.status] ?? contact.status}
+                    </span>
+                  </td>
 
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      onClick={() => onEdit(contact)}
-                      className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
-                      title="Editar"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-                    <button
-                      onClick={() => onDelete(contact)}
-                      className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-                      title="Remover"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  <td className="hidden px-4 py-3 xl:table-cell">
+                    <span className="text-xs text-muted-foreground">{formatDate(contact.created_at)}</span>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      {isManager && (
+                        <>
+                          <button
+                            onClick={() => onAssign(contact)}
+                            className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
+                            title="Atribuir responsável"
+                          >
+                            <UserCheck size={14} />
+                          </button>
+                          <button
+                            onClick={() => onAccess(contact)}
+                            className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
+                            title="Gerenciar acesso"
+                          >
+                            <Shield size={14} />
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => onEdit(contact)}
+                        className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
+                        title="Editar"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => onDelete(contact)}
+                        className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                        title="Remover"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -152,7 +211,7 @@ export function ContactsTable({ contacts, total, page, pageSize, loading, onEdit
   );
 }
 
-function ContactsTableSkeleton() {
+function ContactsTableSkeleton({ isManager }: { isManager: boolean }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-border/50">
       <table className="w-full text-sm">
@@ -161,8 +220,11 @@ function ContactsTableSkeleton() {
             <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Contato</th>
             <th className="hidden px-4 py-3 text-left text-xs font-medium text-muted-foreground sm:table-cell">Informações</th>
             <th className="hidden px-4 py-3 text-left text-xs font-medium text-muted-foreground md:table-cell">Empresa</th>
+            {isManager && (
+              <th className="hidden px-4 py-3 text-left text-xs font-medium text-muted-foreground lg:table-cell">Responsável</th>
+            )}
             <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
-            <th className="hidden px-4 py-3 text-left text-xs font-medium text-muted-foreground lg:table-cell">Criado em</th>
+            <th className="hidden px-4 py-3 text-left text-xs font-medium text-muted-foreground xl:table-cell">Criado em</th>
             <th className="px-4 py-3" />
           </tr>
         </thead>
@@ -184,10 +246,18 @@ function ContactsTableSkeleton() {
               <td className="hidden px-4 py-3 md:table-cell">
                 <Skeleton className="h-2.5 w-24" />
               </td>
+              {isManager && (
+                <td className="hidden px-4 py-3 lg:table-cell">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-2.5 w-20" />
+                  </div>
+                </td>
+              )}
               <td className="px-4 py-3">
                 <Skeleton className="h-5 w-16 rounded-full" />
               </td>
-              <td className="hidden px-4 py-3 lg:table-cell">
+              <td className="hidden px-4 py-3 xl:table-cell">
                 <Skeleton className="h-2.5 w-20" />
               </td>
               <td className="px-4 py-3" />

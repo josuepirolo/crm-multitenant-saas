@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { Contact, ContactStatus } from "@/types";
+import type { Contact, ContactAccess, ContactStatus } from "@/types";
 
 export type { Contact };
 
@@ -12,6 +12,7 @@ export interface CreateContactDTO {
   company?: string;
   status?: ContactStatus;
   notes?: string;
+  assigned_to?: string | null;
   created_by?: string;
 }
 
@@ -23,11 +24,13 @@ export interface UpdateContactDTO {
   company?: string;
   status?: ContactStatus;
   notes?: string;
+  assigned_to?: string | null;
 }
 
 export interface ContactFilters {
   search?: string;
   status?: ContactStatus | "all";
+  assignedTo?: string | "all" | "unassigned";
 }
 
 export interface ContactPage {
@@ -41,6 +44,10 @@ export interface IContactRepository {
   create(data: CreateContactDTO): Promise<Contact>;
   update(workspaceId: string, id: string, data: UpdateContactDTO): Promise<Contact>;
   softDelete(workspaceId: string, id: string): Promise<void>;
+  assign(workspaceId: string, contactId: string, userId: string | null): Promise<Contact>;
+  listAccess(contactId: string): Promise<ContactAccess[]>;
+  grantAccess(contactId: string, userId: string, grantedBy: string): Promise<void>;
+  revokeAccess(contactId: string, userId: string): Promise<void>;
 }
 
 export class SupabaseContactRepository implements IContactRepository {
@@ -55,6 +62,14 @@ export class SupabaseContactRepository implements IContactRepository {
 
     if (filters.status && filters.status !== "all") {
       query = query.eq("status", filters.status);
+    }
+
+    if (filters.assignedTo && filters.assignedTo !== "all") {
+      if (filters.assignedTo === "unassigned") {
+        query = query.is("assigned_to", null);
+      } else {
+        query = query.eq("assigned_to", filters.assignedTo);
+      }
     }
 
     if (filters.search?.trim()) {
@@ -96,6 +111,7 @@ export class SupabaseContactRepository implements IContactRepository {
         company: data.company || null,
         status: data.status ?? "lead",
         notes: data.notes || null,
+        assigned_to: data.assigned_to || null,
         created_by: data.created_by || null,
       })
       .select()
@@ -115,6 +131,7 @@ export class SupabaseContactRepository implements IContactRepository {
         ...(data.company !== undefined && { company: data.company || null }),
         ...(data.status !== undefined && { status: data.status }),
         ...(data.notes !== undefined && { notes: data.notes || null }),
+        ...("assigned_to" in data && { assigned_to: data.assigned_to ?? null }),
       })
       .eq("workspace_id", workspaceId)
       .eq("id", id)
@@ -131,6 +148,45 @@ export class SupabaseContactRepository implements IContactRepository {
       .update({ deleted_at: new Date().toISOString() })
       .eq("workspace_id", workspaceId)
       .eq("id", id);
+    if (error) throw new Error(error.message);
+  }
+
+  async assign(workspaceId: string, contactId: string, userId: string | null): Promise<Contact> {
+    const { data: contact, error } = await this.client
+      .from("contacts")
+      .update({ assigned_to: userId })
+      .eq("workspace_id", workspaceId)
+      .eq("id", contactId)
+      .is("deleted_at", null)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return contact as Contact;
+  }
+
+  async listAccess(contactId: string): Promise<ContactAccess[]> {
+    const { data, error } = await this.client
+      .from("contact_access")
+      .select("*")
+      .eq("contact_id", contactId)
+      .order("created_at");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as ContactAccess[];
+  }
+
+  async grantAccess(contactId: string, userId: string, grantedBy: string): Promise<void> {
+    const { error } = await this.client
+      .from("contact_access")
+      .upsert({ contact_id: contactId, user_id: userId, granted_by: grantedBy });
+    if (error) throw new Error(error.message);
+  }
+
+  async revokeAccess(contactId: string, userId: string): Promise<void> {
+    const { error } = await this.client
+      .from("contact_access")
+      .delete()
+      .eq("contact_id", contactId)
+      .eq("user_id", userId);
     if (error) throw new Error(error.message);
   }
 }
