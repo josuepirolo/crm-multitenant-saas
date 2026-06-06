@@ -36,18 +36,24 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: appleEase } },
 };
 
-function SubmitButton() {
+function SubmitButton({ captchaReady }: { captchaReady: boolean }) {
   const { pending } = useFormStatus();
+  const disabled = pending || !captchaReady;
   return (
     <Button
       type="submit"
       className="w-full h-11 text-sm font-medium rounded-xl transition-all duration-200"
-      disabled={pending}
+      disabled={disabled}
     >
       {pending ? (
         <span className="flex items-center gap-2">
           <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
           Criando conta...
+        </span>
+      ) : !captchaReady ? (
+        <span className="flex items-center gap-2">
+          <span className="h-4 w-4 rounded-full border-2 border-primary/30 border-t-primary/60 animate-spin" />
+          Verificando...
         </span>
       ) : (
         "Criar conta grátis"
@@ -64,9 +70,13 @@ export function RegisterForm({ niches }: Props) {
   const [state, action] = useActionState(signUp, null);
   const [selectedNiche, setSelectedNiche] = useState<string>(state?.nicheId ?? "");
   const [turnstileKey, setTurnstileKey] = useState(0);
+  const [captchaReady, setCaptchaReady] = useState(false);
 
   useEffect(() => {
-    if (state?.error) setTurnstileKey((k) => k + 1);
+    if (state?.error) {
+      setCaptchaReady(false);
+      setTurnstileKey((k) => k + 1);
+    }
   }, [state?.error]);
 
   const parents = niches.filter((n) => !n.parent_id);
@@ -244,11 +254,17 @@ export function RegisterForm({ niches }: Props) {
             )}
 
             <motion.div variants={item} className="flex justify-center">
-              <Turnstile key={turnstileKey} siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} />
+              <Turnstile
+                key={turnstileKey}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                onSuccess={() => setCaptchaReady(true)}
+                onExpire={() => setCaptchaReady(false)}
+                onError={() => setCaptchaReady(false)}
+              />
             </motion.div>
 
             <motion.div variants={item}>
-              <SubmitButton />
+              <SubmitButton captchaReady={captchaReady} />
             </motion.div>
           </form>
 
