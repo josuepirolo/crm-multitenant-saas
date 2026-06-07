@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { motion } from "framer-motion";
 import { updatePassword } from "../actions";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, AlertCircle } from "lucide-react";
@@ -33,7 +34,7 @@ function SubmitButton() {
   );
 }
 
-export function UpdatePasswordForm() {
+export function UpdatePasswordForm({ mfaRequired }: { mfaRequired: boolean }) {
   const [state, action] = useActionState(updatePassword, null);
 
   return (
@@ -72,6 +73,25 @@ export function UpdatePasswordForm() {
               required
             />
           </motion.div>
+
+          {mfaRequired && (
+            <motion.div variants={item} className="space-y-2">
+              <Label htmlFor="mfaCode" className="text-sm font-medium">Código de verificação (2FA)</Label>
+              <Input
+                id="mfaCode"
+                name="mfaCode"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="000000"
+                className="h-11 rounded-xl border-border/60 text-center text-lg tracking-[0.5em] font-mono"
+              />
+              <p className="text-xs text-muted-foreground">
+                Sua conta tem verificação em duas etapas ativada — informe o código de 6 dígitos do seu app autenticador para confirmar a alteração.
+              </p>
+            </motion.div>
+          )}
 
           {state?.error && (
             <motion.div

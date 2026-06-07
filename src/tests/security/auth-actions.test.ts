@@ -58,6 +58,10 @@ vi.mock("@/lib/security/security-errors", () => ({
   RATE_LIMIT_ERROR: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
   CAPTCHA_ERROR: "Verificação de segurança falhou. Tente novamente.",
   isCaptchaError: (message: string) => message.toLowerCase().includes("captcha"),
+  SAME_PASSWORD_ERROR: "A nova senha deve ser diferente da senha atual.",
+  isSamePasswordError: (message: string) =>
+    message.toLowerCase().includes("different from the old password") ||
+    message.toLowerCase().includes("same_password"),
 }));
 vi.mock("@/lib/audit/audit-log", () => ({
   createAuditLog: mocks.createAuditLog,

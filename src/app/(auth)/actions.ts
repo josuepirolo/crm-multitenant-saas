@@ -8,7 +8,7 @@ import { uniqueSlug } from "@/lib/utils/slug";
 import { redirect } from "next/navigation";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/security/rate-limit";
 import { getClientIp, getUserAgent } from "@/lib/security/client-ip";
-import { RATE_LIMIT_ERROR, CAPTCHA_ERROR, isCaptchaError } from "@/lib/security/security-errors";
+import { RATE_LIMIT_ERROR, CAPTCHA_ERROR, isCaptchaError, SAME_PASSWORD_ERROR, isSamePasswordError } from "@/lib/security/security-errors";
 import {
   SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, SESSION_COOKIE_PROFILE,
   sessionCookieOptions, ADMIN_LIMITS, USER_LIMITS,
@@ -255,9 +255,44 @@ export async function updatePassword(_: unknown, formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const supabase = await createClient();
+
+  // GoTrue exige sessão AAL2 para alterar senha quando o usuário tem TOTP ativo —
+  // a sessão de recovery por e-mail é apenas AAL1 ("AAL2 session is required to
+  // update email or password when MFA is enabled"). Eleva a sessão verificando
+  // o código TOTP antes de chamar updateUser.
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  const totpFactor = factors?.totp?.[0];
+
+  if (totpFactor) {
+    const rawCode = formData.get("mfaCode") as string | null;
+    const code = rawCode?.replace(/\s/g, "");
+    if (!code || !/^\d{6}$/.test(code)) {
+      return { error: "Digite o código de 6 dígitos do seu app autenticador." };
+    }
+
+    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: totpFactor.id });
+    if (challengeError) {
+      console.error("[updatePassword] MFA challenge error:", challengeError.message, challengeError.status);
+      return { error: "Não foi possível iniciar a verificação 2FA. Tente novamente." };
+    }
+
+    const { error: verifyError } = await supabase.auth.mfa.verify({
+      factorId: totpFactor.id,
+      challengeId: challenge.id,
+      code,
+    });
+    if (verifyError) return { error: "Código incorreto. Tente novamente." };
+  }
+
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
 
-  if (error) return { error: "Não foi possível atualizar a senha. O link pode ter expirado." };
+  if (error) {
+    console.error("[updatePassword] Supabase error:", error.message, error.status);
+    if (isSamePasswordError(error.message)) {
+      return { error: SAME_PASSWORD_ERROR };
+    }
+    return { error: "Não foi possível atualizar a senha. O link pode ter expirado." };
+  }
 
   // Encerra a sessão de recovery — o AMR "recovery" persiste no JWT após updateUser,
   // causando redirect em loop. signOut limpa o cookie antes do redirect para login.

@@ -14,6 +14,19 @@ export function isCaptchaError(message: string): boolean {
   return message.toLowerCase().includes("captcha");
 }
 
+/** Generic message shown when the new password matches the current one. */
+export const SAME_PASSWORD_ERROR = "A nova senha deve ser diferente da senha atual.";
+
+/**
+ * Detects GoTrue's rejection of a password update where the new password is
+ * identical to the current one ("New password should be different from the
+ * old password" / código `same_password`).
+ */
+export function isSamePasswordError(message: string): boolean {
+  return message.toLowerCase().includes("different from the old password") ||
+    message.toLowerCase().includes("same_password");
+}
+
 /**
  * Logs the real error server-side and returns a safe, generic message to the client.
  * Use in every Server Action catch block to prevent stack traces and internal details

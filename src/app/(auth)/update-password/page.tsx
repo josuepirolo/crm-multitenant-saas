@@ -3,20 +3,27 @@ import { XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { UpdatePasswordForm } from "./UpdatePasswordForm";
 
-async function hasRecoverySession(): Promise<boolean> {
+async function getRecoveryContext(): Promise<{ isRecovery: boolean; mfaRequired: boolean }> {
   try {
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) return false;
+    if (!session?.access_token) return { isRecovery: false, mfaRequired: false };
+
     const payload = JSON.parse(atob(session.access_token.split(".")[1]));
-    return Array.isArray(payload.amr) && payload.amr.some((a: { method: string }) => a.method === "recovery");
+    const isRecovery = Array.isArray(payload.amr) && payload.amr.some((a: { method: string }) => a.method === "recovery");
+    if (!isRecovery) return { isRecovery: false, mfaRequired: false };
+
+    // GoTrue exige sessão AAL2 para alterar a senha quando o usuário tem TOTP
+    // ativo — a sessão de recovery por e-mail é apenas AAL1.
+    const { data: factors } = await supabase.auth.mfa.listFactors();
+    return { isRecovery: true, mfaRequired: !!factors?.totp?.length };
   } catch {
-    return false;
+    return { isRecovery: false, mfaRequired: false };
   }
 }
 
 export default async function UpdatePasswordPage() {
-  const isRecovery = await hasRecoverySession();
+  const { isRecovery, mfaRequired } = await getRecoveryContext();
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-muted px-4">
@@ -26,7 +33,7 @@ export default async function UpdatePasswordPage() {
       </div>
 
       {isRecovery ? (
-        <UpdatePasswordForm />
+        <UpdatePasswordForm mfaRequired={mfaRequired} />
       ) : (
         <div className="relative w-full max-w-[400px]">
           <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl shadow-xl shadow-black/[0.06] p-8 flex flex-col items-center gap-5 text-center">
