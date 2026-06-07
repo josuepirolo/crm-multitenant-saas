@@ -8,7 +8,7 @@ const CARDS = [
   { key: "total_workspaces", label: "Workspaces",  icon: Building2, color: "text-primary",   bg: "bg-primary/10"    },
   { key: "total_members",    label: "Usuários",     icon: Users,     color: "text-violet-500", bg: "bg-violet-500/10" },
   { key: "total_contacts",   label: "Contatos",     icon: UserCheck, color: "text-emerald-500",bg: "bg-emerald-500/10"},
-  { key: "total_deals",      label: "Negociações",  icon: Briefcase, color: "text-amber-500",  bg: "bg-amber-500/10"  },
+  { key: "total_deals",      label: "Negociações",  icon: Briefcase, color: "text-warning",  bg: "bg-warning/10"  },
 ] as const;
 
 function StatCardSkeleton() {

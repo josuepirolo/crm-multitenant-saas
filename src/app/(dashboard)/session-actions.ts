@@ -3,8 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import {
-  SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY,
-  USER_LIMITS, sessionCookieOptions, computeSessionExpiry, checkSessionExpiry,
+  SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, SESSION_COOKIE_PROFILE,
+  resolveSessionLimits, sessionCookieOptions, computeSessionExpiry, checkSessionExpiry,
 } from "@/lib/security/session-policy";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";
@@ -32,12 +32,13 @@ export async function refreshSession(): Promise<RefreshResult> {
   const store      = await cookies();
   const startedAt  = store.get(SESSION_COOKIE_STARTED)?.value;
   const activityAt = store.get(SESSION_COOKIE_ACTIVITY)?.value;
+  const limits     = resolveSessionLimits(store.get(SESSION_COOKIE_PROFILE)?.value);
 
   // Verifica se a sessão ainda está válida antes de renovar
-  const expired = checkSessionExpiry(startedAt, activityAt, USER_LIMITS);
+  const expired = checkSessionExpiry(startedAt, activityAt, limits);
   if (expired) return { ok: false, error: "Sessão já expirada." };
 
-  const expiry = computeSessionExpiry(startedAt, activityAt, USER_LIMITS);
+  const expiry = computeSessionExpiry(startedAt, activityAt, limits);
   if (!expiry.absoluteExpiresAt) return { ok: false, error: "Dados de sessão ausentes." };
 
   const now              = Date.now();
@@ -49,7 +50,7 @@ export async function refreshSession(): Promise<RefreshResult> {
   }
 
   // Novo expiry por inatividade — limitado pelo absoluto
-  const newInactivityWindowMs = Math.min(USER_LIMITS.inactivityMs, absoluteRemainsMs);
+  const newInactivityWindowMs = Math.min(limits.inactivityMs, absoluteRemainsMs);
   const newInactivityExpiresAt = now + newInactivityWindowMs;
 
   store.set(SESSION_COOKIE_ACTIVITY, String(now), sessionCookieOptions(absoluteRemainsMs));

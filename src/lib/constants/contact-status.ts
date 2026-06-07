@@ -9,7 +9,7 @@ export const CONTACT_STATUS_LABELS: Record<ContactStatus, string> = {
 
 export const CONTACT_STATUS_STYLES: Record<ContactStatus, string> = {
   lead:     "bg-primary/10 text-primary",
-  prospect: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  prospect: "bg-warning/10 text-warning",
   customer: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   churned:  "bg-muted text-muted-foreground",
 };

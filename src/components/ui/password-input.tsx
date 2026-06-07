@@ -53,7 +53,7 @@ export function PasswordInput({ className, inputClassName, ...props }: PasswordI
       </div>
 
       {capsLock && (
-        <p className="flex items-center gap-1.5 text-xs text-amber-500">
+        <p className="flex items-center gap-1.5 text-xs text-warning">
           <ALargeSmall size={13} />
           CapsLock ativado
         </p>

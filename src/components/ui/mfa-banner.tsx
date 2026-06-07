@@ -30,8 +30,8 @@ export function MfaBanner() {
   if (!show) return null;
 
   return (
-    <div className="flex items-center justify-between gap-3 bg-amber-500/10 border-b border-amber-500/20 px-5 py-2.5 shrink-0">
-      <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 font-medium">
+    <div className="flex items-center justify-between gap-3 bg-warning/10 border-b border-warning/20 px-5 py-2.5 shrink-0">
+      <div className="flex items-center gap-2 text-sm text-warning font-medium">
         <ShieldAlert size={15} className="shrink-0" />
         <span>
           Proteja sua conta com autenticação em 2 fatores.{" "}
@@ -45,7 +45,7 @@ export function MfaBanner() {
       </div>
       <button
         onClick={dismiss}
-        className="shrink-0 h-6 w-6 flex items-center justify-center rounded-md text-amber-600 hover:bg-amber-500/20 transition-colors"
+        className="shrink-0 h-6 w-6 flex items-center justify-center rounded-md text-warning hover:bg-warning/20 transition-colors"
         aria-label="Dispensar"
       >
         <X size={13} />

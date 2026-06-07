@@ -14,6 +14,14 @@
 export const SESSION_COOKIE_STARTED  = "session-started-at";
 export const SESSION_COOKIE_ACTIVITY = "session-activity-at";
 
+/**
+ * Marca qual perfil de limites se aplica à sessão ("admin" | "user").
+ * Gravado no login (signIn) — evita consultar workspace_members a cada
+ * requisição no middleware só para saber se a sessão é de admin/owner.
+ */
+export const SESSION_COOKIE_PROFILE = "session-profile";
+export type SessionProfile = "admin" | "user";
+
 export interface SessionLimits {
   inactivityMs: number;
   absoluteMs:   number;
@@ -28,6 +36,11 @@ export const USER_LIMITS: SessionLimits = {
   inactivityMs: 60 * 60 * 1000,   // 60 min
   absoluteMs:   12 * 60 * 60 * 1000, // 12h
 };
+
+/** Resolve os limites a aplicar a partir do valor gravado em SESSION_COOKIE_PROFILE. */
+export function resolveSessionLimits(profile: string | undefined): SessionLimits {
+  return profile === "admin" ? ADMIN_LIMITS : USER_LIMITS;
+}
 
 export type ExpiredReason = "inactivity" | "absolute" | null;
 

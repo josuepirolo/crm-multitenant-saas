@@ -10,7 +10,7 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 
 | Módulo | Status | Observação |
 |---|---|---|
-| Auth | IMPLEMENTADO | login, register, MFA, reset, Turnstile, session policy |
+| Auth | IMPLEMENTADO | login, register (auto-cadastro DESATIVADO via flag, código preservado), MFA, reset, Turnstile, session policy |
 | Contacts | IMPLEMENTADO | CRUD, filtros, paginação, multi-tenant, soft delete |
 | Kanban | IMPLEMENTADO | Board DnD (@dnd-kit), CRUD de deals, pipeline, otimista |
 | Settings | IMPLEMENTADO | workspace, membros, RBAC, MFA, nicho, upload |
@@ -44,6 +44,8 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 - WA backend: 27 tabelas wa_* provisionadas no mesmo Supabase
 - workspace_integrations: ponte CRM ↔ WA API via wa_tenant_id
 - Repositório GitHub: josuepirolo/crm-multitenant-saas (privado, dev/prod)
+- Auto-cadastro (`/register`) DESATIVADO via `SELF_REGISTRATION_ENABLED` em `src/lib/constants/feature-flags.ts` (decisão de produto, 2026-06-07) — página/form preservados, reverter trocando a flag para `true`
+- Captcha Turnstile: verificação acontece SOMENTE no Supabase Auth (GoTrue) via `captchaToken`; módulo próprio `src/lib/security/turnstile.ts` foi removido por causar dupla verificação (token single-use) — erro `captcha protection: request disallowed (timeout-or-duplicate)` corrigido em 2026-06-07
 
 ## Próximas ações disponíveis
 

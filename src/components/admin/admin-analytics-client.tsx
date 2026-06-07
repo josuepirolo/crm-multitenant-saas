@@ -158,7 +158,7 @@ export function AdminAnalyticsClient({ summaries }: Props) {
                         <TableCell className="text-xs text-muted-foreground">{relativeTime(u.last_access)}</TableCell>
                         <TableCell className="text-right text-sm">
                           {u.inactive_days !== null && u.inactive_days > 7
-                            ? <Badge variant="outline" className="text-xs text-amber-600 border-amber-400">{u.inactive_days}d</Badge>
+                            ? <Badge variant="outline" className="text-xs text-warning border-warning/40">{u.inactive_days}d</Badge>
                             : <span>{u.inactive_days ?? "—"}</span>
                           }
                         </TableCell>

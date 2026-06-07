@@ -43,7 +43,7 @@ export function FashionStockClient({ lowStock }: Props) {
               <TableCell>
                 {row.quantity === 0
                   ? <Badge variant="destructive" className="text-xs">Esgotado</Badge>
-                  : <Badge variant="outline" className="text-xs text-amber-600 border-amber-400">Baixo</Badge>
+                  : <Badge variant="outline" className="text-xs text-warning border-warning/40">Baixo</Badge>
                 }
               </TableCell>
             </TableRow>

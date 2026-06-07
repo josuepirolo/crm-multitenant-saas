@@ -3,9 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   SESSION_COOKIE_STARTED,
   SESSION_COOKIE_ACTIVITY,
-  ADMIN_LIMITS,
-  USER_LIMITS,
-  sessionCookieOptions,
+  SESSION_COOKIE_PROFILE,
+  resolveSessionLimits,
   checkSessionExpiry,
 } from "@/lib/security/session-policy";
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_SID_COOKIE } from "@/lib/audit/audit-log";
@@ -95,8 +94,9 @@ export async function updateSession(request: NextRequest) {
     // por um login em outro navegador/dispositivo.
     const startedAt  = request.cookies.get(SESSION_COOKIE_STARTED)?.value;
     const activityAt = request.cookies.get(SESSION_COOKIE_ACTIVITY)?.value;
+    const profile    = request.cookies.get(SESSION_COOKIE_PROFILE)?.value;
     const notExpiredYet = startedAt && activityAt &&
-      checkSessionExpiry(startedAt, activityAt, USER_LIMITS) === null;
+      checkSessionExpiry(startedAt, activityAt, resolveSessionLimits(profile)) === null;
 
     if (notExpiredYet) {
       url.searchParams.set("reason", "session_replaced");
@@ -105,6 +105,7 @@ export async function updateSession(request: NextRequest) {
     const redirectRes = NextResponse.redirect(url);
     redirectRes.cookies.delete(SESSION_COOKIE_STARTED);
     redirectRes.cookies.delete(SESSION_COOKIE_ACTIVITY);
+    redirectRes.cookies.delete(SESSION_COOKIE_PROFILE);
     return redirectRes;
   }
 
@@ -112,10 +113,11 @@ export async function updateSession(request: NextRequest) {
   if (user && !isPublicAuthRoute) {
     const startedAt  = request.cookies.get(SESSION_COOKIE_STARTED)?.value;
     const activityAt = request.cookies.get(SESSION_COOKIE_ACTIVITY)?.value;
+    const profile    = request.cookies.get(SESSION_COOKIE_PROFILE)?.value;
 
-    // Usa USER_LIMITS por padrão (mais conservador).
-    // Admins têm ADMIN_LIMITS aplicados via cookie setado no signIn.
-    const limits = USER_LIMITS;
+    // Perfil (admin/user) gravado no login — define qual SessionLimits aplicar
+    // sem precisar consultar workspace_members a cada requisição.
+    const limits = resolveSessionLimits(profile);
     const expiredReason = checkSessionExpiry(startedAt, activityAt, limits);
 
     if (expiredReason) {
@@ -143,6 +145,7 @@ export async function updateSession(request: NextRequest) {
       const redirectResponse = NextResponse.redirect(url);
       redirectResponse.cookies.delete(SESSION_COOKIE_STARTED);
       redirectResponse.cookies.delete(SESSION_COOKIE_ACTIVITY);
+      redirectResponse.cookies.delete(SESSION_COOKIE_PROFILE);
       return redirectResponse;
     }
 

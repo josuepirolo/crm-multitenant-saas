@@ -35,7 +35,6 @@ const mocks = vi.hoisted(() => {
     }),
     workspaceCreate: vi.fn().mockResolvedValue({ id: "ws-1" }),
     checkRateLimit: vi.fn().mockReturnValue(true),
-    validateTurnstile: vi.fn().mockResolvedValue(true),
     getClientIp: vi.fn().mockResolvedValue("127.0.0.1"),
     getUserAgent: vi.fn().mockResolvedValue("vitest"),
     createAuditLog: vi.fn().mockResolvedValue(undefined),
@@ -51,15 +50,14 @@ vi.mock("@/lib/security/rate-limit", () => ({
   checkRateLimit: mocks.checkRateLimit,
   RATE_LIMITS: { login: {}, register: {}, forgotPassword: {}, updatePassword: {} },
 }));
-vi.mock("@/lib/security/turnstile", () => ({
-  validateTurnstile: mocks.validateTurnstile,
-}));
 vi.mock("@/lib/security/client-ip", () => ({
   getClientIp: mocks.getClientIp,
   getUserAgent: mocks.getUserAgent,
 }));
 vi.mock("@/lib/security/security-errors", () => ({
   RATE_LIMIT_ERROR: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+  CAPTCHA_ERROR: "Verificação de segurança falhou. Tente novamente.",
+  isCaptchaError: (message: string) => message.toLowerCase().includes("captcha"),
 }));
 vi.mock("@/lib/audit/audit-log", () => ({
   createAuditLog: mocks.createAuditLog,
@@ -110,7 +108,6 @@ beforeEach(() => {
     throw Object.assign(new Error("NEXT_REDIRECT"), { digest: `NEXT_REDIRECT;${url}` });
   });
   mocks.checkRateLimit.mockReturnValue(true);
-  mocks.validateTurnstile.mockResolvedValue(true);
   mocks.getClientIp.mockResolvedValue("127.0.0.1");
   mocks.getUserAgent.mockResolvedValue("vitest");
   mocks.createAuditLog.mockResolvedValue(undefined);
@@ -177,6 +174,7 @@ describe("signUp — adminClient usado APENAS para criar workspace", () => {
       await signUp(null, fd({
         name: "Maria",
         workspaceName: "Empresa B",
+        nicheId: "00000000-0000-0000-0000-000000000000",
         email: "maria@b.com",
         password: "Abc123!@#",
         confirmPassword: "Abc123!@#",
@@ -200,6 +198,7 @@ describe("signUp — adminClient usado APENAS para criar workspace", () => {
     const result = await signUp(null, fd({
       name: "Test",
       workspaceName: "WS",
+      nicheId: "00000000-0000-0000-0000-000000000000",
       email: "dup@b.com",
       password: "Abc123!@#",
       confirmPassword: "Abc123!@#",
@@ -416,38 +415,69 @@ describe("signIn — auditoria", () => {
   });
 });
 
-// ─── Turnstile — captcha bloqueante ──────────────────────────────────────────
+// ─── Turnstile — captcha verificado pelo Supabase Auth (GoTrue) ──────────────
+//
+// O token do Turnstile é single-use: quem o verifica primeiro o consome.
+// Por isso a verificação acontece uma única vez — dentro do próprio Supabase
+// Auth (via `captchaToken` nas chamadas) — e as Server Actions apenas traduzem
+// a resposta de falha de captcha do GoTrue ("captcha protection: request
+// disallowed (...)") numa mensagem amigável, sem vazar o detalhe interno.
 
-describe("signIn — captcha inválido bloqueia antes de qualquer chamada", () => {
-  it("retorna erro genérico quando captcha inválido", async () => {
-    mocks.validateTurnstile.mockResolvedValue(false);
+describe("signIn — falha de captcha do Supabase vira mensagem amigável", () => {
+  it("traduz erro de captcha do Supabase sem vazar detalhe interno", async () => {
+    mocks.mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      error: { message: "captcha protection: request disallowed (timeout-or-duplicate)" },
+    });
 
     const result = await signIn(null, fd({ email: "a@b.com", password: "Abc123!" }));
 
     expect((result as { error: string }).error).toBe("Verificação de segurança falhou. Tente novamente.");
+    expect((result as { error: string }).error).not.toContain("captcha protection");
   });
 
-  it("não chama Supabase quando captcha inválido", async () => {
-    mocks.validateTurnstile.mockResolvedValue(false);
+  it("não registra LOGIN_FAILURE quando o erro é de captcha (não é tentativa de credencial)", async () => {
+    mocks.mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      error: { message: "captcha protection: request disallowed (timeout-or-duplicate)" },
+    });
 
     await signIn(null, fd({ email: "a@b.com", password: "Abc123!" }));
 
-    expect(mocks.mockSupabase.auth.signInWithPassword).not.toHaveBeenCalled();
+    expect(mocks.createAuditLog).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: "login_failure" })
+    );
   });
+});
 
-  it("não chama rate limit quando captcha inválido", async () => {
-    mocks.validateTurnstile.mockResolvedValue(false);
+describe("signUp — falha de captcha do Supabase vira mensagem amigável", () => {
+  it("traduz erro de captcha do Supabase sem vazar detalhe interno", async () => {
+    mocks.mockSupabase.auth.signUp.mockResolvedValue({
+      error: { message: "captcha protection: request disallowed (timeout-or-duplicate)" },
+      data: {},
+    });
 
-    await signIn(null, fd({ email: "a@b.com", password: "Abc123!" }));
+    const result = await signUp(null, fd({
+      name: "Test",
+      workspaceName: "WS",
+      nicheId: "00000000-0000-0000-0000-000000000000",
+      email: "test@b.com",
+      password: "Abc123!@#",
+      confirmPassword: "Abc123!@#",
+    }));
 
-    expect(mocks.checkRateLimit).not.toHaveBeenCalled();
+    expect((result as { error: string }).error).toBe("Verificação de segurança falhou. Tente novamente.");
+    expect((result as { error: string }).error).not.toContain("captcha protection");
   });
+});
 
-  it("não registra audit log quando captcha inválido", async () => {
-    mocks.validateTurnstile.mockResolvedValue(false);
+describe("requestPasswordReset — falha de captcha do Supabase vira mensagem amigável", () => {
+  it("traduz erro de captcha do Supabase sem vazar detalhe interno", async () => {
+    mocks.mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({
+      error: { message: "captcha protection: request disallowed (timeout-or-duplicate)" },
+    });
 
-    await signIn(null, fd({ email: "a@b.com", password: "Abc123!" }));
+    const result = await requestPasswordReset(null, fd({ email: "a@b.com" }));
 
-    expect(mocks.createAuditLog).not.toHaveBeenCalled();
+    expect((result as { error: string }).error).toBe("Verificação de segurança falhou. Tente novamente.");
+    expect((result as { error: string }).error).not.toContain("captcha protection");
   });
 });

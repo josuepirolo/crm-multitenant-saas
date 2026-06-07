@@ -17,7 +17,7 @@
 
 ## 🤖 Anti-bot / abuso
 
-- [x] Challenge ativo (Cloudflare Turnstile) — `src/lib/security/turnstile.ts`  
+- [x] Challenge ativo (Cloudflare Turnstile) — verificação única feita pelo Supabase Auth (GoTrue) via `captchaToken` em `src/app/(auth)/actions.ts`; falhas traduzidas por `isCaptchaError`/`CAPTCHA_ERROR` em `src/lib/security/security-errors.ts`  
 - [x] Proteção aplicada em:
   - [x] Login  
   - [x] Registro  

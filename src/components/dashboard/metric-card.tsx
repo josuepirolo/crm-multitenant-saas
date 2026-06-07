@@ -13,7 +13,7 @@ interface MetricCardProps {
 const accents = {
   primary: "bg-primary/10 text-primary",
   green:   "bg-emerald-500/10 text-emerald-500",
-  amber:   "bg-amber-500/10 text-amber-500",
+  amber:   "bg-warning/10 text-warning",
   purple:  "bg-violet-500/10 text-violet-500",
 };
 

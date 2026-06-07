@@ -51,13 +51,13 @@ export default function MfaSetupPage() {
       <div className="w-full max-w-md space-y-5">
 
         {/* Banner de obrigatoriedade */}
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/8 p-4">
-          <ShieldAlert size={18} className="text-amber-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/8 p-4">
+          <ShieldAlert size={18} className="text-warning shrink-0 mt-0.5" />
           <div className="space-y-0.5">
-            <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+            <p className="text-sm font-semibold text-warning">
               Verificação em 2 etapas obrigatória
             </p>
-            <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
+            <p className="text-xs text-warning/80">
               Como administrador, você tem acesso a dados de toda a equipe e do workspace. O 2FA é exigido para proteger todos os membros.
             </p>
           </div>

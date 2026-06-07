@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { AUDIT_SID_COOKIE, createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
-import { SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY } from "@/lib/security/session-policy";
+import { SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, SESSION_COOKIE_PROFILE } from "@/lib/security/session-policy";
 import { getClientIp, getUserAgent } from "@/lib/security/client-ip";
 import { getCachedUser } from "@/lib/supabase/cached-auth";
 
@@ -28,6 +28,7 @@ export async function signOut() {
   cookieStore.delete(AUDIT_SID_COOKIE);
   cookieStore.delete(SESSION_COOKIE_STARTED);
   cookieStore.delete(SESSION_COOKIE_ACTIVITY);
+  cookieStore.delete(SESSION_COOKIE_PROFILE);
   redirect("/login");
 }
 

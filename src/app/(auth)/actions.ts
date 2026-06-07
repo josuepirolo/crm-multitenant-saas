@@ -8,20 +8,17 @@ import { uniqueSlug } from "@/lib/utils/slug";
 import { redirect } from "next/navigation";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/security/rate-limit";
 import { getClientIp, getUserAgent } from "@/lib/security/client-ip";
-import { RATE_LIMIT_ERROR } from "@/lib/security/security-errors";
+import { RATE_LIMIT_ERROR, CAPTCHA_ERROR, isCaptchaError } from "@/lib/security/security-errors";
 import {
-  SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, sessionCookieOptions, ADMIN_LIMITS, USER_LIMITS,
+  SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, SESSION_COOKIE_PROFILE,
+  sessionCookieOptions, ADMIN_LIMITS, USER_LIMITS,
 } from "@/lib/security/session-policy";
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_SID_COOKIE } from "@/lib/audit/audit-log";
-import { validateTurnstile } from "@/lib/security/turnstile";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
 
 export async function signIn(_: unknown, formData: FormData) {
   const captchaToken = formData.get("cf-turnstile-response") as string | null;
-  if (!await validateTurnstile(captchaToken)) {
-    return { error: "Verificação de segurança falhou. Tente novamente." };
-  }
 
   const ip = await getClientIp();
   if (!await checkRateLimit(`login:ip:${ip}`, RATE_LIMITS.login)) {
@@ -51,6 +48,9 @@ export async function signIn(_: unknown, formData: FormData) {
   });
 
   if (error) {
+    if (isCaptchaError(error.message)) {
+      return { error: CAPTCHA_ERROR, email: parsed.data.email };
+    }
     await createAuditLog({ action: AUDIT_ACTIONS.LOGIN_FAILURE, ip_address: ip });
     if (error.message.toLowerCase().includes("email not confirmed")) {
       return { error: "Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.", email: parsed.data.email };
@@ -74,8 +74,10 @@ export async function signIn(_: unknown, formData: FormData) {
     maxAge: 60 * 60 * 24 * 7,
   });
 
-  // Verifica se admin/owner sem 2FA → seta flag de setup obrigatório
+  // Verifica role do usuário — define tanto a obrigatoriedade de MFA quanto
+  // o perfil de limites de sessão (admin/owner recebe política mais restritiva).
   const userId = authData.user?.id;
+  let isAdmin = false;
   if (userId) {
     const [memberResult, factorsResult] = await Promise.all([
       supabase
@@ -88,7 +90,7 @@ export async function signIn(_: unknown, formData: FormData) {
       supabase.auth.mfa.listFactors(),
     ]);
     const role     = memberResult.data?.role;
-    const isAdmin  = role === "owner" || role === "admin";
+    isAdmin        = role === "owner" || role === "admin";
     const enrolled = factorsResult.data?.totp?.some((f: { status: string }) => f.status === "verified") ?? false;
     if (isAdmin && !enrolled) {
       cookieStore.set("require-mfa-setup", "1", {
@@ -102,11 +104,14 @@ export async function signIn(_: unknown, formData: FormData) {
   }
 
   // Seta cookies de controle de expiração de sessão (server-side, nunca confia no client)
-  // Usa USER_LIMITS (12h absoluto) — o middleware checa inatividade por role
-  const limits = USER_LIMITS;
+  // Admin/owner: 15min inatividade / 4h absoluto. Demais: 60min / 12h (ver session-policy.ts).
+  // O perfil é gravado em cookie próprio (SESSION_COOKIE_PROFILE) para que o middleware
+  // reaplique os mesmos limites sem precisar consultar workspace_members a cada requisição.
+  const limits = isAdmin ? ADMIN_LIMITS : USER_LIMITS;
   const now = String(Date.now());
   cookieStore.set(SESSION_COOKIE_STARTED,  now, sessionCookieOptions(limits.absoluteMs));
   cookieStore.set(SESSION_COOKIE_ACTIVITY, now, sessionCookieOptions(limits.absoluteMs));
+  cookieStore.set(SESSION_COOKIE_PROFILE,  isAdmin ? "admin" : "user", sessionCookieOptions(limits.absoluteMs));
 
   await createAuditLog({
     action:     AUDIT_ACTIONS.LOGIN_SUCCESS,
@@ -120,9 +125,6 @@ export async function signIn(_: unknown, formData: FormData) {
 
 export async function signUp(_: unknown, formData: FormData) {
   const captchaToken = formData.get("cf-turnstile-response") as string | null;
-  if (!await validateTurnstile(captchaToken)) {
-    return { error: "Verificação de segurança falhou. Tente novamente." };
-  }
 
   const ip = await getClientIp();
   if (!await checkRateLimit(`register:ip:${ip}`, RATE_LIMITS.register)) {
@@ -155,10 +157,13 @@ export async function signUp(_: unknown, formData: FormData) {
   });
 
   if (authError) {
+    if (isCaptchaError(authError.message)) {
+      return { error: CAPTCHA_ERROR, email: parsed.data.email, name: parsed.data.name, workspaceName: parsed.data.workspaceName, nicheId: parsed.data.nicheId };
+    }
     if (authError.message.toLowerCase().includes("already registered")) {
       return { error: "Este e-mail já está cadastrado.", email: parsed.data.email, name: parsed.data.name, workspaceName: parsed.data.workspaceName, nicheId: parsed.data.nicheId };
     }
-    return { error: authError.message, email: parsed.data.email, name: parsed.data.name, workspaceName: parsed.data.workspaceName, nicheId: parsed.data.nicheId };
+    return { error: "Não foi possível criar sua conta. Tente novamente.", email: parsed.data.email, name: parsed.data.name, workspaceName: parsed.data.workspaceName, nicheId: parsed.data.nicheId };
   }
 
   if (!authData.user) {
@@ -198,9 +203,6 @@ export async function signUp(_: unknown, formData: FormData) {
 
 export async function requestPasswordReset(_: unknown, formData: FormData) {
   const captchaToken = formData.get("cf-turnstile-response") as string | null;
-  if (!await validateTurnstile(captchaToken)) {
-    return { error: "Verificação de segurança falhou. Tente novamente." };
-  }
 
   const ip = await getClientIp();
   if (!await checkRateLimit(`forgot:ip:${ip}`, RATE_LIMITS.forgotPassword)) {
@@ -223,6 +225,9 @@ export async function requestPasswordReset(_: unknown, formData: FormData) {
   });
 
   if (error) {
+    if (isCaptchaError(error.message)) {
+      return { error: CAPTCHA_ERROR, email: parsed.data.email };
+    }
     console.error("[requestPasswordReset] Supabase error:", error.message, error.status);
     const isRateLimit = error.status === 429 || error.message.toLowerCase().includes("security purposes") || error.message.toLowerCase().includes("rate limit");
     return {

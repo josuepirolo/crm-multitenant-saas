@@ -112,7 +112,7 @@ export function SessionTimer({
             "fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur-sm transition-all duration-300",
             isUrgent
               ? "border-destructive/30 bg-destructive/10 text-destructive"
-              : "border-amber-500/30 bg-amber-500/8 text-amber-700 dark:text-amber-400"
+              : "border-warning/30 bg-warning/8 text-warning"
           )}
         >
           {/* Mini gauge circular */}
@@ -144,13 +144,13 @@ export function SessionTimer({
             <div className="text-center space-y-3">
               <div className="flex justify-center">
                 <div className="relative">
-                  <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-                    <Clock size={26} className="text-amber-600" />
+                  <div className="h-14 w-14 rounded-2xl bg-warning/10 flex items-center justify-center">
+                    <Clock size={26} className="text-warning" />
                   </div>
                   {/* Badge de tempo urgente */}
                   <span className={cn(
                     "absolute -top-1 -right-1 min-w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-bold text-white px-1",
-                    remaining <= 60_000 ? "bg-destructive" : "bg-amber-500"
+                    remaining <= 60_000 ? "bg-destructive" : "bg-warning"
                   )}>
                     {formatTime(remaining)}
                   </span>
@@ -170,7 +170,7 @@ export function SessionTimer({
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-1000",
-                  remaining <= 60_000 ? "bg-destructive" : "bg-amber-500"
+                  remaining <= 60_000 ? "bg-destructive" : "bg-warning"
                 )}
                 style={{ width: `${pct}%` }}
               />

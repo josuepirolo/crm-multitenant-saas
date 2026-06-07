@@ -7,7 +7,8 @@ import { MfaBanner } from "@/components/ui/mfa-banner";
 import { SessionTimer } from "@/components/ui/session-timer";
 import { NicheSetupWall } from "@/components/dashboard/niche-setup-wall";
 import {
-  SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, USER_LIMITS, computeSessionExpiry,
+  SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, SESSION_COOKIE_PROFILE,
+  resolveSessionLimits, computeSessionExpiry,
 } from "@/lib/security/session-policy";
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getNicheThemeClass } from "@/lib/themes/niche-themes";
@@ -99,7 +100,7 @@ export default async function DashboardLayout({
   const sessionExpiry = computeSessionExpiry(
     cookieStore.get(SESSION_COOKIE_STARTED)?.value,
     cookieStore.get(SESSION_COOKIE_ACTIVITY)?.value,
-    USER_LIMITS,
+    resolveSessionLimits(cookieStore.get(SESSION_COOKIE_PROFILE)?.value),
   );
 
   const currentWorkspace = workspaces.find(w => w.id === currentWorkspaceId);

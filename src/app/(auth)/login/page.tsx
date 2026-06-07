@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, AlertCircle, MailCheck } from "lucide-react";
 import dynamic from "next/dynamic";
 import { appleEase } from "@/components/ui/motion";
+import { SELF_REGISTRATION_ENABLED } from "@/lib/constants/feature-flags";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((m) => m.Turnstile),
@@ -43,7 +44,7 @@ function SubmitButton({ captchaReady }: { captchaReady: boolean }) {
     >
       {pending ? (
         <span className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+          <span className="h-4 w-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
           Entrando...
         </span>
       ) : !captchaReady ? (
@@ -63,6 +64,7 @@ export default function LoginPage() {
   const [turnstileKey, setTurnstileKey] = useState(0);
   const [captchaReady, setCaptchaReady] = useState(false);
   const searchParams = useSearchParams();
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
     if (state?.error) {
@@ -101,7 +103,7 @@ export default function LoginPage() {
 
           <motion.div variants={item} className="flex flex-col items-center gap-3 mb-8">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30">
-              <MessageSquare size={26} className="text-white" />
+              <MessageSquare size={26} className="text-primary-foreground" />
             </div>
             <div className="text-center">
               <h1 className="text-2xl font-bold tracking-tight text-foreground">CRM Vendas</h1>
@@ -114,10 +116,12 @@ export default function LoginPage() {
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2, ease: appleEase }}
-              className="flex items-center gap-2.5 rounded-xl bg-amber-500/8 border border-amber-500/20 px-4 py-3 mb-6"
+              role="status"
+              aria-live="polite"
+              className="flex items-center gap-2.5 rounded-xl bg-warning/8 border border-warning/20 px-4 py-3 mb-6"
             >
-              <AlertCircle size={15} className="shrink-0 text-amber-600" />
-              <p className="text-sm text-amber-700 dark:text-amber-400">{reasonMsg}</p>
+              <AlertCircle size={15} className="shrink-0 text-warning" />
+              <p className="text-sm text-warning">{reasonMsg}</p>
             </motion.div>
           )}
 
@@ -126,6 +130,8 @@ export default function LoginPage() {
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2, ease: appleEase }}
+              role="status"
+              aria-live="polite"
               className="flex items-center gap-2.5 rounded-xl bg-primary/8 border border-primary/20 px-4 py-3 mb-6"
             >
               <MailCheck size={15} className="shrink-0 text-primary" />
@@ -138,6 +144,8 @@ export default function LoginPage() {
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2, ease: appleEase }}
+              role="status"
+              aria-live="polite"
               className="flex items-center gap-2.5 rounded-xl bg-primary/8 border border-primary/20 px-4 py-3 mb-6"
             >
               <MailCheck size={15} className="shrink-0 text-primary" />
@@ -185,6 +193,8 @@ export default function LoginPage() {
                 initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.2, ease: appleEase }}
+                role="alert"
+                aria-live="assertive"
                 className="flex items-center gap-2.5 rounded-xl bg-destructive/8 border border-destructive/20 px-4 py-3"
               >
                 <AlertCircle size={15} className="shrink-0 text-destructive" />
@@ -193,28 +203,36 @@ export default function LoginPage() {
             )}
 
             <motion.div variants={item} className="flex justify-center">
-              <Turnstile
-                key={turnstileKey}
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-                onSuccess={() => setCaptchaReady(true)}
-                onExpire={() => setCaptchaReady(false)}
-                onError={() => setCaptchaReady(false)}
-              />
+              {turnstileSiteKey ? (
+                <Turnstile
+                  key={turnstileKey}
+                  siteKey={turnstileSiteKey}
+                  onSuccess={() => setCaptchaReady(true)}
+                  onExpire={() => setCaptchaReady(false)}
+                  onError={() => setCaptchaReady(false)}
+                />
+              ) : (
+                <p role="alert" className="text-xs text-destructive text-center">
+                  Verificação de segurança indisponível no momento. Tente novamente mais tarde.
+                </p>
+              )}
             </motion.div>
 
             <motion.div variants={item}>
-              <SubmitButton captchaReady={captchaReady} />
+              <SubmitButton captchaReady={captchaReady || !turnstileSiteKey} />
             </motion.div>
           </form>
 
-          <motion.div variants={item} className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Não tem uma conta?{" "}
-              <Link href="/register" className="font-medium text-primary hover:text-primary/80 transition-colors duration-150">
-                Criar conta
-              </Link>
-            </p>
-          </motion.div>
+          {SELF_REGISTRATION_ENABLED && (
+            <motion.div variants={item} className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Não tem uma conta?{" "}
+                <Link href="/register" className="font-medium text-primary hover:text-primary/80 transition-colors duration-150">
+                  Criar conta
+                </Link>
+              </p>
+            </motion.div>
+          )}
         </div>
 
         <motion.p variants={item} className="mt-6 text-center text-xs text-muted-foreground/60">
