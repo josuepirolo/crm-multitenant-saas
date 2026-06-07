@@ -280,3 +280,8 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-07 22:55 | `C:/Projetos/CRM WhatsApp/src/app/(auth)/update-password/page.tsx` |
 | 2026-06-07 22:55 | `C:/Projetos/CRM WhatsApp/src/app/(auth)/update-password/UpdatePasswordForm.tsx` |
 | 2026-06-07 22:56 | `C:/Projetos/CRM WhatsApp/src/app/(auth)/actions.ts` |
+| 2026-06-07 23:02 | `src/app/(auth)/actions.ts` |
+| 2026-06-07 23:02 | `src/app/(auth)/update-password/UpdatePasswordForm.tsx` |
+| 2026-06-07 23:02 | `src/app/(auth)/update-password/page.tsx` |
+| 2026-06-07 23:02 | `src/lib/security/security-errors.ts` |
+| 2026-06-07 23:02 | `src/tests/security/auth-actions.test.ts` |
