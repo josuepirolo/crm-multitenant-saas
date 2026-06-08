@@ -287,3 +287,5 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-07 23:02 | `src/tests/security/auth-actions.test.ts` |
 | 2026-06-08 02:43 | `C:/Projetos/CRM WhatsApp/src/lib/workspace-context.ts` |
 | 2026-06-08 03:03 | `C:/Projetos/CRM WhatsApp/supabase/migrations/20260608120000_restore_business_niches.sql` |
+| 2026-06-08 10:21 | `src/lib/workspace-context.ts` |
+| 2026-06-08 10:21 | `supabase/migrations/20260608120000_restore_business_niches.sql` |
