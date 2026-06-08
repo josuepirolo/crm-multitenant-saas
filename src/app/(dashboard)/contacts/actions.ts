@@ -2,16 +2,22 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { SupabaseContactRepository } from "@/repositories/contact.repository";
+import { SupabaseContactSourceRepository } from "@/repositories/contact-source.repository";
 import { SupabaseWorkspaceMemberRepository } from "@/repositories/member.repository";
 import {
   GetContactsUseCase, CreateContactUseCase, UpdateContactUseCase, SoftDeleteContactUseCase,
   AssignContactUseCase, GrantContactAccessUseCase, RevokeContactAccessUseCase, ListContactAccessUseCase,
 } from "@/usecases/ContactUseCases";
+import {
+  ListContactSourcesUseCase, CreateContactSourceUseCase, RenameContactSourceUseCase, SetContactSourceActiveUseCase,
+} from "@/usecases/ContactSourceUseCases";
 import { getWorkspaceContext, getCurrentWorkspaceId } from "@/lib/guards";
 import { getUserRole } from "@/lib/user-role";
 import { getCachedUser } from "@/lib/supabase/cached-auth";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
+import { getClientIp } from "@/lib/security/client-ip";
 import { revalidatePath } from "next/cache";
-import { contactSchema, toDigits, validateCPF, validateCNPJ } from "@/lib/validations/contact";
+import { contactSchema, contactSourceSchema, toDigits, validateCPF, validateCNPJ } from "@/lib/validations/contact";
 import type { ContactFilters } from "@/repositories/contact.repository";
 import type { MemberRole } from "@/types";
 
@@ -212,6 +218,100 @@ export async function getWorkspaceMembersForContacts() {
     return { error: undefined, data };
   } catch {
     return { error: "Erro ao buscar membros.", data: [] };
+  }
+}
+
+// ─── origens de contato ──────────────────────────────────────────────────────
+
+export async function listContactSources(options?: { onlyActive?: boolean }) {
+  const ctx = await getWorkspaceContext("contacts", "view");
+  if ("error" in ctx) return { error: ctx.error, data: [] };
+
+  try {
+    const supabase = await createClient();
+    const data = await new ListContactSourcesUseCase(new SupabaseContactSourceRepository(supabase))
+      .execute(ctx.workspaceId, options);
+    return { error: undefined, data };
+  } catch {
+    return { error: "Erro ao buscar origens.", data: [] };
+  }
+}
+
+export async function createContactSource(_: unknown, formData: FormData) {
+  const ctx = await requireManagerContext();
+  if ("error" in ctx) return ctx;
+
+  const parsed = contactSourceSchema.safeParse({ name: (formData.get("name") as string)?.trim() });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  try {
+    const supabase = await createClient();
+    const source = await new CreateContactSourceUseCase(new SupabaseContactSourceRepository(supabase))
+      .execute({ workspace_id: ctx.workspaceId, name: parsed.data.name });
+    await createAuditLog({
+      action:       AUDIT_ACTIONS.CONTACT_SOURCE_CREATED,
+      workspace_id: ctx.workspaceId,
+      user_id:      ctx.userId,
+      entity_type:  "contact_source",
+      entity_id:    source.id,
+      ip_address:   await getClientIp(),
+      metadata:     { name: source.name },
+    });
+    revalidatePath("/contacts");
+    return { error: undefined, source };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Erro ao criar origem. Tente novamente." };
+  }
+}
+
+export async function renameContactSource(id: string, name: string) {
+  const ctx = await requireManagerContext();
+  if ("error" in ctx) return ctx;
+
+  const parsed = contactSourceSchema.safeParse({ name: name?.trim() });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  try {
+    const supabase = await createClient();
+    const source = await new RenameContactSourceUseCase(new SupabaseContactSourceRepository(supabase))
+      .execute(ctx.workspaceId, id, parsed.data.name);
+    await createAuditLog({
+      action:       AUDIT_ACTIONS.CONTACT_SOURCE_RENAMED,
+      workspace_id: ctx.workspaceId,
+      user_id:      ctx.userId,
+      entity_type:  "contact_source",
+      entity_id:    source.id,
+      ip_address:   await getClientIp(),
+      metadata:     { name: source.name },
+    });
+    revalidatePath("/contacts");
+    return { error: undefined, source };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Erro ao renomear origem. Tente novamente." };
+  }
+}
+
+export async function setContactSourceActive(id: string, isActive: boolean) {
+  const ctx = await requireManagerContext();
+  if ("error" in ctx) return ctx;
+
+  try {
+    const supabase = await createClient();
+    const source = await new SetContactSourceActiveUseCase(new SupabaseContactSourceRepository(supabase))
+      .execute(ctx.workspaceId, id, isActive);
+    await createAuditLog({
+      action:       AUDIT_ACTIONS.CONTACT_SOURCE_TOGGLED,
+      workspace_id: ctx.workspaceId,
+      user_id:      ctx.userId,
+      entity_type:  "contact_source",
+      entity_id:    source.id,
+      ip_address:   await getClientIp(),
+      metadata:     { name: source.name, is_active: source.is_active },
+    });
+    revalidatePath("/contacts");
+    return { error: undefined, source };
+  } catch {
+    return { error: "Erro ao atualizar origem." };
   }
 }
 

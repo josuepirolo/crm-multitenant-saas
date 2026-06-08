@@ -13,6 +13,7 @@ export interface CreateContactDTO {
   status?: ContactStatus;
   notes?: string;
   assigned_to?: string | null;
+  source_id?: string | null;
   created_by?: string;
 }
 
@@ -25,6 +26,7 @@ export interface UpdateContactDTO {
   status?: ContactStatus;
   notes?: string;
   assigned_to?: string | null;
+  source_id?: string | null;
 }
 
 export interface ContactFilters {
@@ -112,6 +114,7 @@ export class SupabaseContactRepository implements IContactRepository {
         status: data.status ?? "lead",
         notes: data.notes || null,
         assigned_to: data.assigned_to || null,
+        source_id: data.source_id || null,
         created_by: data.created_by || null,
       })
       .select()
@@ -132,6 +135,7 @@ export class SupabaseContactRepository implements IContactRepository {
         ...(data.status !== undefined && { status: data.status }),
         ...(data.notes !== undefined && { notes: data.notes || null }),
         ...("assigned_to" in data && { assigned_to: data.assigned_to ?? null }),
+        ...("source_id" in data && { source_id: data.source_id ?? null }),
       })
       .eq("workspace_id", workspaceId)
       .eq("id", id)

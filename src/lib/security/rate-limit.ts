@@ -6,10 +6,11 @@ export interface RateLimitConfig {
 }
 
 export const RATE_LIMITS = {
-  login:          { windowMs: 15 * 60_000, max: 5 },
-  register:       { windowMs: 60 * 60_000, max: 5 },
-  forgotPassword: { windowMs: 60 * 60_000, max: 3 },
-  updatePassword: { windowMs: 15 * 60_000, max: 5 },
+  login:              { windowMs: 15 * 60_000, max: 5 },
+  register:           { windowMs: 60 * 60_000, max: 5 },
+  forgotPassword:     { windowMs: 60 * 60_000, max: 3 },
+  updatePassword:     { windowMs: 15 * 60_000, max: 5 },
+  contactsBulkImport: { windowMs: 60 * 60_000, max: 5 },
 } satisfies Record<string, RateLimitConfig>;
 
 /** Returns true when the request is allowed, false when blocked. */

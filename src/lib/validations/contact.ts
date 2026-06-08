@@ -63,11 +63,12 @@ export const contactSchema = z.object({
   name:       z.string().min(2, "Mínimo 2 caracteres"),
   personType: z.enum(["fisica", "juridica"]),
   document:   z.string().optional().or(z.literal("")),
-  phone:      z.string().optional().or(z.literal("")),
+  phone:      z.string().min(1, "Celular é obrigatório"),
   email:      z.string().email("E-mail inválido").optional().or(z.literal("")),
   company:    z.string().optional(),
   status:     z.enum(["lead", "prospect", "customer", "churned"]),
   notes:      z.string().optional(),
+  source_id:  z.string().optional().or(z.literal("")),
 }).superRefine((data, ctx) => {
   const doc = toDigits(data.document ?? "");
   if (doc) {
@@ -80,9 +81,15 @@ export const contactSchema = z.object({
   }
   // Telefone: E.164 mínimo (7 a 15 dígitos com DDI)
   const phone = toDigits(data.phone ?? "");
-  if (phone && (phone.length < 7 || phone.length > 15)) {
-    ctx.addIssue({ code: "custom", path: ["phone"], message: "Telefone inválido" });
+  if (phone.length < 7 || phone.length > 15) {
+    ctx.addIssue({ code: "custom", path: ["phone"], message: "Celular inválido" });
   }
 });
 
 export type ContactFormValues = z.infer<typeof contactSchema>;
+
+export const contactSourceSchema = z.object({
+  name: z.string().min(2, "Mínimo 2 caracteres"),
+});
+
+export type ContactSourceFormValues = z.infer<typeof contactSourceSchema>;

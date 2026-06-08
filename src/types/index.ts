@@ -144,6 +144,7 @@ export interface Contact {
   notes: string | null;
   custom_fields: Record<string, unknown>;
   assigned_to: string | null;
+  source_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -154,6 +155,41 @@ export interface ContactAccess {
   user_id: string;
   granted_by: string | null;
   created_at: string;
+}
+
+export interface ContactSource {
+  id: string;
+  workspace_id: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ContactImportRowStatus = "valid" | "invalid" | "duplicate";
+
+export interface ContactImportRow {
+  row: number;
+  data: {
+    name?: string;
+    personType?: "fisica" | "juridica";
+    document?: string;
+    phone?: string;
+    email?: string;
+    company?: string;
+    status?: ContactStatus;
+    notes?: string;
+    source?: string;
+  };
+  status: ContactImportRowStatus;
+  errors?: string[];
+}
+
+export interface ContactImportResult {
+  total: number;
+  created: number;
+  skipped: number;
+  errors: { row: number; message: string }[];
 }
 
 export interface Pipeline {

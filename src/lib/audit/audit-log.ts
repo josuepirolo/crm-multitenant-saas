@@ -34,6 +34,10 @@ export const AUDIT_ACTIONS = {
   SESSION_REFRESHED:             "session_refreshed",
   SESSION_EXPIRY_WARNING_SHOWN:  "session_expiry_warning_shown",
   AREA_VIEWED:                   "area_viewed",
+  CONTACTS_BULK_IMPORTED:        "contacts_bulk_imported",
+  CONTACT_SOURCE_CREATED:        "contact_source_created",
+  CONTACT_SOURCE_RENAMED:        "contact_source_renamed",
+  CONTACT_SOURCE_TOGGLED:        "contact_source_toggled",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

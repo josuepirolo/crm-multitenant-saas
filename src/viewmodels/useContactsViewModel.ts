@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef, useTransition } from "react";
 import { toast } from "sonner";
-import { getContacts, assignContact, grantContactAccess, revokeContactAccess, listContactAccess } from "@/app/(dashboard)/contacts/actions";
-import type { Contact, ContactAccess, MemberRole, WorkspaceMemberWithProfile } from "@/types";
+import { getContacts, assignContact, grantContactAccess, revokeContactAccess, listContactAccess, listContactSources } from "@/app/(dashboard)/contacts/actions";
+import type { Contact, ContactAccess, ContactSource, MemberRole, WorkspaceMemberWithProfile } from "@/types";
 import type { ContactFilters } from "@/repositories/contact.repository";
 
 const PAGE_SIZE = 20;
@@ -31,6 +31,9 @@ export function useContactsViewModel({ initialRole, initialMembers, currentUserI
 
   const [assignModal, setAssignModal] = useState<{ open: boolean; contact: Contact | null }>({ open: false, contact: null });
   const [accessSheet, setAccessSheet] = useState<{ open: boolean; contact: Contact | null; grants: ContactAccess[] }>({ open: false, contact: null, grants: [] });
+
+  const [sources, setSources] = useState<ContactSource[]>([]);
+  const [sourcesSheetOpen, setSourcesSheetOpen] = useState(false);
 
   const isManager = !!initialRole && MANAGER_ROLES.includes(initialRole);
   const members = initialMembers;
@@ -67,6 +70,24 @@ export function useContactsViewModel({ initialRole, initialMembers, currentUserI
     fetchContacts(page, filters);
   }, [fetchContacts, page, filters]);
 
+  const fetchSources = useCallback(async () => {
+    const result = await listContactSources({ onlyActive: true });
+    setSources(result.data ?? []);
+  }, []);
+
+  useEffect(() => {
+    fetchSources();
+  }, [fetchSources]);
+
+  function openSourcesSheet() {
+    setSourcesSheetOpen(true);
+  }
+
+  function closeSourcesSheet() {
+    setSourcesSheetOpen(false);
+    fetchSources();
+  }
+
   function openCreate() {
     setEditingContact(null);
     setModalOpen(true);
@@ -95,6 +116,11 @@ export function useContactsViewModel({ initialRole, initialMembers, currentUserI
 
   function onDeleted() {
     setDeleteConfirm(null);
+    startTransition(() => fetchContacts(page, filters));
+  }
+
+  function refetch() {
+    lastKey.current = null;
     startTransition(() => fetchContacts(page, filters));
   }
 
@@ -173,7 +199,7 @@ export function useContactsViewModel({ initialRole, initialMembers, currentUserI
     isNavigating,
     fetchError,
     modalOpen, editingContact, openCreate, openEdit, closeModal, onSaved, isEdit: !!editingContact,
-    deleteConfirm, setDeleteConfirm, onDeleted,
+    deleteConfirm, setDeleteConfirm, onDeleted, refetch,
     pageSize: PAGE_SIZE,
     // carteira
     isManager,
@@ -181,5 +207,7 @@ export function useContactsViewModel({ initialRole, initialMembers, currentUserI
     currentUserId,
     assignModal, openAssign, closeAssign, onAssign,
     accessSheet, openAccess, closeAccess, onGrantAccess, onRevokeAccess,
+    // origens
+    sources, sourcesSheetOpen, openSourcesSheet, closeSourcesSheet,
   };
 }

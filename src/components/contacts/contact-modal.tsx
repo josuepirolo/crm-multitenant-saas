@@ -19,6 +19,7 @@ import { contactSchema, type ContactFormValues } from "@/lib/validations/contact
 import { DocumentField } from "@/components/ui/document-field";
 import { maskDocument, stripDocument } from "@/lib/validations/document";
 import type { Contact } from "@/repositories/contact.repository";
+import type { ContactSource } from "@/types";
 
 const STATUS_OPTIONS = [
   { value: "lead",     label: "Lead" },
@@ -30,11 +31,12 @@ const STATUS_OPTIONS = [
 interface ContactModalProps {
   open: boolean;
   contact?: Contact | null;
+  sources: ContactSource[];
   onClose: () => void;
   onSaved: (contact: Contact, isEdit: boolean) => void;
 }
 
-export function ContactModal({ open, contact, onClose, onSaved }: ContactModalProps) {
+export function ContactModal({ open, contact, sources, onClose, onSaved }: ContactModalProps) {
   const isEdit = !!contact;
 
   const { register, handleSubmit, reset, setError, control, watch, setValue,
@@ -61,9 +63,10 @@ export function ContactModal({ open, contact, onClose, onSaved }: ContactModalPr
         company:    contact.company ?? "",
         status:     contact.status,
         notes:      contact.notes ?? "",
+        source_id:  contact.source_id ?? "",
       });
     } else {
-      reset({ name: "", personType: "fisica", document: "", phone: "", email: "", company: "", status: "lead", notes: "" });
+      reset({ name: "", personType: "fisica", document: "", phone: "", email: "", company: "", status: "lead", notes: "", source_id: "" });
     }
   }, [open, contact, reset]);
 
@@ -159,7 +162,7 @@ export function ContactModal({ open, contact, onClose, onSaved }: ContactModalPr
                 </div>
 
                 <div className="sm:col-span-2 space-y-1.5">
-                  <Label className="text-sm font-medium">Telefone</Label>
+                  <Label className="text-sm font-medium">Celular *</Label>
                   <Controller
                     name="phone"
                     control={control}
@@ -198,6 +201,17 @@ export function ContactModal({ open, contact, onClose, onSaved }: ContactModalPr
                     className="h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all">
                     {STATUS_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Origem</Label>
+                  <select {...register("source_id")}
+                    className="h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all">
+                    <option value="">Não informada</option>
+                    {sources.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
                 </div>

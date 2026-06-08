@@ -24,6 +24,7 @@ const makeContact = (ws = WS_A): Contact => ({
   notes: null,
   custom_fields: {},
   assigned_to: null,
+  source_id: null,
   created_by: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
