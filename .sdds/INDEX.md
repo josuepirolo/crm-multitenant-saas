@@ -1,7 +1,7 @@
 # INDEX.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-05-22
+Atualizado: 2026-06-08
 
 ## Ler primeiro
 1. `CURRENT_STATE.md` — estado atual
@@ -23,10 +23,12 @@ Atualizado: 2026-05-22
 | Discovery | Resumo |
 |---|---|
 | `discoveries/2026-05-20-wa-backend-architecture.md` | Backend WA tem 27 tabelas wa_* no mesmo Supabase; ponte via workspace_integrations |
+| `discoveries/2026-06-08-business-niches-outage.md` | Outage site-wide: tabela `business_niches` dropada via SQL ad-hoc fora do framework de migrations, derrubando login de todos os usuários (PGRST200); restaurada via migration versionada |
 
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-08 | Incidente resolvido: outage site-wide por `business_niches` dropada ad-hoc; restaurada via migration `20260608120000_restore_business_niches.sql` |
 | 2026-05-22 | Revisão de estado — documentação de pendências e riscos atualizados |
 | 2026-05-20 | Setup GitHub, limpeza banco, arquitetura WA, PROJECT.md |
 | 2026-05-13 | Bootstrap SDDS v1.3.1 — recuperação de estado |
