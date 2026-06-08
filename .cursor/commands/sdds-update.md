@@ -16,13 +16,20 @@ Se `.sdds/` não existir: informar para rodar `/sdds-init` primeiro.
 
 Executar: `git status`, `git diff --stat HEAD`, `git log -5 --oneline`.
 
-### 2. Substância (`OPERACIONAL_SUBSTANTIVO`)
+### 2. Rotação de memória (housekeeping)
+
+Executar `node _sdds_private/scripts/rotate-memory.js` — arquiva `.sdds/sessions/`
+e `.sdds/timeline/` com mais de 30 dias em `archive/YYYY-MM/`. Saiu do hook `stop`
+(ver `.sdds/decisions/ADR-001-stop-hook-leve.md`) por causar lentidão a cada
+encerramento de turno; agora roda só aqui, uma vez por consolidação.
+
+### 3. Substância (`OPERACIONAL_SUBSTANTIVO`)
 
 Avaliar conforme `01B_SDDS_MEMORY_AND_INDEXING.md`.
 
 - Se não for substantivo (perguntas rápidas, trivial): não criar novo arquivo de sessão sem necessidade — confirmar ao utilizador.
 
-### 3. Artefatos a atualizar
+### 4. Artefatos a atualizar
 
 **Sempre quando substantivo:**
 
@@ -35,17 +42,33 @@ Avaliar conforme `01B_SDDS_MEMORY_AND_INDEXING.md`.
 
 - `CHANGELOG.md`, `discoveries/`, `decisions/ADR-NNN-*.md`, specs/contracts afetados.
 
-### 4. `INDEX.md`
+### 5. `INDEX.md`
 
 Se módulos, rotas ou ficheiros-chave mudaram na memória navegável, atualizar `.sdds/INDEX.md`.
 
-### 5. Atualizar README.md
+### 6. Atualizar README.md
 
 Se nesta sessão foi adicionada, alterada ou removida qualquer funcionalidade do framework
 (novo script, hook, comando, guardrail, módulo, entrypoint), atualizar `README.md` para refletir o estado atual.
 
 O README é a fonte de verdade pública do framework — deve estar sempre alinhado com a implementação real.
 
-### 6. Confirmar ao utilizador
+### 7. Confirmar ao utilizador
 
 Listar objetivamente o que gravou/caminhos tocados (`sessions/`, `timeline/`, `CURRENT_STATE`, ADRs, etc.).
+
+### 8. Sugerir nova sessão quando fizer sentido
+
+Se o trabalho consolidado representa um marco natural de conclusão (módulo fechado,
+specs concluídas, commit+push feito, decisão registrada — não uma pausa no meio de
+algo em andamento), sugerir ao utilizador iniciar uma sessão nova:
+
+> Estado consolidado em `CURRENT_STATE.md`/`INDEX.md` — bom momento para `/clear` e
+> começar uma sessão nova; o `SessionStart` (`inject-session-context.js`) recupera
+> esse estado automaticamente.
+
+Razão: a sessão atual já carrega contexto acumulado e tende a disparar compactação
+automática (custosa em tokens — ver discussão e fontes na sessão de 2026-06-08).
+Começar do zero após consolidar é mais barato do que deixar a conversa crescer até
+o limite. Esta é apenas uma **sugestão** — a decisão de limpar a sessão é sempre do
+utilizador, o agente não tem como medir o uso de contexto nem encerrar a própria sessão.

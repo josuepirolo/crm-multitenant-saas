@@ -289,3 +289,62 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-08 03:03 | `C:/Projetos/CRM WhatsApp/supabase/migrations/20260608120000_restore_business_niches.sql` |
 | 2026-06-08 10:21 | `src/lib/workspace-context.ts` |
 | 2026-06-08 10:21 | `supabase/migrations/20260608120000_restore_business_niches.sql` |
+| 2026-06-08 10:54 | `C:/Projetos/CRM WhatsApp/package.json` |
+| 2026-06-08 10:56 | `C:/Projetos/CRM WhatsApp/src/types/index.ts` |
+| 2026-06-08 10:58 | `C:/Projetos/CRM WhatsApp/src/lib/contacts/parse-contact-import.ts` |
+| 2026-06-08 10:59 | `C:/Projetos/CRM WhatsApp/src/usecases/ContactUseCases.ts` |
+| 2026-06-08 11:00 | `C:/Projetos/CRM WhatsApp/src/lib/audit/audit-log.ts` |
+| 2026-06-08 11:01 | `C:/Projetos/CRM WhatsApp/src/lib/security/rate-limit.ts` |
+| 2026-06-08 11:01 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-08 11:03 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-08 11:04 | `C:/Projetos/CRM WhatsApp/public/templates/contacts-import-template.csv` |
+| 2026-06-08 11:05 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-result-summary.tsx` |
+| 2026-06-08 11:05 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-08 11:05 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactsViewModel.ts` |
+| 2026-06-08 11:05 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/contacts-client.tsx` |
+| 2026-06-08 16:50 | `C:/Projetos/CRM WhatsApp/README.md` |
+| 2026-06-08 17:01 | `C:/Projetos/CRM WhatsApp/supabase/migrations/20260608130000_fix_contacts_contact_access_rls_recursion.sql` |
+| 2026-06-08 17:33 | `C:/Projetos/CRM WhatsApp/supabase/migrations/20260608172806_contact_sources.sql` |
+| 2026-06-08 17:33 | `C:/Projetos/CRM WhatsApp/src/types/index.ts` |
+| 2026-06-08 17:33 | `C:/Projetos/CRM WhatsApp/src/lib/validations/contact.ts` |
+| 2026-06-08 17:33 | `C:/Projetos/CRM WhatsApp/src/repositories/contact.repository.ts` |
+| 2026-06-08 17:34 | `C:/Projetos/CRM WhatsApp/src/repositories/contact-source.repository.ts` |
+| 2026-06-08 17:34 | `C:/Projetos/CRM WhatsApp/src/usecases/ContactSourceUseCases.ts` |
+| 2026-06-08 17:34 | `C:/Projetos/CRM WhatsApp/src/usecases/ContactUseCases.ts` |
+| 2026-06-08 17:34 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-08 17:35 | `C:/Projetos/CRM WhatsApp/src/lib/audit/audit-log.ts` |
+| 2026-06-08 17:35 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/actions.ts` |
+| 2026-06-08 17:36 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactsViewModel.ts` |
+| 2026-06-08 17:36 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactSourcesViewModel.ts` |
+| 2026-06-08 17:37 | `C:/Projetos/CRM WhatsApp/src/components/contacts/contact-sources-sheet.tsx` |
+| 2026-06-08 17:37 | `C:/Projetos/CRM WhatsApp/src/components/contacts/contact-modal.tsx` |
+| 2026-06-08 17:38 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/contacts-client.tsx` |
+| 2026-06-08 17:38 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-08 17:38 | `C:/Projetos/CRM WhatsApp/src/lib/contacts/parse-contact-import.ts` |
+| 2026-06-08 17:39 | `C:/Projetos/CRM WhatsApp/src/tests/tenant-isolation/contact.usecases.test.ts` |
+| 2026-06-08 23:27 | `supabase/migrations/20260608170406_fix_contacts_contact_access_rls_recursion.sql` |
+| 2026-06-08 23:27 | `supabase/migrations/20260608172806_contact_sources.sql` |
+| 2026-06-08 23:30 | `README.md` |
+| 2026-06-08 23:30 | `package-lock.json` |
+| 2026-06-08 23:30 | `package.json` |
+| 2026-06-08 23:30 | `public/templates/contacts-import-template.csv` |
+| 2026-06-08 23:30 | `src/app/(dashboard)/contacts/actions.ts` |
+| 2026-06-08 23:30 | `src/app/(dashboard)/contacts/contacts-client.tsx` |
+| 2026-06-08 23:30 | `src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-08 23:30 | `src/components/contacts/contact-modal.tsx` |
+| 2026-06-08 23:30 | `src/components/contacts/contact-sources-sheet.tsx` |
+| 2026-06-08 23:30 | `src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-08 23:30 | `src/components/contacts/import-result-summary.tsx` |
+| 2026-06-08 23:30 | `src/lib/audit/audit-log.ts` |
+| 2026-06-08 23:30 | `src/lib/contacts/parse-contact-import.ts` |
+| 2026-06-08 23:30 | `src/lib/security/rate-limit.ts` |
+| 2026-06-08 23:30 | `src/lib/validations/contact.ts` |
+| 2026-06-08 23:30 | `src/repositories/contact-source.repository.ts` |
+| 2026-06-08 23:30 | `src/repositories/contact.repository.ts` |
+| 2026-06-08 23:30 | `src/tests/tenant-isolation/contact.usecases.test.ts` |
+| 2026-06-08 23:30 | `src/types/index.ts` |
+| 2026-06-08 23:30 | `src/usecases/ContactSourceUseCases.ts` |
+| 2026-06-08 23:30 | `src/usecases/ContactUseCases.ts` |
+| 2026-06-08 23:30 | `src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-08 23:30 | `src/viewmodels/useContactSourcesViewModel.ts` |
+| 2026-06-08 23:30 | `src/viewmodels/useContactsViewModel.ts` |

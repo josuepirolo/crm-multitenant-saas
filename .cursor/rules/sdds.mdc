@@ -6,7 +6,9 @@ alwaysApply: true
 
 **Início:** leia `.sdds/CURRENT_STATE.md` e `.sdds/INDEX.md` antes de agir na tarefa.
 
-**Antes de codar:** localize o módulo no `INDEX` e leia o spec em `.sdds/specs/`.
+**Antes de codar:** localize o módulo no `INDEX` e leia o spec em `.sdds/specs/`. Regras por módulo estão em `.cursor/rules/sdds-[modulo].mdc` (criadas automaticamente com cada spec). A spec de alto nível do projeto está em `.sdds/project-spec/` — leia antes de decisões arquiteturais.
+
+**Spec de projeto:** se `.sdds/project-spec/` não existir, priorize criar via módulo `_sdds_private/08_SDDS_BROWNFIELD_PROJECT_SPEC.md`. Atualize os arquivos impactados em `.sdds/project-spec/` sempre que houver nova regra de negócio, novo módulo, mudança de stack, nova integração ou decisão arquitetural.
 
 **Versões de runtime:** antes de gerar qualquer código, verifique as versões confirmadas em `.sdds/TECH_STACK.md`. Se alguma versão estiver marcada como `A_CONFIRMAR_OPERACIONAL` ou ausente, pergunte ao usuário antes de escrever código com sintaxe ou APIs específicas de versão. Nunca assuma versão recente — o projeto pode rodar PHP 7.2, Node 14, Python 3.8, etc.
 

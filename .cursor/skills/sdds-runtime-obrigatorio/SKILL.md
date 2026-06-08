@@ -37,6 +37,7 @@ Antes de qualquer ação técnica:
 | `_sdds_private/03_SDDS_RESOLVE_PENDING_CONFIRMATIONS.md` | Resolver pendências A_CONFIRMAR |
 | `_sdds_private/04_SDDS_AUDITOR.md` | Auditar ou validar módulo |
 | `_sdds_private/06_SDDS_IMPLEMENTATION.md` | Implementar com spec já criada |
+| `_sdds_private/08_SDDS_BROWNFIELD_PROJECT_SPEC.md` | Criar ou atualizar spec de projeto (documentação viva de alto nível) para projeto existente |
 
 ## Segregação de memória
 

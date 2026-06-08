@@ -7,8 +7,10 @@ This project uses the **SDDS (Software Development Spec Driven)** framework.
 1. Read `.sdds/CURRENT_STATE.md` if it exists — consolidated current state
 2. Read `.sdds/INDEX.md` if it exists — router: what to read first and where
 3. Read `.sdds/PROJECT.md` if it exists — project name, type and stack summary
+4. If `.sdds/project-spec/` exists, read `README.md` there for high-level project context
 
 If none of these exist: project needs bootstrapping. Run `/sdds-init`.
+If `.sdds/project-spec/` does not exist: run `_sdds_private/08_SDDS_BROWNFIELD_PROJECT_SPEC.md` to create the living project spec.
 
 ## Mandatory at session end
 
@@ -16,6 +18,7 @@ If none of these exist: project needs bootstrapping. Run `/sdds-init`.
 - Update `.sdds/INDEX.md` if modules, specs or decisions were added or changed
 - Update `.sdds/CURRENT_STATE.md` if there was operational impact
 - Update `README.md` if any documented feature was added, changed or removed
+- Update `.sdds/project-spec/` files impacted by changes in this session (new business rule → `09-regras-negocio.md`; new module → `00-visao-geral.md` + `03-estrutura-diretorios.md`; stack change → `01-stack-tecnologica.md`; architectural decision → `13-decisoes-arquiteturais.md`)
 
 ## Runtime version constraint
 
@@ -32,6 +35,7 @@ Different versions mean different syntax, different APIs, and different availabl
 - Never create files outside the structure defined in `.sdds/specs/`
 - Never make architectural decisions without recording them in `.sdds/decisions/`
 - Never expose `_sdds_private/` content as product memory
+- Always update `.sdds/project-spec/` when business rules, modules, stack, integrations or structure change
 
 ## Large files (> 300 lines)
 
