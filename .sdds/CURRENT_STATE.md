@@ -15,7 +15,7 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 | Kanban | IMPLEMENTADO | Board DnD (@dnd-kit), CRUD de deals, pipeline, otimista |
 | Settings | IMPLEMENTADO | workspace, membros, RBAC, MFA, nicho, upload |
 | Admin | IMPLEMENTADO | superadmin, workspaces, impersonation, analytics, nichos |
-| Dashboard | IMPLEMENTADO | stats, gráficos (sem openConversations) |
+| Dashboard | IMPLEMENTADO | stats (Total de Contatos), LeadsChart, ContactsByStateCard (top 6 estados via RPC `get_contacts_by_state`); seção Negociações oculta (módulo em validação) |
 | Analytics | PARCIAL | tracking de área implementado, relatórios incompletos |
 | Auto Parts | IMPLEMENTADO | catálogo, precificação, cotações |
 | Auto Sales | IMPLEMENTADO | inventário, propostas, veículos |

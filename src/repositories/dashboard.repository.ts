@@ -3,10 +3,6 @@ import { SupabaseClient } from "@supabase/supabase-js";
 export interface DashboardStats {
   totalLeads: number;
   totalLeadsThisMonth: number;
-  openDealsValue: number;
-  openDealsCount: number;
-  wonDealsCount: number;
-  totalDealsCount: number;
 }
 
 export interface LeadsByDay {
@@ -14,10 +10,14 @@ export interface LeadsByDay {
   total: number;
 }
 
-export interface DealsByStatus {
-  status: string;
+export interface ContactsByState {
+  state: string;
   count: number;
-  value: number;
+}
+
+export interface ContactsByStateResult {
+  byState: ContactsByState[];
+  withoutPhone: number;
 }
 
 export interface RecentContact {
@@ -32,9 +32,10 @@ export interface RecentContact {
 export interface IDashboardRepository {
   getStats(workspaceId: string): Promise<DashboardStats>;
   getLeadsByDay(workspaceId: string, days: number): Promise<LeadsByDay[]>;
-  getDealsByStatus(workspaceId: string): Promise<DealsByStatus[]>;
+  getContactsByState(workspaceId: string): Promise<ContactsByStateResult>;
   getRecentContacts(workspaceId: string, limit: number): Promise<RecentContact[]>;
 }
+
 
 export class SupabaseDashboardRepository implements IDashboardRepository {
   constructor(private readonly client: SupabaseClient) {}
@@ -44,35 +45,17 @@ export class SupabaseDashboardRepository implements IDashboardRepository {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const [
-      { count: totalLeads },
-      { count: totalLeadsThisMonth },
-      { data: openDeals },
-      { count: wonDealsCount },
-      { count: totalDealsCount },
-    ] = await Promise.all([
+    const [{ count: totalLeads }, { count: totalLeadsThisMonth }] = await Promise.all([
       this.client.from("contacts").select("*", { count: "exact", head: true })
         .eq("workspace_id", workspaceId).is("deleted_at", null),
       this.client.from("contacts").select("*", { count: "exact", head: true })
         .eq("workspace_id", workspaceId).is("deleted_at", null)
         .gte("created_at", startOfMonth.toISOString()),
-      this.client.from("deals").select("value")
-        .eq("workspace_id", workspaceId).eq("status", "open").is("deleted_at", null),
-      this.client.from("deals").select("*", { count: "exact", head: true })
-        .eq("workspace_id", workspaceId).eq("status", "won").is("deleted_at", null),
-      this.client.from("deals").select("*", { count: "exact", head: true })
-        .eq("workspace_id", workspaceId).is("deleted_at", null),
     ]);
-
-    const openDealsValue = (openDeals ?? []).reduce((sum, d) => sum + (d.value ?? 0), 0);
 
     return {
       totalLeads: totalLeads ?? 0,
       totalLeadsThisMonth: totalLeadsThisMonth ?? 0,
-      openDealsValue,
-      openDealsCount: openDeals?.length ?? 0,
-      wonDealsCount: wonDealsCount ?? 0,
-      totalDealsCount: totalDealsCount ?? 0,
     };
   }
 
@@ -90,7 +73,6 @@ export class SupabaseDashboardRepository implements IDashboardRepository {
 
     const counts: Record<string, number> = {};
 
-    // Pre-fill all days with 0
     for (let i = days; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -105,29 +87,16 @@ export class SupabaseDashboardRepository implements IDashboardRepository {
     return Object.entries(counts).map(([date, total]) => ({ date, total }));
   }
 
-  async getDealsByStatus(workspaceId: string): Promise<DealsByStatus[]> {
-    const { data } = await this.client
-      .from("deals")
-      .select("status, value")
-      .eq("workspace_id", workspaceId)
-      .is("deleted_at", null);
-
-    const grouped: Record<string, { count: number; value: number }> = {
-      open: { count: 0, value: 0 },
-      won: { count: 0, value: 0 },
-      lost: { count: 0, value: 0 },
-    };
-
-    (data ?? []).forEach(({ status, value }) => {
-      if (status in grouped) {
-        grouped[status].count++;
-        grouped[status].value += value ?? 0;
-      }
+  async getContactsByState(workspaceId: string): Promise<ContactsByStateResult> {
+    const { data } = await this.client.rpc("get_contacts_by_state", {
+      p_workspace_id: workspaceId,
     });
 
-    return Object.entries(grouped).map(([status, { count, value }]) => ({
-      status, count, value,
-    }));
+    const rows = (data ?? []) as { state: string; cnt: number; without_phone: number }[];
+    const byState = rows.map(({ state, cnt }) => ({ state, count: Number(cnt) }));
+    const withoutPhone = Number(rows[0]?.without_phone ?? 0);
+
+    return { byState, withoutPhone };
   }
 
   async getRecentContacts(workspaceId: string, limit = 5): Promise<RecentContact[]> {

@@ -386,3 +386,14 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-09 09:49 | `C:/Projetos/CRM WhatsApp/src/lib/contacts/parse-contact-import.ts` |
 | 2026-06-09 09:49 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/actions.ts` |
 | 2026-06-09 10:00 | `C:/Projetos/CRM WhatsApp/src/lib/contacts/parse-contact-import.ts` |
+| 2026-06-09 10:14 | `src/app/(dashboard)/contacts/actions.ts` |
+| 2026-06-09 10:14 | `src/lib/contacts/parse-contact-import.ts` |
+| 2026-06-09 10:14 | `src/lib/validations/contact.ts` |
+| 2026-06-09 10:16 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/dashboard/page.tsx` |
+| 2026-06-09 10:21 | `C:/Projetos/CRM WhatsApp/src/repositories/dashboard.repository.ts` |
+| 2026-06-09 10:21 | `C:/Projetos/CRM WhatsApp/src/usecases/GetDashboardStatsUseCase.ts` |
+| 2026-06-09 10:21 | `C:/Projetos/CRM WhatsApp/src/components/dashboard/contacts-by-state-card.tsx` |
+| 2026-06-09 10:22 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/dashboard/page.tsx` |
+| 2026-06-09 10:23 | `C:/Projetos/CRM WhatsApp/src/components/dashboard/deals-chart.tsx` |
+| 2026-06-09 10:27 | `C:/Projetos/CRM WhatsApp/src/repositories/dashboard.repository.ts` |
+| 2026-06-09 10:31 | `C:/Projetos/CRM WhatsApp/src/components/dashboard/contacts-by-state-card.tsx` |

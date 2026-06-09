@@ -1,7 +1,11 @@
 "use client";
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import type { DealsByStatus } from "@/repositories/dashboard.repository";
+interface DealsByStatus {
+  status: string;
+  count: number;
+  value: number;
+}
 
 interface DealsChartProps {
   data: DealsByStatus[];

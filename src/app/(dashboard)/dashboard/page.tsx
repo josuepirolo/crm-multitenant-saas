@@ -5,16 +5,10 @@ import { SupabaseDashboardRepository } from "@/repositories/dashboard.repository
 import { GetDashboardStatsUseCase } from "@/usecases/GetDashboardStatsUseCase";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { LeadsChart } from "@/components/dashboard/leads-chart";
-import { DealsChart } from "@/components/dashboard/deals-chart";
+import { ContactsByStateCard } from "@/components/dashboard/contacts-by-state-card";
 import { RecentContactsTable } from "@/components/dashboard/recent-contacts-table";
-import { Users, DollarSign, TrendingUp } from "lucide-react";
+import { Users } from "lucide-react";
 import { redirect } from "next/navigation";
-
-function formatCurrency(value: number) {
-  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(1)}K`;
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
-}
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -31,12 +25,11 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   if (!workspaceId) redirect("/login");
 
-  // Nome do usuário via auth metadata — sem query direta a profiles
   const firstName = (user.user_metadata?.name as string | undefined)?.split(" ")[0] ?? "usuário";
 
   const repo = new SupabaseDashboardRepository(supabase);
   const useCase = new GetDashboardStatsUseCase(repo);
-  const { stats, leadsByDay, dealsByStatus, recentContacts, conversionRate } = await useCase.execute(workspaceId);
+  const { stats, leadsByDay, contactsByState, recentContacts } = await useCase.execute(workspaceId);
 
   const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
 
@@ -54,28 +47,13 @@ export default async function DashboardPage() {
       </div>
 
       {/* Métricas */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <MetricCard
-          title="Total de Leads"
+          title="Total de Contatos"
           value={stats.totalLeads.toLocaleString("pt-BR")}
           subtitle={`${stats.totalLeadsThisMonth} este mês`}
           icon={Users}
           accent="primary"
-        />
-        <MetricCard
-          title="Negociações em aberto"
-          value={formatCurrency(stats.openDealsValue)}
-          subtitle={`${stats.openDealsCount} negociações`}
-          icon={DollarSign}
-          accent="green"
-        />
-
-        <MetricCard
-          title="Taxa de conversão"
-          value={`${conversionRate}%`}
-          subtitle={`${stats.wonDealsCount} deals ganhos`}
-          icon={TrendingUp}
-          accent="purple"
         />
       </div>
 
@@ -85,7 +63,7 @@ export default async function DashboardPage() {
           <LeadsChart data={leadsByDay} />
         </div>
         <div>
-          <DealsChart data={dealsByStatus} />
+          <ContactsByStateCard data={contactsByState} />
         </div>
       </div>
 
