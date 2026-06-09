@@ -23,7 +23,7 @@ interface ContactsClientProps {
 
 export function ContactsClient({ initialRole, initialMembers, currentUserId }: ContactsClientProps) {
   const vm = useContactsViewModel({ initialRole, initialMembers, currentUserId });
-  const importVm = useContactImportViewModel(vm.refetch, vm.sources);
+  const importVm = useContactImportViewModel(vm.refetch);
   const sourcesVm = useContactSourcesViewModel(vm.sourcesSheetOpen);
 
   return (

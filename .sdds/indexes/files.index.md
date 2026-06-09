@@ -397,3 +397,13 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-09 10:23 | `C:/Projetos/CRM WhatsApp/src/components/dashboard/deals-chart.tsx` |
 | 2026-06-09 10:27 | `C:/Projetos/CRM WhatsApp/src/repositories/dashboard.repository.ts` |
 | 2026-06-09 10:31 | `C:/Projetos/CRM WhatsApp/src/components/dashboard/contacts-by-state-card.tsx` |
+| 2026-06-09 10:35 | `src/app/(dashboard)/dashboard/page.tsx` |
+| 2026-06-09 10:35 | `src/components/dashboard/contacts-by-state-card.tsx` |
+| 2026-06-09 10:35 | `src/components/dashboard/deals-chart.tsx` |
+| 2026-06-09 10:35 | `src/repositories/dashboard.repository.ts` |
+| 2026-06-09 10:35 | `src/usecases/GetDashboardStatsUseCase.ts` |
+| 2026-06-09 10:38 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-09 10:39 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/contacts-client.tsx` |
+| 2026-06-09 10:40 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-09 10:43 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-09 10:44 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |

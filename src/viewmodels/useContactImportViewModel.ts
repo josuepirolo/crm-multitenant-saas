@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { importContactsAction, previewImportAction } from "@/app/(dashboard)/contacts/import-actions";
-import { createContactSource } from "@/app/(dashboard)/contacts/actions";
+import { createContactSource, listContactSources } from "@/app/(dashboard)/contacts/actions";
 import { MAX_IMPORT_ROWS } from "@/lib/contacts/parse-contact-import";
 import type { ContactImportResult, ContactSource } from "@/types";
 import type { ImportPreviewResult } from "@/lib/contacts/parse-contact-import";
@@ -16,15 +16,16 @@ function capitalizeFirst(name: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-export function useContactImportViewModel(onImported: () => void, initialSources: ContactSource[]) {
+export function useContactImportViewModel(onImported: () => void) {
   const [open, setOpen]                         = useState(false);
+  const [isCollapsed, setIsCollapsed]           = useState(false);
   const [stage, setStage]                       = useState<ContactImportStage>("upload");
   const [file, setFile]                         = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting]         = useState(false);
   const [result, setResult]                     = useState<ContactImportResult | null>(null);
   const [error, setError]                       = useState<string | null>(null);
   const [previewData, setPreviewData]           = useState<ImportPreviewResult | null>(null);
-  const [sources, setSources]                   = useState<ContactSource[]>(initialSources);
+  const [sources, setSources]                   = useState<ContactSource[]>([]);
   const [selectedSourceId, setSelectedSourceId] = useState<string>("");
   const [newSourceName, setNewSourceName]       = useState<string>("");
   const [creatingSource, setCreatingSource]     = useState(false);
@@ -45,17 +46,35 @@ export function useContactImportViewModel(onImported: () => void, initialSources
     setCurrentChunk(0);
     setTotalChunks(1);
     setProcessedRows(0);
+    setIsCollapsed(false);
   }
 
-  function openDialog() {
+  async function openDialog() {
     reset();
-    setSources(initialSources);
     setOpen(true);
+    const result = await listContactSources({ onlyActive: true });
+    setSources(result.data ?? []);
   }
 
   function closeDialog() {
     setOpen(false);
     reset();
+  }
+
+  function tryClose() {
+    if (isSubmitting) {
+      setIsCollapsed(true);
+    } else {
+      closeDialog();
+    }
+  }
+
+  function collapse() {
+    setIsCollapsed(true);
+  }
+
+  function expand() {
+    setIsCollapsed(false);
   }
 
   function selectFile(next: File | null) {
@@ -165,6 +184,7 @@ export function useContactImportViewModel(onImported: () => void, initialSources
 
   return {
     open,
+    isCollapsed,
     stage,
     file,
     isSubmitting,
@@ -183,6 +203,9 @@ export function useContactImportViewModel(onImported: () => void, initialSources
     processedRows,
     openDialog,
     closeDialog,
+    tryClose,
+    collapse,
+    expand,
     selectFile,
     advance,
     goBack,

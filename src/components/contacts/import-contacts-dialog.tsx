@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, FileSpreadsheet, Download, X, Plus, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Upload, FileSpreadsheet, Download, X, Minus, Plus, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,10 +22,11 @@ export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
+    <>
     <AnimatePresence>
-      {vm.open && (
+      {vm.open && !vm.isCollapsed && (
         <>
-          <ModalOverlay onClick={vm.closeDialog} />
+          <ModalOverlay onClick={vm.tryClose} />
           <motion.div
             key="import-contacts-modal"
             initial={{ opacity: 0, y: 20 }}
@@ -36,12 +37,25 @@ export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
           >
             <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
               <h2 className="text-base font-semibold">Importar contatos por planilha</h2>
-              <button
-                onClick={vm.closeDialog}
-                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <X size={16} />
-              </button>
+              <div className="flex items-center gap-1">
+                {vm.isSubmitting && (
+                  <button
+                    onClick={vm.collapse}
+                    title="Minimizar — a importação continua em segundo plano"
+                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Minus size={16} />
+                  </button>
+                )}
+                <button
+                  onClick={vm.tryClose}
+                  disabled={vm.isSubmitting}
+                  title={vm.isSubmitting ? "Importação em andamento" : "Fechar"}
+                  className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4 p-6">
@@ -156,76 +170,78 @@ export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
                     </table>
                   </div>
 
-                  {/* Seleção de origem quando não há coluna */}
-                  {vm.previewData.hasOriginColumn ? (
-                    <div className="flex items-center gap-2 rounded-xl border border-border/40 bg-muted/30 px-4 py-3">
-                      <CheckCircle2 size={15} className="text-primary shrink-0" />
-                      <p className="text-sm text-muted-foreground">
-                        Coluna de origem detectada — os contatos serão importados com a origem da planilha.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-amber-200/60 bg-amber-50/60 dark:border-amber-800/40 dark:bg-amber-950/20 p-4 space-y-3">
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle size={15} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                            Coluna de origem não encontrada
-                          </p>
-                          <p className="text-xs text-amber-700/80 dark:text-amber-400/80 mt-0.5">
-                            Selecione ou crie uma origem para todos os contatos desta importação.
-                          </p>
+                  {/* Seleção de origem quando não há coluna — oculto durante o import */}
+                  {!vm.isSubmitting && (
+                    vm.previewData.hasOriginColumn ? (
+                      <div className="flex items-center gap-2 rounded-xl border border-border/40 bg-muted/30 px-4 py-3">
+                        <CheckCircle2 size={15} className="text-primary shrink-0" />
+                        <p className="text-sm text-muted-foreground">
+                          Coluna de origem detectada — os contatos serão importados com a origem da planilha.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-amber-200/60 bg-amber-50/60 dark:border-amber-800/40 dark:bg-amber-950/20 p-4 space-y-3">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle size={15} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                              Coluna de origem não encontrada
+                            </p>
+                            <p className="text-xs text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                              Selecione ou crie uma origem para todos os contatos desta importação.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Seletor de origem existente */}
+                        <select
+                          value={vm.selectedSourceId}
+                          onChange={(e) => vm.setSelectedSourceId(e.target.value)}
+                          className="h-9 w-full rounded-lg border border-amber-200/80 dark:border-amber-800/60 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40 transition-all"
+                        >
+                          <option value="">Selecionar origem existente...</option>
+                          {vm.sources.filter((s) => s.is_active).map((s) => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+
+                        {/* Ou criar nova */}
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-800/40" />
+                          <span className="text-xs text-amber-600/70 dark:text-amber-500/70">ou crie uma nova</span>
+                          <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-800/40" />
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Input
+                            value={vm.newSourceName}
+                            onChange={(e) => vm.setNewSourceName(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") vm.createSourceAndSelect(); }}
+                            placeholder="Ex: Instagram, Indicação..."
+                            className={cn(
+                              "flex-1 h-9 text-sm rounded-lg",
+                              "border-amber-200/80 dark:border-amber-800/60",
+                              "focus-visible:ring-amber-400/40"
+                            )}
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={vm.createSourceAndSelect}
+                            disabled={vm.newSourceName.trim().length < 2 || vm.creatingSource}
+                            className="rounded-lg border-amber-200/80 dark:border-amber-800/60 gap-1.5 shrink-0"
+                          >
+                            {vm.creatingSource ? (
+                              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-foreground/30 border-t-foreground" />
+                            ) : (
+                              <Plus size={13} />
+                            )}
+                            Criar
+                          </Button>
                         </div>
                       </div>
-
-                      {/* Seletor de origem existente */}
-                      <select
-                        value={vm.selectedSourceId}
-                        onChange={(e) => vm.setSelectedSourceId(e.target.value)}
-                        className="h-9 w-full rounded-lg border border-amber-200/80 dark:border-amber-800/60 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40 transition-all"
-                      >
-                        <option value="">Selecionar origem existente...</option>
-                        {vm.sources.filter((s) => s.is_active).map((s) => (
-                          <option key={s.id} value={s.id}>{s.name}</option>
-                        ))}
-                      </select>
-
-                      {/* Ou criar nova */}
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-800/40" />
-                        <span className="text-xs text-amber-600/70 dark:text-amber-500/70">ou crie uma nova</span>
-                        <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-800/40" />
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Input
-                          value={vm.newSourceName}
-                          onChange={(e) => vm.setNewSourceName(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === "Enter") vm.createSourceAndSelect(); }}
-                          placeholder="Ex: Instagram, Indicação..."
-                          className={cn(
-                            "flex-1 h-9 text-sm rounded-lg",
-                            "border-amber-200/80 dark:border-amber-800/60",
-                            "focus-visible:ring-amber-400/40"
-                          )}
-                        />
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={vm.createSourceAndSelect}
-                          disabled={vm.newSourceName.trim().length < 2 || vm.creatingSource}
-                          className="rounded-lg border-amber-200/80 dark:border-amber-800/60 gap-1.5 shrink-0"
-                        >
-                          {vm.creatingSource ? (
-                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-foreground/30 border-t-foreground" />
-                          ) : (
-                            <Plus size={13} />
-                          )}
-                          Criar
-                        </Button>
-                      </div>
-                    </div>
+                    )
                   )}
 
                   {vm.error && <p className="text-xs text-destructive">{vm.error}</p>}
@@ -310,5 +326,64 @@ export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
         </>
       )}
     </AnimatePresence>
+
+    {/* Pill flutuante quando colapsado */}
+    <AnimatePresence>
+      {vm.open && vm.isCollapsed && (
+        <motion.div
+          key="import-pill"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 16 }}
+          transition={{ duration: 0.2, ease: appleEase }}
+          className="fixed bottom-6 right-6 z-50 w-72 rounded-2xl border border-border/60 bg-card shadow-xl shadow-black/20 p-4"
+        >
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2 min-w-0">
+              {vm.stage !== "result" ? (
+                <Loader2 size={14} className="text-primary shrink-0 animate-spin" />
+              ) : (
+                <CheckCircle2 size={14} className="text-green-500 shrink-0" />
+              )}
+              <span className="text-sm font-medium truncate">
+                {vm.stage === "result" ? "Importação concluída" : "Importando contatos…"}
+              </span>
+            </div>
+            <button
+              onClick={vm.expand}
+              className="text-xs text-primary hover:underline shrink-0"
+            >
+              Ver detalhes
+            </button>
+          </div>
+
+          {vm.stage !== "result" ? (
+            <>
+              <p className="text-xs text-muted-foreground mb-2">
+                {vm.totalChunks > 1
+                  ? `Lote ${vm.currentChunk} de ${vm.totalChunks} · ${vm.processedRows.toLocaleString("pt-BR")} / ${(vm.previewData?.totalDataRows ?? 0).toLocaleString("pt-BR")} linhas`
+                  : "Processando…"}
+              </p>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <motion.div
+                  className="h-full rounded-full bg-primary"
+                  animate={{
+                    width: vm.totalChunks > 1
+                      ? `${Math.round((vm.processedRows / Math.max(vm.previewData?.totalDataRows ?? 1, 1)) * 100)}%`
+                      : "100%",
+                  }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                />
+              </div>
+            </>
+          ) : vm.result ? (
+            <p className="text-xs text-muted-foreground">
+              {vm.result.created.toLocaleString("pt-BR")} criado(s) · {vm.result.skipped.toLocaleString("pt-BR")} ignorado(s)
+            </p>
+          ) : null}
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 }
