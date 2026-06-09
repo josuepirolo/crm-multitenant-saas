@@ -2,15 +2,17 @@
 
 import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, FileSpreadsheet, Download, X } from "lucide-react";
+import { Upload, FileSpreadsheet, Download, X, Plus, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { appleEase } from "@/components/ui/motion";
 import { ImportResultSummary } from "@/components/contacts/import-result-summary";
+import { cn } from "@/lib/utils";
 import type { useContactImportViewModel } from "@/viewmodels/useContactImportViewModel";
 
 const TEMPLATE_HREF = "/templates/contacts-import-template.csv";
-const ACCEPTED_TYPES = ".xlsx,.xls,.csv,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const ACCEPTED_TYPES = ".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 interface ImportContactsDialogProps {
   vm: ReturnType<typeof useContactImportViewModel>;
@@ -30,7 +32,7 @@ export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.25, ease: appleEase }}
-            className="fixed inset-x-4 top-1/2 z-50 mx-auto max-w-lg -translate-y-1/2 overflow-y-auto rounded-2xl border border-border/50 bg-card shadow-2xl shadow-black/20 max-h-[90vh]"
+            className="fixed inset-x-4 top-1/2 z-50 mx-auto max-w-2xl -translate-y-1/2 overflow-y-auto rounded-2xl border border-border/50 bg-card shadow-2xl shadow-black/20 max-h-[90vh]"
           >
             <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
               <h2 className="text-base font-semibold">Importar contatos por planilha</h2>
@@ -43,16 +45,14 @@ export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
             </div>
 
             <div className="space-y-4 p-6">
+              {/* ── ETAPA 1: upload ───────────────────────────────────────── */}
               {vm.stage === "upload" && (
                 <>
                   <p className="text-sm text-muted-foreground">
-                    Envie um arquivo <span className="font-medium text-foreground">.xlsx</span>,{" "}
-                    <span className="font-medium text-foreground">.xls</span> ou{" "}
+                    Envie um arquivo <span className="font-medium text-foreground">.xlsx</span> ou{" "}
                     <span className="font-medium text-foreground">.csv</span>. As colunas{" "}
                     <span className="font-medium text-foreground">nome</span> e{" "}
-                    <span className="font-medium text-foreground">celular</span> são obrigatórias — e-mail,
-                    documento, empresa, status, origem e observações são reconhecidos automaticamente pelo
-                    cabeçalho (ex: &quot;origem&quot;, &quot;canal&quot;).
+                    <span className="font-medium text-foreground">celular</span> são obrigatórias.
                   </p>
 
                   <button
@@ -95,23 +95,206 @@ export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
                     </Button>
                     <Button
                       type="button"
-                      onClick={vm.submit}
+                      onClick={vm.advance}
                       disabled={!vm.file || vm.isSubmitting}
                       className="rounded-xl min-w-[120px]"
                     >
                       {vm.isSubmitting ? (
                         <span className="flex items-center gap-2">
                           <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                          Importando...
+                          Lendo arquivo...
                         </span>
                       ) : (
-                        "Importar"
+                        "Avançar"
                       )}
                     </Button>
                   </div>
                 </>
               )}
 
+              {/* ── ETAPA 2: preview ──────────────────────────────────────── */}
+              {vm.stage === "preview" && vm.previewData && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet size={15} className="text-muted-foreground shrink-0" />
+                    <p className="text-sm text-muted-foreground truncate">
+                      <span className="font-medium text-foreground">{vm.file?.name}</span>
+                      {" — "}primeiras {vm.previewData.previewRows.length} linha{vm.previewData.previewRows.length !== 1 ? "s" : ""} identificadas
+                    </p>
+                  </div>
+
+                  {/* Tabela de pré-visualização */}
+                  <div className="overflow-x-auto rounded-xl border border-border/50">
+                    <table className="w-full min-w-max text-xs">
+                      <thead>
+                        <tr className="border-b border-border/50 bg-muted/40">
+                          {vm.previewData.headers.map((h, i) => (
+                            <th
+                              key={i}
+                              className="whitespace-nowrap px-3 py-2 text-left font-medium text-muted-foreground"
+                            >
+                              {h || `Coluna ${i + 1}`}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vm.previewData.previewRows.map((row, i) => (
+                          <tr key={i} className="border-b border-border/30 last:border-0">
+                            {row.map((cell, j) => (
+                              <td
+                                key={j}
+                                className="max-w-[140px] truncate px-3 py-2 text-foreground"
+                                title={cell}
+                              >
+                                {cell || <span className="text-muted-foreground/50">—</span>}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Seleção de origem quando não há coluna */}
+                  {vm.previewData.hasOriginColumn ? (
+                    <div className="flex items-center gap-2 rounded-xl border border-border/40 bg-muted/30 px-4 py-3">
+                      <CheckCircle2 size={15} className="text-primary shrink-0" />
+                      <p className="text-sm text-muted-foreground">
+                        Coluna de origem detectada — os contatos serão importados com a origem da planilha.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-amber-200/60 bg-amber-50/60 dark:border-amber-800/40 dark:bg-amber-950/20 p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle size={15} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                            Coluna de origem não encontrada
+                          </p>
+                          <p className="text-xs text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                            Selecione ou crie uma origem para todos os contatos desta importação.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Seletor de origem existente */}
+                      <select
+                        value={vm.selectedSourceId}
+                        onChange={(e) => vm.setSelectedSourceId(e.target.value)}
+                        className="h-9 w-full rounded-lg border border-amber-200/80 dark:border-amber-800/60 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40 transition-all"
+                      >
+                        <option value="">Selecionar origem existente...</option>
+                        {vm.sources.filter((s) => s.is_active).map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+
+                      {/* Ou criar nova */}
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-800/40" />
+                        <span className="text-xs text-amber-600/70 dark:text-amber-500/70">ou crie uma nova</span>
+                        <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-800/40" />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Input
+                          value={vm.newSourceName}
+                          onChange={(e) => vm.setNewSourceName(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") vm.createSourceAndSelect(); }}
+                          placeholder="Ex: Instagram, Indicação..."
+                          className={cn(
+                            "flex-1 h-9 text-sm rounded-lg",
+                            "border-amber-200/80 dark:border-amber-800/60",
+                            "focus-visible:ring-amber-400/40"
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={vm.createSourceAndSelect}
+                          disabled={vm.newSourceName.trim().length < 2 || vm.creatingSource}
+                          className="rounded-lg border-amber-200/80 dark:border-amber-800/60 gap-1.5 shrink-0"
+                        >
+                          {vm.creatingSource ? (
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-foreground/30 border-t-foreground" />
+                          ) : (
+                            <Plus size={13} />
+                          )}
+                          Criar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {vm.error && <p className="text-xs text-destructive">{vm.error}</p>}
+
+                  {/* Barra de progresso (aparece durante importação em lotes) */}
+                  {vm.isSubmitting && (
+                    <div className="space-y-2 rounded-xl border border-border/40 bg-muted/30 px-4 py-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {vm.totalChunks > 1
+                            ? `Importando lote ${vm.currentChunk} de ${vm.totalChunks}…`
+                            : "Importando contatos…"}
+                        </span>
+                        {vm.totalChunks > 1 && (
+                          <span className="tabular-nums font-medium text-foreground">
+                            {vm.processedRows.toLocaleString("pt-BR")}
+                            {" / "}
+                            {vm.previewData.totalDataRows.toLocaleString("pt-BR")}
+                          </span>
+                        )}
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <motion.div
+                          className="h-full rounded-full bg-primary"
+                          initial={{ width: "0%" }}
+                          animate={{
+                            width: vm.totalChunks > 1
+                              ? `${Math.round((vm.processedRows / Math.max(vm.previewData.totalDataRows, 1)) * 100)}%`
+                              : "100%",
+                          }}
+                          transition={{ duration: 0.4, ease: "easeOut" }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between gap-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={vm.goBack}
+                      disabled={vm.isSubmitting}
+                      className="rounded-xl"
+                    >
+                      Voltar
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={vm.submit}
+                      disabled={
+                        (!vm.previewData.hasOriginColumn && !vm.selectedSourceId) ||
+                        vm.isSubmitting
+                      }
+                      className="rounded-xl min-w-[160px]"
+                    >
+                      {vm.isSubmitting ? (
+                        <span className="flex items-center gap-2">
+                          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                          {vm.totalChunks > 1 ? `Lote ${vm.currentChunk}/${vm.totalChunks}` : "Importando…"}
+                        </span>
+                      ) : (
+                        "Confirmar e importar"
+                      )}
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* ── ETAPA 3: resultado ────────────────────────────────────── */}
               {vm.stage === "result" && vm.result && (
                 <>
                   <ImportResultSummary result={vm.result} />

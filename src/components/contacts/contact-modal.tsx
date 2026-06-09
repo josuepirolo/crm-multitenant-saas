@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { appleEase } from "@/components/ui/motion";
-import { contactSchema, type ContactFormValues } from "@/lib/validations/contact";
+import { contactFormSchema, type ContactFormValues } from "@/lib/validations/contact";
 import { DocumentField } from "@/components/ui/document-field";
 import { maskDocument, stripDocument } from "@/lib/validations/document";
 import type { Contact } from "@/repositories/contact.repository";
@@ -42,7 +42,7 @@ export function ContactModal({ open, contact, sources, onClose, onSaved }: Conta
   const { register, handleSubmit, reset, setError, control, watch, setValue,
     formState: { errors, isSubmitting },
   } = useForm<ContactFormValues>({
-    resolver: zodResolver(contactSchema),
+    resolver: zodResolver(contactFormSchema),
     defaultValues: { status: "lead", personType: "fisica" },
   });
 
@@ -206,14 +206,15 @@ export function ContactModal({ open, contact, sources, onClose, onSaved }: Conta
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Origem</Label>
+                  <Label className="text-sm font-medium">Origem *</Label>
                   <select {...register("source_id")}
                     className="h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all">
-                    <option value="">Não informada</option>
-                    {sources.map((s) => (
+                    <option value="" disabled>Selecionar origem...</option>
+                    {sources.filter((s) => s.is_active).map((s) => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
+                  {errors.source_id && <p className="text-xs text-destructive">{errors.source_id.message}</p>}
                 </div>
 
                 <div className="sm:col-span-2 space-y-1.5">

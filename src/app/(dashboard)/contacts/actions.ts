@@ -75,6 +75,7 @@ export async function createContact(_: unknown, formData: FormData) {
   const raw = normalizeInput(Object.fromEntries(formData) as Record<string, string>);
   const parsed = contactSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.data.source_id) return { error: "Origem é obrigatória." };
 
   const docError = validateDocument(parsed.data.personType, parsed.data.document);
   if (docError) return { error: docError };
@@ -107,6 +108,7 @@ export async function updateContact(_: unknown, formData: FormData) {
   const raw = normalizeInput(Object.fromEntries(formData) as Record<string, string>);
   const parsed = contactSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.data.source_id) return { error: "Origem é obrigatória." };
 
   const docError = validateDocument(parsed.data.personType, parsed.data.document);
   if (docError) return { error: docError };

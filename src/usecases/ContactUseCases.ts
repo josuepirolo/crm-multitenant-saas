@@ -104,7 +104,7 @@ export class ImportContactsUseCase {
     private readonly sourceRepo: IContactSourceRepository
   ) {}
 
-  async execute(workspaceId: string, userId: string, rows: ContactImportRow[]): Promise<ContactImportResult> {
+  async execute(workspaceId: string, userId: string, rows: ContactImportRow[], fallbackSourceId?: string | null): Promise<ContactImportResult> {
     const result: ContactImportResult = { total: rows.length, created: 0, skipped: 0, errors: [] };
 
     for (const row of rows) {
@@ -121,8 +121,8 @@ export class ImportContactsUseCase {
     const sources = await this.sourceRepo.findAll(workspaceId, { onlyActive: true });
     const sourceByName = new Map(sources.map((s) => [normalizeSourceName(s.name), s.id]));
     const resolveSourceId = (rawName?: string): string | null => {
-      if (!rawName) return null;
-      return sourceByName.get(normalizeSourceName(rawName)) ?? null;
+      if (rawName) return sourceByName.get(normalizeSourceName(rawName)) ?? fallbackSourceId ?? null;
+      return fallbackSourceId ?? null;
     };
 
     for (let i = 0; i < importable.length; i += IMPORT_BATCH_SIZE) {

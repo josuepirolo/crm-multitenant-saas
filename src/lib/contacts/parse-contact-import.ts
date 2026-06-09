@@ -68,14 +68,55 @@ function normalizeStatus(raw?: string): ContactStatus | undefined {
 }
 
 async function loadWorksheet(buffer: Buffer, fileName: string): Promise<ExcelJS.Worksheet | undefined> {
-  const ext = fileName.toLowerCase().split(".").pop();
   const workbook = new ExcelJS.Workbook();
 
-  if (ext === "csv") {
+  if (fileName.toLowerCase().endsWith(".csv")) {
     return workbook.csv.read(Readable.from(buffer));
   }
   await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
   return workbook.worksheets[0];
+}
+
+export interface ImportPreviewResult {
+  headers: string[];
+  previewRows: string[][];
+  hasOriginColumn: boolean;
+  totalDataRows: number;
+  error?: string;
+}
+
+const ORIGIN_HEADER_ALIASES = new Set(["origem", "canal", "source", "origin"]);
+
+export async function extractImportPreview(buffer: Buffer, fileName: string): Promise<ImportPreviewResult> {
+  let worksheet: ExcelJS.Worksheet | undefined;
+  try {
+    worksheet = await loadWorksheet(buffer, fileName);
+  } catch {
+    return { headers: [], previewRows: [], hasOriginColumn: false, totalDataRows: 0, error: "Não foi possível ler o arquivo." };
+  }
+
+  if (!worksheet || worksheet.rowCount < 2) {
+    return { headers: [], previewRows: [], hasOriginColumn: false, totalDataRows: 0, error: "Planilha vazia ou sem linhas de dados." };
+  }
+
+  const headers: string[] = [];
+  worksheet.getRow(1).eachCell((cell) => {
+    headers.push(cellToString(cell.value) ?? "");
+  });
+
+  const hasOriginColumn = headers.some((h) => ORIGIN_HEADER_ALIASES.has(normalizeHeader(h)));
+  const totalDataRows = Math.max(0, worksheet.rowCount - 1);
+
+  const previewRows: string[][] = [];
+  const maxDataRow = Math.min(worksheet.rowCount, 11);
+  for (let r = 2; r <= maxDataRow; r++) {
+    const row = worksheet.getRow(r);
+    const cells = headers.map((_, colIdx) => cellToString(row.getCell(colIdx + 1).value) ?? "");
+    if (cells.every((c) => c === "")) continue;
+    previewRows.push(cells);
+  }
+
+  return { headers, previewRows, hasOriginColumn, totalDataRows };
 }
 
 export interface ParseImportFileResult {
@@ -83,12 +124,11 @@ export interface ParseImportFileResult {
   error?: string;
 }
 
-/**
- * Faz parsing da planilha, mapeia cabeçalhos por alias, normaliza e valida cada
- * linha contra o `contactSchema` já usado no cadastro individual de contatos.
- * Não acessa o Supabase — pura transformação de dados (testável em isolamento).
- */
-export async function parseContactImportFile(buffer: Buffer, fileName: string): Promise<ParseImportFileResult> {
+export async function parseContactImportFile(
+  buffer: Buffer,
+  fileName: string,
+  options?: { offset?: number; limit?: number }
+): Promise<ParseImportFileResult> {
   let worksheet: ExcelJS.Worksheet | undefined;
   try {
     worksheet = await loadWorksheet(buffer, fileName);
@@ -110,14 +150,15 @@ export async function parseContactImportFile(buffer: Buffer, fileName: string): 
     return { rows: [], error: "Coluna obrigatória 'nome' não encontrada na planilha." };
   }
 
-  if (worksheet.rowCount - 1 > MAX_IMPORT_ROWS) {
-    return { rows: [], error: `A planilha tem mais de ${MAX_IMPORT_ROWS} linhas. Divida em arquivos menores.` };
-  }
+  const offset = options?.offset ?? 0;
+  const limit  = options?.limit  ?? MAX_IMPORT_ROWS;
+  const startRow = 2 + offset;
+  const endRow   = Math.min(worksheet.rowCount, startRow + limit - 1);
 
   const rows: ContactImportRow[] = [];
   const seen = { phone: new Set<string>(), email: new Set<string>(), document: new Set<string>() };
 
-  for (let r = 2; r <= worksheet.rowCount; r++) {
+  for (let r = startRow; r <= endRow; r++) {
     const row = worksheet.getRow(r);
     if (row.cellCount === 0) continue;
 

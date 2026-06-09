@@ -59,7 +59,9 @@ export function maskCNPJ(v: string): string {
 }
 
 // ─── schema Zod compartilhado ─────────────────────────────────────────────────
-export const contactSchema = z.object({
+
+// Campos base reutilizados pelos dois schemas (sem refinement aplicado)
+const _contactBaseFields = {
   name:       z.string().min(2, "Mínimo 2 caracteres"),
   personType: z.enum(["fisica", "juridica"]),
   document:   z.string().optional().or(z.literal("")),
@@ -69,7 +71,13 @@ export const contactSchema = z.object({
   status:     z.enum(["lead", "prospect", "customer", "churned"]),
   notes:      z.string().optional(),
   source_id:  z.string().optional().or(z.literal("")),
-}).superRefine((data, ctx) => {
+};
+
+// Refinement compartilhado (CPF/CNPJ + telefone E.164)
+function _contactRefinement(
+  data: { personType: string; document?: string; phone?: string },
+  ctx: z.RefinementCtx
+) {
   const doc = toDigits(data.document ?? "");
   if (doc) {
     if (data.personType === "fisica" && !validateCPF(doc)) {
@@ -79,14 +87,22 @@ export const contactSchema = z.object({
       ctx.addIssue({ code: "custom", path: ["document"], message: "CNPJ inválido" });
     }
   }
-  // Telefone: E.164 mínimo (7 a 15 dígitos com DDI)
   const phone = toDigits(data.phone ?? "");
   if (phone.length < 7 || phone.length > 15) {
     ctx.addIssue({ code: "custom", path: ["phone"], message: "Celular inválido" });
   }
-});
+}
 
-export type ContactFormValues = z.infer<typeof contactSchema>;
+// Schema de importação e validação server-side (source_id opcional)
+export const contactSchema = z.object(_contactBaseFields).superRefine(_contactRefinement);
+
+// Schema do formulário manual (source_id obrigatório)
+export const contactFormSchema = z.object({
+  ..._contactBaseFields,
+  source_id: z.string().min(1, "Origem é obrigatória"),
+}).superRefine(_contactRefinement);
+
+export type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 export const contactSourceSchema = z.object({
   name: z.string().min(2, "Mínimo 2 caracteres"),
