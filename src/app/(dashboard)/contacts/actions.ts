@@ -17,7 +17,7 @@ import { getCachedUser } from "@/lib/supabase/cached-auth";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";
 import { revalidatePath } from "next/cache";
-import { contactSchema, contactSourceSchema, toDigits, validateCPF, validateCNPJ } from "@/lib/validations/contact";
+import { contactSchema, contactSourceSchema, toDigits, normalizeBrazilianPhone, validateCPF, validateCNPJ } from "@/lib/validations/contact";
 import type { ContactFilters } from "@/repositories/contact.repository";
 import type { MemberRole } from "@/types";
 
@@ -25,7 +25,7 @@ import type { MemberRole } from "@/types";
 function normalizeInput(raw: Record<string, string>) {
   return {
     ...raw,
-    phone:    raw.phone    ? toDigits(raw.phone)    || undefined : undefined,
+    phone:    raw.phone    ? normalizeBrazilianPhone(raw.phone) || undefined : undefined,
     email:    raw.email    ? raw.email.toLowerCase().trim() || undefined : undefined,
     document: raw.document ? toDigits(raw.document) || undefined : undefined,
   };

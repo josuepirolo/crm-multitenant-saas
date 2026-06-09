@@ -381,3 +381,8 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-09 09:38 | `src/lib/validations/contact.ts` |
 | 2026-06-09 09:38 | `src/usecases/ContactUseCases.ts` |
 | 2026-06-09 09:38 | `src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-09 09:38 | `criar_skill_next_js_security.md` |
+| 2026-06-09 09:48 | `C:/Projetos/CRM WhatsApp/src/lib/validations/contact.ts` |
+| 2026-06-09 09:49 | `C:/Projetos/CRM WhatsApp/src/lib/contacts/parse-contact-import.ts` |
+| 2026-06-09 09:49 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/actions.ts` |
+| 2026-06-09 10:00 | `C:/Projetos/CRM WhatsApp/src/lib/contacts/parse-contact-import.ts` |

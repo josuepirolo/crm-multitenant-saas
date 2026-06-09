@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import { Readable } from "node:stream";
-import { contactSchema, toDigits } from "@/lib/validations/contact";
+import { contactSchema, toDigits, normalizeBrazilianPhone } from "@/lib/validations/contact";
 import type { ContactImportRow, ContactStatus } from "@/types";
 
 export const MAX_IMPORT_ROWS = 2000;
@@ -60,6 +60,22 @@ function inferPersonType(documentDigits: string, rawHint?: string): "fisica" | "
   if (hint && JURIDICA_HINTS.includes(hint)) return "juridica";
   if (hint && FISICA_HINTS.includes(hint)) return "fisica";
   return documentDigits.length === 14 ? "juridica" : "fisica";
+}
+
+const PT_PREPS = new Set(["de", "da", "das", "do", "dos", "e", "em", "na", "nas", "no", "nos"]);
+
+function toTitleCase(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map((word, i) => {
+      const lower = word.toLowerCase();
+      return i > 0 && PT_PREPS.has(lower)
+        ? lower
+        : lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
 }
 
 function normalizeStatus(raw?: string): ContactStatus | undefined {
@@ -172,10 +188,10 @@ export async function parseContactImportFile(
 
     const documentDigits = raw.document ? toDigits(raw.document) : "";
     const candidate = {
-      name: raw.name ?? "",
+      name: raw.name ? toTitleCase(raw.name) : "",
       personType: inferPersonType(documentDigits, raw.personType),
       document: documentDigits || undefined,
-      phone: raw.phone ? toDigits(raw.phone) || undefined : undefined,
+      phone: raw.phone ? normalizeBrazilianPhone(raw.phone) || undefined : undefined,
       email: raw.email ? raw.email.toLowerCase() : undefined,
       company: raw.company,
       status: normalizeStatus(raw.status) ?? "lead",

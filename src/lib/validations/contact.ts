@@ -3,9 +3,49 @@ import { z } from "zod";
 // ─── normalização ────────────────────────────────────────────────────────────
 export const toDigits = (v: string) => v.replace(/[^0-9]/g, "");
 
+/**
+ * Normaliza número brasileiro para E.164 sem o "+":
+ *   - Remove caracteres não-numéricos
+ *   - Adiciona DDI 55 se ausente
+ *   - Injeta nono dígito se: número (pós-DDD) tem 8 dígitos E começa com 6-9 (celular)
+ *
+ * Casos tratados pelo comprimento dos dígitos:
+ *   10 → DDD(2) + nº(8)             → adiciona DDI + nono se celular
+ *   11 → DDD(2) + nº(9)             → adiciona DDI (nono já presente ou fixo)
+ *   12 começando com 55 → DDI+DDD+nº(8)  → adiciona nono se celular
+ *   13 começando com 55 → completo        → retorna como está
+ *   demais → retorna dígitos sem alteração (internacional ou inválido)
+ *
+ * DDI 55 vs DDD 55 (Três Lagoas/MS): não há ambiguidade — o comprimento
+ * total determina qual papel o "55" exerce.
+ */
+export function normalizeBrazilianPhone(raw: string): string {
+  const digits = toDigits(raw);
+  if (!digits) return digits;
+
+  let ddi: string, ddd: string, number: string;
+
+  if (digits.length === 10) {
+    ddi = "55"; ddd = digits.slice(0, 2); number = digits.slice(2);
+  } else if (digits.length === 11) {
+    ddi = "55"; ddd = digits.slice(0, 2); number = digits.slice(2);
+  } else if (digits.length === 12 && digits.startsWith("55")) {
+    ddi = "55"; ddd = digits.slice(2, 4); number = digits.slice(4);
+  } else if (digits.length === 13 && digits.startsWith("55")) {
+    return digits;
+  } else {
+    return digits;
+  }
+
+  if (number.length === 8 && /^[6-9]/.test(number)) {
+    number = "9" + number;
+  }
+
+  return ddi + ddd + number;
+}
+
 export function normalizePhone(v: string): string {
-  // Preserva E.164: +5544998094320 → 5544998094320 (dígitos)
-  return toDigits(v);
+  return normalizeBrazilianPhone(v);
 }
 
 // ─── CPF ─────────────────────────────────────────────────────────────────────
