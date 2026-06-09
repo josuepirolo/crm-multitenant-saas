@@ -348,3 +348,36 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-08 23:30 | `src/viewmodels/useContactImportViewModel.ts` |
 | 2026-06-08 23:30 | `src/viewmodels/useContactSourcesViewModel.ts` |
 | 2026-06-08 23:30 | `src/viewmodels/useContactsViewModel.ts` |
+| 2026-06-08 23:30 | `.agents/skills/sdds-runtime-obrigatorio/SKILL.md` |
+| 2026-06-08 23:30 | `.cursor/commands/sdds-update.md` |
+| 2026-06-08 23:30 | `.cursor/rules/sdds.mdc` |
+| 2026-06-08 23:30 | `.cursor/skills/sdds-runtime-obrigatorio/SKILL.md` |
+| 2026-06-08 23:30 | `CLAUDE.md` |
+| 2026-06-08 23:39 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-08 23:39 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-08 23:39 | `C:/Projetos/CRM WhatsApp/src/lib/contacts/parse-contact-import.ts` |
+| 2026-06-09 01:59 | `C:/Projetos/CRM WhatsApp/src/lib/validations/contact.ts` |
+| 2026-06-09 01:59 | `C:/Projetos/CRM WhatsApp/src/components/contacts/contact-modal.tsx` |
+| 2026-06-09 01:59 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/actions.ts` |
+| 2026-06-09 01:59 | `C:/Projetos/CRM WhatsApp/src/lib/contacts/parse-contact-import.ts` |
+| 2026-06-09 01:59 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-09 01:59 | `C:/Projetos/CRM WhatsApp/src/usecases/ContactUseCases.ts` |
+| 2026-06-09 02:00 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-09 02:01 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-09 02:01 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/contacts-client.tsx` |
+| 2026-06-09 02:05 | `C:/Projetos/CRM WhatsApp/src/lib/validations/contact.ts` |
+| 2026-06-09 09:31 | `C:/Projetos/CRM WhatsApp/src/lib/contacts/parse-contact-import.ts` |
+| 2026-06-09 09:32 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-09 09:32 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-09 09:33 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-09 09:37 | `C:/Projetos/CRM WhatsApp/README.md` |
+| 2026-06-09 09:38 | `README.md` |
+| 2026-06-09 09:38 | `src/app/(dashboard)/contacts/actions.ts` |
+| 2026-06-09 09:38 | `src/app/(dashboard)/contacts/contacts-client.tsx` |
+| 2026-06-09 09:38 | `src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-09 09:38 | `src/components/contacts/contact-modal.tsx` |
+| 2026-06-09 09:38 | `src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-09 09:38 | `src/lib/contacts/parse-contact-import.ts` |
+| 2026-06-09 09:38 | `src/lib/validations/contact.ts` |
+| 2026-06-09 09:38 | `src/usecases/ContactUseCases.ts` |
+| 2026-06-09 09:38 | `src/viewmodels/useContactImportViewModel.ts` |

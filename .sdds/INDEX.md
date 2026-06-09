@@ -37,6 +37,13 @@ Atualizado: 2026-06-08
 | 2026-05-20 | Setup GitHub, limpeza banco, arquitetura WA, PROJECT.md |
 | 2026-05-13 | Bootstrap SDDS v1.3.1 — recuperação de estado |
 
+## Skills de segurança
+| Skill | Escopo | Quando usar |
+|---|---|---|
+| `.claude/skills/nextjs-security-audit` | Next.js genérico — 17 vetores | Auditoria profunda, onboarding, pré-deploy |
+| `.claude/skills/security-review-gate` | Este projeto — Supabase+multi-tenant | Gate antes de cada commit/push sensível |
+| `.claude/skills/security-tests` | Prompt para gerar suíte de testes | Ao criar/expandir testes de segurança |
+
 ## Indexes
 - `indexes/modules.index.md`
 - `indexes/risks.index.md`
