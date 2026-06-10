@@ -146,7 +146,7 @@ export function useContactImportViewModel(onImported: () => void) {
     setIsSubmitting(true);
     setError(null);
 
-    const aggregated: ContactImportResult = { total: totalRows, created: 0, skipped: 0, errors: [] };
+    const aggregated: ContactImportResult = { total: totalRows, created: 0, skipped: 0, already_exists: 0, invalid_count: 0, file_duplicates: 0, errors: [] };
 
     for (let i = 0; i < chunks; i++) {
       setCurrentChunk(i + 1);
@@ -168,13 +168,17 @@ export function useContactImportViewModel(onImported: () => void) {
       const r = response.result!;
       aggregated.created += r.created;
       aggregated.skipped += r.skipped;
+      aggregated.already_exists += r.already_exists;
+      aggregated.invalid_count += r.invalid_count;
+      aggregated.file_duplicates += r.file_duplicates;
       aggregated.errors.push(...r.errors);
       setProcessedRows(Math.min((i + 1) * MAX_IMPORT_ROWS, totalRows));
     }
 
-    toast.success(
-      `Importação concluída: ${aggregated.created.toLocaleString("pt-BR")} criado(s), ${aggregated.skipped.toLocaleString("pt-BR")} ignorado(s).`
-    );
+    const parts = [`${aggregated.created.toLocaleString("pt-BR")} criado(s)`];
+    if (aggregated.already_exists > 0) parts.push(`${aggregated.already_exists.toLocaleString("pt-BR")} já existia(m)`);
+    if (aggregated.invalid_count > 0) parts.push(`${aggregated.invalid_count.toLocaleString("pt-BR")} inválido(s)`);
+    toast.success(`Importação concluída: ${parts.join(", ")}.`);
 
     setResult(aggregated);
     setStage("result");

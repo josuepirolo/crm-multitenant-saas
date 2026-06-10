@@ -100,7 +100,7 @@ export async function importContactsAction(
 
   const parsedFile = await parseContactImportFile(buffer, file.name, { offset, limit: chunkSize });
   if (parsedFile.error) return { error: parsedFile.error };
-  if (parsedFile.rows.length === 0) return { error: undefined, result: { total: 0, created: 0, skipped: 0, errors: [] } };
+  if (parsedFile.rows.length === 0) return { error: undefined, result: { total: 0, created: 0, skipped: 0, already_exists: 0, invalid_count: 0, file_duplicates: 0, errors: [] } };
 
   try {
     const supabase = await createClient();

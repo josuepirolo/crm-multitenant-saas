@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getValidatedImpersonatedWorkspaceId } from "@/lib/impersonation";
 import type { MemberRole } from "@/types";
 
 export async function getSessionUser() {
@@ -14,6 +15,10 @@ export async function getUserRole(workspaceId: string): Promise<MemberRole | nul
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+
+  // Superadmin impersonando este workspace: trata como owner.
+  const impersonatedId = await getValidatedImpersonatedWorkspaceId(user.id);
+  if (impersonatedId === workspaceId) return "owner";
 
   const admin = createAdminClient();
   const { data, error } = await admin

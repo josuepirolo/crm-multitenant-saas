@@ -5,6 +5,7 @@ import { getCachedUser } from "@/lib/supabase/cached-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { can } from "@/lib/permissions";
 import { getUserRole } from "@/lib/user-role";
+import { getValidatedImpersonatedWorkspaceId } from "@/lib/impersonation";
 import type { MemberRole, PermissionModule, PermissionAction } from "@/types";
 
 export async function requirePermission(
@@ -22,6 +23,9 @@ export async function requirePermission(
 export async function getCurrentWorkspaceId(): Promise<string | null> {
   const { data: { user } } = await getCachedUser();
   if (!user) return null;
+
+  const impersonatedId = await getValidatedImpersonatedWorkspaceId(user.id);
+  if (impersonatedId) return impersonatedId;
 
   const supabase = await createClient();
   const { data } = await supabase
@@ -73,6 +77,12 @@ export async function getWorkspaceContext(
 ): Promise<{ workspaceId: string; userId: string } | { error: string }> {
   const { data: { user } } = await getCachedUser();
   if (!user) return { error: "Não autenticado." };
+
+  // Superadmin impersonando outro workspace: acesso total (owner-like) ao
+  // workspace impersonado. startImpersonation já exige requireSuperAdmin()
+  // e é auditado — bypassa current_workspace_id e RBAC normais.
+  const impersonatedId = await getValidatedImpersonatedWorkspaceId(user.id);
+  if (impersonatedId) return { workspaceId: impersonatedId, userId: user.id };
 
   const admin = createAdminClient();
   const { data: profile } = await admin

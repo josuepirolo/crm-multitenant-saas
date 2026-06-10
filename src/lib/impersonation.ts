@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const COOKIE_WID  = process.env.NODE_ENV === "production" ? "__Host-imp-wid"  : "imp-wid";
 const COOKIE_BY   = process.env.NODE_ENV === "production" ? "__Host-imp-by"   : "imp-by";
@@ -47,4 +48,26 @@ export async function getImpersonationContext(): Promise<ImpersonationContext | 
 
 export async function isImpersonating(): Promise<boolean> {
   return (await getImpersonationContext()) !== null;
+}
+
+/**
+ * Retorna o workspaceId impersonado para `userId`, mas só se a sessão for
+ * válida: o cookie pertence a esse usuário E ele é confirmado superadmin no
+ * banco (defesa contra cookie forjado/órfão de usuário comum). Cookies
+ * inválidos são ignorados em silêncio aqui — a limpeza acontece no layout,
+ * que tem permissão de escrita em cookies (Server Actions/Components que
+ * apenas leem contexto não podem mutar cookies).
+ */
+export async function getValidatedImpersonatedWorkspaceId(userId: string): Promise<string | null> {
+  const impersonation = await getImpersonationContext();
+  if (!impersonation || impersonation.impersonatedBy !== userId) return null;
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("profiles")
+    .select("is_superadmin")
+    .eq("id", userId)
+    .single();
+
+  return data?.is_superadmin ? impersonation.workspaceId : null;
 }

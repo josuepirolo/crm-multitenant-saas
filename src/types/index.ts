@@ -189,6 +189,9 @@ export interface ContactImportResult {
   total: number;
   created: number;
   skipped: number;
+  already_exists: number;
+  invalid_count: number;
+  file_duplicates: number;
   errors: { row: number; message: string }[];
 }
 
