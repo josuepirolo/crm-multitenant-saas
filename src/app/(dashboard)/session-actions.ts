@@ -1,5 +1,6 @@
 "use server";
 
+// eslint-disable-next-line no-restricted-imports -- refreshSession é escopo do próprio usuário (auth.uid()), não do workspace
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import {

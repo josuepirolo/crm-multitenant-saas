@@ -453,3 +453,39 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-10 03:26 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
 | 2026-06-10 03:27 | `C:/Projetos/CRM WhatsApp/src/tests/tenant-isolation/actions-auth.test.ts` |
 | 2026-06-10 03:37 | `C:/Projetos/CRM WhatsApp/README.md` |
+| 2026-06-10 03:38 | `README.md` |
+| 2026-06-10 03:38 | `src/app/(dashboard)/contacts/actions.ts` |
+| 2026-06-10 03:38 | `src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-10 03:38 | `src/app/(dashboard)/contacts/niche-profile-actions.ts` |
+| 2026-06-10 03:38 | `src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-10 03:38 | `src/lib/guards.ts` |
+| 2026-06-10 03:38 | `src/tests/security/workspace-context-impersonation.test.ts` |
+| 2026-06-10 03:38 | `src/tests/tenant-isolation/actions-auth.test.ts` |
+| 2026-06-10 03:40 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/dashboard/page.tsx` |
+| 2026-06-10 03:46 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/kanban/actions.ts` |
+| 2026-06-10 03:46 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/actions.ts` |
+| 2026-06-10 03:46 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/niche-actions.ts` |
+| 2026-06-10 03:47 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/rbac-actions.ts` |
+| 2026-06-10 03:47 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/upload-actions.ts` |
+| 2026-06-10 03:47 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-parts/actions.ts` |
+| 2026-06-10 03:48 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-parts/page.tsx` |
+| 2026-06-10 03:48 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-parts/quotes/page.tsx` |
+| 2026-06-10 03:48 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-sales/actions.ts` |
+| 2026-06-10 03:48 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-sales/page.tsx` |
+| 2026-06-10 03:48 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-sales/proposals/page.tsx` |
+| 2026-06-10 03:49 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/fashion/actions.ts` |
+| 2026-06-10 03:49 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/fashion/page.tsx` |
+| 2026-06-10 03:49 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/fashion/stock/page.tsx` |
+| 2026-06-10 03:50 | `C:/Projetos/CRM WhatsApp/src/tests/security/settings-actions.test.ts` |
+| 2026-06-10 03:50 | `C:/Projetos/CRM WhatsApp/src/tests/security/upload-actions.test.ts` |
+| 2026-06-10 03:50 | `C:/Projetos/CRM WhatsApp/src/tests/security/workspace-profile-actions.test.ts` |
+| 2026-06-10 03:57 | `C:/Projetos/CRM WhatsApp/eslint.config.mjs` |
+| 2026-06-10 03:57 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/upload-actions.ts` |
+| 2026-06-10 03:59 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/kanban/actions.ts` |
+| 2026-06-10 03:59 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/rbac-actions.ts` |
+| 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/actions.ts` |
+| 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/layout.tsx` |
+| 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/session-actions.ts` |
+| 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/mfa-actions.ts` |
+| 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/setup-niche-action.ts` |
+| 2026-06-10 04:04 | `C:/Projetos/CRM WhatsApp/README.md` |

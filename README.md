@@ -55,7 +55,7 @@ Abra [http://localhost:3000](http://localhost:3000).
 | `npm run dev` | Servidor de desenvolvimento |
 | `npm run build` | Build de produção |
 | `npm run start` | Servidor após build |
-| `npm run lint` | ESLint |
+| `npm run lint` | ESLint (inclui regra `no-restricted-imports` que bane `createClient` direto em `src/app/(dashboard)/**`, exigindo `getScopedSupabaseClient()` para suportar impersonação — ver `.sdds/decisions/ADR-004-impersonation-owner-like-access.md`) |
 | `npm run typecheck` | TypeScript sem emit |
 | `npm test` | Vitest (uma execução) |
 | `npm run test:watch` | Vitest em modo watch |

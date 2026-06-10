@@ -1,5 +1,4 @@
-import { getWorkspaceContext } from "@/lib/guards";
-import { createClient } from "@/lib/supabase/server";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { SupabaseFashionRepository } from "@/repositories/fashion.repository";
 import { ListFashionProductsUseCase } from "@/usecases/FashionUseCases";
 import { FashionProductsClient } from "@/components/fashion/fashion-products-client";
@@ -8,7 +7,7 @@ export default async function FashionPage() {
   const ctx = await getWorkspaceContext("contacts", "view");
   if ("error" in ctx) return <div className="p-8 text-destructive">{ctx.error}</div>;
 
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   const repo = new SupabaseFashionRepository(supabase);
   const products = await new ListFashionProductsUseCase(repo).execute(ctx.workspaceId);
 

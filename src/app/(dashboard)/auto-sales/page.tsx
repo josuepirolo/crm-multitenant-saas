@@ -1,5 +1,4 @@
-import { getWorkspaceContext } from "@/lib/guards";
-import { createClient } from "@/lib/supabase/server";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { SupabaseAutoSalesRepository } from "@/repositories/auto-sales.repository";
 import { ListInventoryUseCase } from "@/usecases/AutoSalesUseCases";
 import { AutoSalesInventoryClient } from "@/components/auto-sales/auto-sales-inventory-client";
@@ -8,7 +7,7 @@ export default async function AutoSalesPage() {
   const ctx = await getWorkspaceContext("contacts", "view");
   if ("error" in ctx) return <div className="p-8 text-destructive">{ctx.error}</div>;
 
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   const repo = new SupabaseAutoSalesRepository(supabase);
   const inventory = await new ListInventoryUseCase(repo).execute(ctx.workspaceId, { status: "available" });
 

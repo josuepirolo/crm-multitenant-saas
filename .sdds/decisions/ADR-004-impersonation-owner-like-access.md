@@ -58,4 +58,6 @@ Problema: `createClient()` é RLS-bound ao `auth.uid()` real (o superadmin). RLS
 
 A barreira de segurança continua sendo a validação de impersonação (cookie `imp-by` + `is_superadmin` confirmado no banco), não o RLS — mesmo raciocínio já aceito para `getWorkspaceContext`. Todo `workspace_id` usado nas queries continua vindo de `ctx.workspaceId`/`getCurrentWorkspaceId()`, nunca do client.
 
-**Status de adoção:** aplicado em `src/app/(dashboard)/contacts/{actions,import-actions,niche-profile-actions}.ts` nesta sessão. ~15 arquivos fora de `contacts/` ainda usam `createClient()` direto após `getWorkspaceContext`/`getCurrentWorkspaceId` e têm o mesmo gap — rastreado como risco `R-009` em `CURRENT_STATE.md`.
+**Status de adoção:** aplicado em `src/app/(dashboard)/contacts/{actions,import-actions,niche-profile-actions}.ts` em sessão anterior, e nos demais 16 arquivos com o mesmo padrão (`dashboard`, `kanban`, `settings`, `auto-parts`, `auto-sales`, `fashion`) nesta sessão — `R-009` RESOLVIDO.
+
+**Guardrail:** regra ESLint `no-restricted-imports` (`eslint.config.mjs`, escopo `src/app/(dashboard)/**/*.{ts,tsx}`) bane `createClient` de `@/lib/supabase/server`, apontando para `getScopedSupabaseClient()`. Usos legítimos (escopo `auth.uid()` do próprio usuário ou catálogo global, sem `workspace_id`) têm `eslint-disable-next-line` com justificativa: `(dashboard)/actions.ts`, `layout.tsx`, `session-actions.ts`, `settings/{mfa-actions,upload-actions}.ts`, `setup-niche-action.ts`.

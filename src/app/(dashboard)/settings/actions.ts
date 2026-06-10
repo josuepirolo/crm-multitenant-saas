@@ -1,6 +1,5 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";
@@ -10,7 +9,7 @@ import { SupabaseWorkspaceMemberRepository } from "@/repositories/member.reposit
 import { UpdateWorkspaceUseCase } from "@/usecases/WorkspaceUseCases";
 import { UpdateWorkspaceProfileUseCase } from "@/usecases/WorkspaceProfileUseCases";
 import { ListMembersUseCase, InviteMemberUseCase, UpdateMemberRoleUseCase, DeactivateMemberUseCase } from "@/usecases/MemberUseCases";
-import { getWorkspaceContext } from "@/lib/guards";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { updateWorkspaceSchema, inviteMemberSchema, updateMemberRoleSchema, updateWorkspaceProfileSchema } from "@/lib/validations/workspace";
 import { revalidatePath } from "next/cache";
 
@@ -18,7 +17,7 @@ export async function getSettingsData() {
   const ctx = await getWorkspaceContext("settings", "view");
   if ("error" in ctx) return { error: ctx.error, workspace: null, members: [] };
 
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   const [ws, members] = await Promise.all([
     new SupabaseWorkspaceRepository(supabase).findById(ctx.workspaceId),
     new ListMembersUseCase(new SupabaseWorkspaceMemberRepository(supabase)).execute(ctx.workspaceId),
@@ -35,7 +34,7 @@ export async function updateWorkspace(_: unknown, formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     const workspace = await new UpdateWorkspaceUseCase(new SupabaseWorkspaceRepository(supabase)).execute(ctx.workspaceId, parsed.data);
     await createAuditLog({
       action:       AUDIT_ACTIONS.WORKSPACE_UPDATED,
@@ -66,7 +65,7 @@ export async function updateWorkspaceProfile(_: unknown, formData: FormData) {
   );
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     const workspace = await new UpdateWorkspaceProfileUseCase(
       new SupabaseWorkspaceRepository(supabase)
     ).execute(ctx.workspaceId, cleanData);
@@ -109,7 +108,7 @@ export async function inviteMember(_: unknown, formData: FormData) {
   }
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     await new InviteMemberUseCase(new SupabaseWorkspaceMemberRepository(supabase)).execute({
       workspace_id: ctx.workspaceId,
       user_id: userId as string,
@@ -142,7 +141,7 @@ export async function updateMemberRole(_: unknown, formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     await new UpdateMemberRoleUseCase(new SupabaseWorkspaceMemberRepository(supabase)).execute(
       ctx.workspaceId,
       parsed.data.userId,
@@ -173,7 +172,7 @@ export async function deactivateMember(formData: FormData) {
   if (!userId) return { error: "ID do membro inválido." };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     await new DeactivateMemberUseCase(new SupabaseWorkspaceMemberRepository(supabase)).execute(ctx.workspaceId, userId, ctx.userId);
     await createAuditLog({
       action:       AUDIT_ACTIONS.MEMBER_DEACTIVATED,

@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { getWorkspaceContext } from "@/lib/guards";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { SupabaseRbacRepository } from "@/repositories/rbac.repository";
 import {
   ListPermissionsUseCase,
@@ -16,14 +16,14 @@ import { getClientIp, getUserAgent } from "@/lib/security/client-ip";
 import { revalidatePath } from "next/cache";
 import { publicError } from "@/lib/security/security-errors";
 
-function makeRepo(client: Awaited<ReturnType<typeof createClient>>) {
+function makeRepo(client: SupabaseClient) {
   return new SupabaseRbacRepository(client);
 }
 
 export async function listPermissions() {
   const ctx = await getWorkspaceContext("members", "view");
   if ("error" in ctx) return { error: ctx.error, data: [] };
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   try {
     const data = await new ListPermissionsUseCase(makeRepo(supabase)).execute();
     return { error: undefined, data };
@@ -35,7 +35,7 @@ export async function listPermissions() {
 export async function listWorkspaceRoles() {
   const ctx = await getWorkspaceContext("members", "view");
   if ("error" in ctx) return { error: ctx.error, data: [] };
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   try {
     const data = await new ListWorkspaceRolesUseCase(makeRepo(supabase)).execute(ctx.workspaceId);
     return { error: undefined, data };
@@ -48,7 +48,7 @@ export async function createWorkspaceRole(_: unknown, formData: FormData) {
   const ctx = await getWorkspaceContext("members", "create");
   if ("error" in ctx) return { error: ctx.error };
   const name = formData.get("name") as string;
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   try {
     const role = await new CreateWorkspaceRoleUseCase(makeRepo(supabase)).execute(ctx.workspaceId, name);
     await createAuditLog({
@@ -71,7 +71,7 @@ export async function createWorkspaceRole(_: unknown, formData: FormData) {
 export async function deleteWorkspaceRole(roleId: string) {
   const ctx = await getWorkspaceContext("members", "delete");
   if ("error" in ctx) return { error: ctx.error };
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   try {
     await new DeleteWorkspaceRoleUseCase(makeRepo(supabase)).execute(roleId);
     await createAuditLog({
@@ -93,7 +93,7 @@ export async function deleteWorkspaceRole(roleId: string) {
 export async function setRolePermissions(roleId: string, permissionIds: string[]) {
   const ctx = await getWorkspaceContext("members", "edit");
   if ("error" in ctx) return { error: ctx.error };
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   try {
     await new SetRolePermissionsUseCase(makeRepo(supabase)).execute(roleId, permissionIds);
     await createAuditLog({
@@ -116,7 +116,7 @@ export async function setRolePermissions(roleId: string, permissionIds: string[]
 export async function assignRoleToMember(memberId: string, roleId: string) {
   const ctx = await getWorkspaceContext("members", "edit");
   if ("error" in ctx) return { error: ctx.error };
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   try {
     await new AssignRoleToMemberUseCase(makeRepo(supabase)).execute(memberId, roleId);
     await createAuditLog({

@@ -55,8 +55,8 @@ Aplicado (substituindo `createClient()` por `getScopedSupabaseClient()`) em todo
 ## Nível de confiança
 CONFIRMADO — causa raiz explica os dois sintomas relatados (origens invisíveis + reimport bloqueado), consistente com o comportamento de RLS (`my_workspace_ids()`) e com a remediação de dados de 2026-06-09 (linhas existem no banco, mas filtradas no SELECT).
 
-## Impacto remanescente — R-009 (ABERTO)
-O mesmo padrão (`createClient()` após `getWorkspaceContext`/`getCurrentWorkspaceId`, sem `getScopedSupabaseClient()`) ainda existe em **~15 arquivos fora de `contacts/`** — qualquer um desses, ao ser usado durante impersonação de um workspace onde o superadmin não é membro, terá o mesmo sintoma (leituras vazias / escritas rejeitadas por RLS):
+## Impacto remanescente — R-009 (RESOLVIDO 2026-06-10)
+O mesmo padrão (`createClient()` após `getWorkspaceContext`/`getCurrentWorkspaceId`, sem `getScopedSupabaseClient()`) existia em **16 arquivos fora de `contacts/`** — qualquer um desses, ao ser usado durante impersonação de um workspace onde o superadmin não é membro, teria o mesmo sintoma (leituras vazias / escritas rejeitadas por RLS). Corrigido na mesma sessão (mesmo replace 1:1 `createClient()` → `getScopedSupabaseClient()`), 384/384 testes passando:
 
 - `src/app/(dashboard)/kanban/actions.ts`
 - `src/app/(dashboard)/settings/actions.ts`

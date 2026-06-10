@@ -1,7 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { getWorkspaceContext } from "@/lib/guards";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { revalidatePath } from "next/cache";
 import { SupabaseAutoSalesRepository } from "@/repositories/auto-sales.repository";
 import {
@@ -17,7 +16,7 @@ import { publicError } from "@/lib/security/security-errors";
 import { z } from "zod";
 
 function makeRepo() {
-  return createClient().then(s => new SupabaseAutoSalesRepository(s));
+  return getScopedSupabaseClient().then(s => new SupabaseAutoSalesRepository(s));
 }
 
 const inventorySchema = z.object({

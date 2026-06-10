@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => {
   const mockAdmin    = { from: vi.fn() };
   return {
     getWorkspaceContext: vi.fn(),
+    getScopedSupabaseClient: vi.fn().mockResolvedValue(mockSupabase),
     requireSuperAdmin:   vi.fn(),
     revalidatePath:      vi.fn(),
     createClient:        vi.fn().mockResolvedValue(mockSupabase),
@@ -20,6 +21,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@/lib/guards", () => ({
   getWorkspaceContext: mocks.getWorkspaceContext,
+  getScopedSupabaseClient: mocks.getScopedSupabaseClient,
   requireSuperAdmin:   mocks.requireSuperAdmin,
 }));
 vi.mock("next/cache",             () => ({ revalidatePath: mocks.revalidatePath }));
