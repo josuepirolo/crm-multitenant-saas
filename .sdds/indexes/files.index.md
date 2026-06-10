@@ -441,3 +441,5 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-10 02:22 | `docs/criar_skill_next_js_security.md` |
 | 2026-06-10 02:22 | `docs/skills_criar_especificao.md` |
 | 2026-06-10 02:22 | `skills_criar_especificao.md` |
+| 2026-06-10 02:29 | `C:/Projetos/CRM WhatsApp/src/app/(admin)/layout.tsx` |
+| 2026-06-10 02:31 | `C:/Projetos/CRM WhatsApp/README.md` |

@@ -1,13 +1,27 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { requireSuperAdmin } from "@/lib/guards";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { SessionTimer } from "@/components/ui/session-timer";
+import {
+  SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, SESSION_COOKIE_PROFILE,
+  resolveSessionLimits, computeSessionExpiry,
+} from "@/lib/security/session-policy";
 import { Toaster } from "sonner";
 import { ShieldCheck, LayoutDashboard } from "lucide-react";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const superAdmin = await requireSuperAdmin();
   if (!superAdmin) notFound();
+
+  // Calcula expiry de sessão server-side para o SessionTimer (admin = 15min inatividade)
+  const cookieStore = await cookies();
+  const sessionExpiry = computeSessionExpiry(
+    cookieStore.get(SESSION_COOKIE_STARTED)?.value,
+    cookieStore.get(SESSION_COOKIE_ACTIVITY)?.value,
+    resolveSessionLimits(cookieStore.get(SESSION_COOKIE_PROFILE)?.value),
+  );
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -32,6 +46,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {children}
         </main>
       </div>
+      {/* Timer de sessão — só renderiza se os cookies de expiração existirem */}
+      {sessionExpiry.effectiveExpiresAt && sessionExpiry.absoluteExpiresAt && (
+        <SessionTimer
+          inactivityExpiresAt={sessionExpiry.inactivityExpiresAt!}
+          absoluteExpiresAt={sessionExpiry.absoluteExpiresAt}
+        />
+      )}
       <Toaster position="bottom-right" richColors />
     </div>
   );
