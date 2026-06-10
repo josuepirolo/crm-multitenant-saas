@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { appleEase } from "@/components/ui/motion";
 import { ImportResultSummary } from "@/components/contacts/import-result-summary";
-import { cn } from "@/lib/utils";
 import type { useContactImportViewModel } from "@/viewmodels/useContactImportViewModel";
 
 const TEMPLATE_HREF = "/templates/contacts-import-template.csv";
@@ -16,6 +15,42 @@ const ACCEPTED_TYPES = ".xlsx,.csv,text/csv,application/vnd.openxmlformats-offic
 
 interface ImportContactsDialogProps {
   vm: ReturnType<typeof useContactImportViewModel>;
+}
+
+/** Mini-form para criar uma origem sem sair do fluxo de importação — disponível em qualquer etapa. */
+function CreateSourceInline({ vm }: ImportContactsDialogProps) {
+  return (
+    <div className="rounded-xl border border-border/50 bg-muted/30 p-3 space-y-2">
+      <div className="flex items-center gap-1.5">
+        <Plus size={13} className="text-muted-foreground" />
+        <span className="text-xs font-medium text-muted-foreground">Criar nova origem</span>
+      </div>
+      <div className="flex gap-2">
+        <Input
+          value={vm.newSourceName}
+          onChange={(e) => vm.setNewSourceName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") vm.createSourceAndSelect(); }}
+          placeholder="Ex: Instagram, Indicação..."
+          className="flex-1 h-9 text-sm rounded-lg"
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={vm.createSourceAndSelect}
+          disabled={vm.newSourceName.trim().length < 2 || vm.creatingSource}
+          className="rounded-lg gap-1.5 shrink-0"
+        >
+          {vm.creatingSource ? (
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-foreground/30 border-t-foreground" />
+          ) : (
+            <Plus size={13} />
+          )}
+          Criar
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
@@ -188,7 +223,7 @@ export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
                               Coluna de origem não encontrada
                             </p>
                             <p className="text-xs text-amber-700/80 dark:text-amber-400/80 mt-0.5">
-                              Selecione ou crie uma origem para todos os contatos desta importação.
+                              Selecione uma origem existente abaixo, ou crie uma nova em &quot;Criar nova origem&quot;.
                             </p>
                           </div>
                         </div>
@@ -204,45 +239,12 @@ export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
                             <option key={s.id} value={s.id}>{s.name}</option>
                           ))}
                         </select>
-
-                        {/* Ou criar nova */}
-                        <div className="flex items-center gap-1.5">
-                          <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-800/40" />
-                          <span className="text-xs text-amber-600/70 dark:text-amber-500/70">ou crie uma nova</span>
-                          <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-800/40" />
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Input
-                            value={vm.newSourceName}
-                            onChange={(e) => vm.setNewSourceName(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") vm.createSourceAndSelect(); }}
-                            placeholder="Ex: Instagram, Indicação..."
-                            className={cn(
-                              "flex-1 h-9 text-sm rounded-lg",
-                              "border-amber-200/80 dark:border-amber-800/60",
-                              "focus-visible:ring-amber-400/40"
-                            )}
-                          />
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={vm.createSourceAndSelect}
-                            disabled={vm.newSourceName.trim().length < 2 || vm.creatingSource}
-                            className="rounded-lg border-amber-200/80 dark:border-amber-800/60 gap-1.5 shrink-0"
-                          >
-                            {vm.creatingSource ? (
-                              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-foreground/30 border-t-foreground" />
-                            ) : (
-                              <Plus size={13} />
-                            )}
-                            Criar
-                          </Button>
-                        </div>
                       </div>
                     )
                   )}
+
+                  {/* Criar nova origem — disponível durante todo o fluxo de importação */}
+                  <CreateSourceInline vm={vm} />
 
                   {vm.error && <p className="text-xs text-destructive">{vm.error}</p>}
 
@@ -314,6 +316,10 @@ export function ImportContactsDialog({ vm }: ImportContactsDialogProps) {
               {vm.stage === "result" && vm.result && (
                 <>
                   <ImportResultSummary result={vm.result} />
+
+                  {/* Criar nova origem — útil para a próxima importação ou ajustes manuais */}
+                  <CreateSourceInline vm={vm} />
+
                   <div className="flex justify-end gap-2 pt-2">
                     <Button type="button" onClick={vm.closeDialog} className="rounded-xl">
                       Concluir

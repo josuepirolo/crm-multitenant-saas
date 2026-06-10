@@ -31,6 +31,7 @@ const mocks = vi.hoisted(() => {
   return {
     getWorkspaceContext: vi.fn(),
     getCurrentWorkspaceId: vi.fn(),
+    getScopedSupabaseClient: vi.fn().mockResolvedValue(mockSupabase),
     revalidatePath: vi.fn(),
     softDelete: vi.fn(),
     create: vi.fn(),
@@ -46,6 +47,7 @@ const mocks = vi.hoisted(() => {
 vi.mock("@/lib/guards", () => ({
   getWorkspaceContext: mocks.getWorkspaceContext,
   getCurrentWorkspaceId: mocks.getCurrentWorkspaceId,
+  getScopedSupabaseClient: mocks.getScopedSupabaseClient,
 }));
 
 vi.mock("next/cache", () => ({
@@ -101,6 +103,7 @@ beforeEach(() => {
   mocks.findAll.mockResolvedValue({ data: [], total: 0 });
   mocks.createClient.mockResolvedValue(mocks.mockSupabase);
   mocks.createAdminClient.mockReturnValue(mocks.mockAdmin);
+  mocks.getScopedSupabaseClient.mockResolvedValue(mocks.mockSupabase);
 });
 
 // ─── createContact ────────────────────────────────────────────────────────────

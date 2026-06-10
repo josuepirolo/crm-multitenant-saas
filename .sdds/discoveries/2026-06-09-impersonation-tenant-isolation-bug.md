@@ -29,6 +29,14 @@ CONFIRMADO — reproduzido via SQL (contagem/timestamps dos 8.485 contatos), cau
 - Validado: `tsc --noEmit` limpo; `vitest run src/tests/security src/tests/tenant-isolation` → 307/307 passando.
 
 ## Próximos passos
-- Criar testes automatizados específicos para `getValidatedImpersonatedWorkspaceId`, `getCurrentWorkspaceId`, `getWorkspaceContext` e `getUserRole` cobrindo: sem cookie, cookie de outro usuário, usuário não-superadmin, impersonação válida (pendente — próxima sessão).
+- ~~Criar testes automatizados específicos para `getValidatedImpersonatedWorkspaceId`, `getCurrentWorkspaceId`, `getWorkspaceContext` e `getUserRole`~~ — feito na mesma sessão (16 testes novos, 323/323 passando, ver `sessions/2026-06-09-0805-session.md`).
 - Usuário deve reimportar a planilha de contatos da Lekazis (workspace agora isolado corretamente durante impersonação).
 - Considerar auditoria adicional: revisar se outras leituras (não só `getWorkspaceContext`) resolvem tenant de forma divergente durante impersonação (ex: RPCs chamadas diretamente fora de `guards.ts`).
+
+## Remediação adicional — `contact_sources` (2026-06-09, sessão 23:40)
+O mesmo bug também afetou a tabela `contact_sources`: 11 origens (Instagram, WhatsApp, Loja_Fisica_Varejo, Loja_Fisica_Atacado, Facebook, Tiktok, Magazord, MarketPlace_Via_Evangelica, Web_Catalogo_Lancamentos, Telefone, MarketPlace_Epulari) criadas entre 02:04–10:46 UTC do mesmo dia foram gravadas em PyTec em vez de Lekazis — mesma janela temporal do bug dos 8.485 contatos.
+
+- Confirmado via SQL: PyTec tinha 11 `contact_sources` (nomes consistentes com canais de varejo/e-commerce da Lekazis, não com PyTec); Lekazis tinha 0.
+- `contact_source_assignments` estava vazio (0 linhas) em ambos os workspaces — sem referências a realinhar.
+- Corrigido com `UPDATE contact_sources SET workspace_id = '23a8b0b2-3845-42a3-bb0b-bb9abbfdf8e6' WHERE workspace_id = 'b5a71a25-c2d1-4395-9d66-ac059cff1ce0'` (preserva os 11 IDs). Verificado: Lekazis agora com 11 origens, PyTec com 0.
+- Remediação pontual via SQL direto (não migration) — dados corrompidos por bug já corrigido no código, não mudança de schema.

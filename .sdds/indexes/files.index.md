@@ -443,3 +443,13 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-10 02:22 | `skills_criar_especificao.md` |
 | 2026-06-10 02:29 | `C:/Projetos/CRM WhatsApp/src/app/(admin)/layout.tsx` |
 | 2026-06-10 02:31 | `C:/Projetos/CRM WhatsApp/README.md` |
+| 2026-06-10 02:31 | `README.md` |
+| 2026-06-10 02:31 | `src/app/(admin)/layout.tsx` |
+| 2026-06-10 03:20 | `C:/Projetos/CRM WhatsApp/src/lib/guards.ts` |
+| 2026-06-10 03:20 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/actions.ts` |
+| 2026-06-10 03:21 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-10 03:21 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/niche-profile-actions.ts` |
+| 2026-06-10 03:21 | `C:/Projetos/CRM WhatsApp/src/tests/security/workspace-context-impersonation.test.ts` |
+| 2026-06-10 03:26 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-10 03:27 | `C:/Projetos/CRM WhatsApp/src/tests/tenant-isolation/actions-auth.test.ts` |
+| 2026-06-10 03:37 | `C:/Projetos/CRM WhatsApp/README.md` |

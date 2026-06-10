@@ -39,7 +39,7 @@ vi.mock("@/lib/impersonation", () => ({
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: mocks.createAdminClient }));
 
-import { getCurrentWorkspaceId, getWorkspaceContext } from "@/lib/guards";
+import { getCurrentWorkspaceId, getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { getUserRole } from "@/lib/user-role";
 
 const USER_ID = "user-1";
@@ -136,6 +136,48 @@ describe("getWorkspaceContext", () => {
     expect(await getWorkspaceContext("contacts", "create")).toEqual({
       error: "Você não tem permissão para realizar esta ação.",
     });
+  });
+});
+
+// ─── getScopedSupabaseClient ────────────────────────────────────────────────
+//
+// Mesmo workspaceId resolvido por getWorkspaceContext/getCurrentWorkspaceId,
+// o createClient() RLS-bound ao auth.uid() real (superadmin) não enxerga
+// dados de workspaces onde o superadmin não é membro (RLS = workspace_id IN
+// my_workspace_ids()). Durante impersonação validada, leituras/escritas
+// usam service_role — ver discoveries/2026-06-10-impersonation-rls-blocks-data-access.md.
+
+describe("getScopedSupabaseClient", () => {
+  it("não autenticado: retorna createClient() sem checar impersonação", async () => {
+    mocks.getCachedUser.mockResolvedValue({ data: { user: null } });
+
+    const client = await getScopedSupabaseClient();
+
+    expect(mocks.getValidatedImpersonatedWorkspaceId).not.toHaveBeenCalled();
+    expect(mocks.createAdminClient).not.toHaveBeenCalled();
+    expect(mocks.createClient).toHaveBeenCalled();
+    expect(client).toEqual({ from: mocks.serverFrom, auth: { getUser: mocks.serverAuthGetUser } });
+  });
+
+  it("sem impersonação válida: retorna createClient() (RLS-bound), idêntico ao comportamento anterior", async () => {
+    mocks.getCachedUser.mockResolvedValue({ data: { user: { id: USER_ID } } });
+    mocks.getValidatedImpersonatedWorkspaceId.mockResolvedValue(null);
+
+    const client = await getScopedSupabaseClient();
+
+    expect(mocks.createAdminClient).not.toHaveBeenCalled();
+    expect(client).toEqual({ from: mocks.serverFrom, auth: { getUser: mocks.serverAuthGetUser } });
+  });
+
+  it("com impersonação válida: retorna createAdminClient() (service_role) para contornar RLS de my_workspace_ids()", async () => {
+    mocks.getCachedUser.mockResolvedValue({ data: { user: { id: USER_ID } } });
+    mocks.getValidatedImpersonatedWorkspaceId.mockResolvedValue(IMPERSONATED_WORKSPACE_ID);
+
+    const client = await getScopedSupabaseClient();
+
+    expect(mocks.createClient).not.toHaveBeenCalled();
+    expect(mocks.createAdminClient).toHaveBeenCalled();
+    expect(client).toEqual({ from: mocks.adminFrom });
   });
 });
 

@@ -42,7 +42,20 @@ Se for necessário restringir o que um superadmin pode fazer durante impersonaç
 
 ## Arquivos relacionados
 - `src/lib/impersonation.ts` (`getValidatedImpersonatedWorkspaceId`)
-- `src/lib/guards.ts` (`getCurrentWorkspaceId`, `getWorkspaceContext`)
+- `src/lib/guards.ts` (`getCurrentWorkspaceId`, `getWorkspaceContext`, `getScopedSupabaseClient`)
 - `src/lib/user-role.ts` (`getUserRole`)
 - `src/app/(admin)/admin/impersonation-actions.ts` (`startImpersonation`/`stopImpersonation`, já auditados)
 - `discoveries/2026-06-09-impersonation-tenant-isolation-bug.md`
+- `discoveries/2026-06-10-impersonation-rls-blocks-data-access.md`
+
+## Addendum (2026-06-10) — segunda metade da decisão: seleção do cliente Supabase
+
+A decisão original cobriu apenas **qual `workspaceId` usar** (app layer). Faltava decidir **qual cliente Supabase executa as queries com esse `workspaceId`** (data layer) — ver `discoveries/2026-06-10-impersonation-rls-blocks-data-access.md`.
+
+Problema: `createClient()` é RLS-bound ao `auth.uid()` real (o superadmin). RLS (`workspace_id IN (SELECT my_workspace_ids())`) só retorna `true` para workspaces onde o superadmin tem `workspace_members`. Logo, mesmo com `workspaceId` correto, `createClient()` durante impersonação de um workspace onde o superadmin não é membro: SELECTs retornam vazio e INSERTs/UPDATEs são rejeitados pelo `WITH CHECK`.
+
+**Decisão (consistente com a decisão original):** novo helper `getScopedSupabaseClient()` em `src/lib/guards.ts` — durante impersonação validada (`getValidatedImpersonatedWorkspaceId` não-nulo), retorna `createAdminClient()` (`service_role`, bypassa RLS); caso contrário, retorna `createClient()` (RLS-bound, comportamento idêntico ao anterior).
+
+A barreira de segurança continua sendo a validação de impersonação (cookie `imp-by` + `is_superadmin` confirmado no banco), não o RLS — mesmo raciocínio já aceito para `getWorkspaceContext`. Todo `workspace_id` usado nas queries continua vindo de `ctx.workspaceId`/`getCurrentWorkspaceId()`, nunca do client.
+
+**Status de adoção:** aplicado em `src/app/(dashboard)/contacts/{actions,import-actions,niche-profile-actions}.ts` nesta sessão. ~15 arquivos fora de `contacts/` ainda usam `createClient()` direto após `getWorkspaceContext`/`getCurrentWorkspaceId` e têm o mesmo gap — rastreado como risco `R-009` em `CURRENT_STATE.md`.

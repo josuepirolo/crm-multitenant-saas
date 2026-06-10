@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { can } from "@/lib/permissions";
 import { getUserRole } from "@/lib/user-role";
 import { getValidatedImpersonatedWorkspaceId } from "@/lib/impersonation";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { MemberRole, PermissionModule, PermissionAction } from "@/types";
 
 export async function requirePermission(
@@ -35,6 +36,25 @@ export async function getCurrentWorkspaceId(): Promise<string | null> {
     .single();
 
   return data?.current_workspace_id ?? null;
+}
+
+/**
+ * Cliente Supabase para operações de dados do workspace resolvido por
+ * getWorkspaceContext/getCurrentWorkspaceId. Durante impersonação validada
+ * (getValidatedImpersonatedWorkspaceId), o auth.uid() real (superadmin) não
+ * é necessariamente membro do workspace impersonado — RLS bloquearia leituras
+ * e escritas mesmo com workspaceId corretamente resolvido. A validação de
+ * impersonação (cookie + is_superadmin confirmado no banco) já é o gate de
+ * segurança (acesso owner-like, ver ADR-004), então usamos service_role aqui.
+ * Sem impersonação, comportamento idêntico ao createClient() RLS-bound.
+ */
+export async function getScopedSupabaseClient(): Promise<SupabaseClient> {
+  const { data: { user } } = await getCachedUser();
+  if (user) {
+    const impersonatedId = await getValidatedImpersonatedWorkspaceId(user.id);
+    if (impersonatedId) return createAdminClient();
+  }
+  return createClient();
 }
 
 export async function requireSuperAdmin(): Promise<{ userId: string } | null> {
