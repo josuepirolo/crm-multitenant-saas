@@ -489,3 +489,28 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/mfa-actions.ts` |
 | 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/setup-niche-action.ts` |
 | 2026-06-10 04:04 | `C:/Projetos/CRM WhatsApp/README.md` |
+| 2026-06-10 04:05 | `README.md` |
+| 2026-06-10 04:05 | `eslint.config.mjs` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-parts/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-parts/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-parts/quotes/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-sales/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-sales/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-sales/proposals/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/dashboard/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/fashion/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/fashion/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/fashion/stock/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/kanban/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/layout.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/session-actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/settings/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/settings/mfa-actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/settings/niche-actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/settings/rbac-actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/settings/upload-actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/setup-niche-action.ts` |
+| 2026-06-10 04:05 | `src/tests/security/settings-actions.test.ts` |
+| 2026-06-10 04:05 | `src/tests/security/upload-actions.test.ts` |
+| 2026-06-10 04:05 | `src/tests/security/workspace-profile-actions.test.ts` |
