@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-08
+Atualizado: 2026-06-09
 Bootstrap: recuperado de código real (sessão anterior sem persistência de .sdds/)
 
 ---
@@ -11,7 +11,7 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 | Módulo | Status | Observação |
 |---|---|---|
 | Auth | IMPLEMENTADO | login, register (auto-cadastro DESATIVADO via flag, código preservado), MFA, reset, Turnstile, session policy |
-| Contacts | IMPLEMENTADO | CRUD, filtros, paginação, multi-tenant, soft delete; importação em massa (XLSX/CSV) com preview (10 linhas + detecção de origem), lotes automáticos de 2.000 sem limite máximo, barra de progresso; `source_id` obrigatório no formulário manual; gerenciamento de origens (`ContactSourcesSheet`); apenas `.xlsx` e `.csv`; normalização de telefone E.164 (`normalizeBrazilianPhone`: DDI 55, nono dígito, DDD 55); `toTitleCase` PT-BR no parser (preposições minúsculas, espaços duplos colapsados); 4.324 nomes históricos normalizados em lote no banco; teste manual em navegador pendente |
+| Contacts | IMPLEMENTADO | CRUD, filtros, paginação, multi-tenant, soft delete; importação em massa (XLSX/CSV) com preview (10 linhas + detecção de origem), lotes automáticos de 2.000 sem limite máximo, barra de progresso; `source_id` obrigatório no formulário manual; gerenciamento de origens (`ContactSourcesSheet`); apenas `.xlsx` e `.csv`; normalização de telefone E.164 (`normalizeBrazilianPhone`: DDI 55, nono dígito, DDD 55); `toTitleCase` PT-BR no parser (preposições minúsculas, espaços duplos colapsados); 4.324 nomes históricos normalizados em lote no banco; **resultado de importação detalha `already_exists`/`invalid_count`/`file_duplicates` (2026-06-09)**; **multi-origem por contato via `contact_source_assignments` (ADR-003, 2026-06-09)**; teste manual em navegador pendente |
 | Kanban | IMPLEMENTADO | Board DnD (@dnd-kit), CRUD de deals, pipeline, otimista |
 | Settings | IMPLEMENTADO | workspace, membros, RBAC, MFA, nicho, upload |
 | Admin | IMPLEMENTADO | superadmin, workspaces, impersonation, analytics, nichos |
@@ -34,6 +34,7 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 | R-005 | Kanban sem testes automatizados (harness parcial) | MÉDIO | ABERTO |
 | R-006 | RLS ausente nas tabelas wa_* (gerenciada pelo WA backend) | INFO | EXTERNO |
 | R-007 | Nada detecta DDL ad-hoc em produção fora do framework de migrations | ALTO | ABERTO |
+| R-008 | Fix de impersonação (acesso owner-like ao workspace impersonado em `getWorkspaceContext`/`getCurrentWorkspaceId`/`getUserRole`) sem testes automatizados próprios ainda — apenas validado contra a suíte existente (307/307) | ALTO | RESOLVIDO 2026-06-09 |
 
 ## Verdades atuais (CONFIRMADO)
 
@@ -55,10 +56,14 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 
 - **Normalização de telefone brasileiro — IMPLEMENTADA (2026-06-09, branch dev, não commitada)**: `normalizeBrazilianPhone(raw)` em `src/lib/validations/contact.ts` — detecta comprimento de dígitos para normalizar para E.164 sem `+`; adiciona DDI 55 quando ausente; injeta nono dígito apenas em celulares (8 dígitos pós-DDD, iniciam 6-9); trata ambiguidade DDI 55 vs DDD 55 (Três Lagoas/MS) pelo comprimento total. Aplicada em `parse-contact-import.ts` (importação planilha) e `actions.ts` (formulário manual). `normalizePhone` delega para ela. tsc limpo, 365/365 passando.
 
+- **BUG CRÍTICO DE SEGURANÇA — impersonação não isolava `workspace_id` em escritas — RESOLVIDO 2026-06-09 (branch dev, não commitado)**: `getCurrentWorkspaceId`/`getWorkspaceContext` (`src/lib/guards.ts`) e `getUserRole` (`src/lib/user-role.ts`) resolviam o tenant só por `profiles.current_workspace_id`, ignorando o cookie de impersonação (`imp-wid`/`imp-by`) — qualquer Server Action protegida por essas funções gravava no workspace do superadmin, não no workspace impersonado. Detectado quando uma importação de contatos feita impersonando "Lekazis" (`23a8b0b2-3845-42a3-bb0b-bb9abbfdf8e6`) gravou 8.485 contatos em "PyTec" (`b5a71a25-c2d1-4395-9d66-ac059cff1ce0`, workspace de teste/pessoal do superadmin). Corrigido com nova `getValidatedImpersonatedWorkspaceId(userId)` em `src/lib/impersonation.ts` (valida dono do cookie + `is_superadmin` confirmado no banco via admin client) — usada nas três funções acima, concedendo acesso **owner-like** ao workspace impersonado (ver ADR-004). Os 8.485 contatos foram apagados de PyTec (`DELETE FROM contacts WHERE workspace_id = '...'`, FKs com CASCADE/SET NULL verificadas antes). Cobertura de testes adicionada em `src/tests/security/impersonation-validated-workspace.test.ts` (5 testes da função de validação) e `src/tests/security/workspace-context-impersonation.test.ts` (11 testes cobrindo `getCurrentWorkspaceId`/`getWorkspaceContext`/`getUserRole` com e sem impersonação). `tsc --noEmit` limpo; `vitest run src/tests/security src/tests/tenant-isolation` → 323/323 passando (era 307, +16 novos). **Pendente**: usuário precisa reimportar a planilha da Lekazis; commit das alterações.
+
 ## Próximas ações disponíveis
 
 | Ação | Módulo SDDS | Status |
 |---|---|---|
+| Reimportar planilha de contatos da Lekazis (impersonado) | — | Ação do usuário |
+| Commit das alterações desta sessão (import feedback + multi-origem + fix impersonação + testes) | — | PRÓXIMO |
 | Spec módulo WA Integrations | 02_CREATE_MODULE_SPEC | PRÓXIMO |
 | Tela /settings/integrations | 06_IMPLEMENTATION | Aguarda spec |
 | Linkar deal → wa_conversation | 06_IMPLEMENTATION | Aguarda spec |

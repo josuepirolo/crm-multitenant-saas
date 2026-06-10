@@ -407,3 +407,37 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-09 10:40 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
 | 2026-06-09 10:43 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactImportViewModel.ts` |
 | 2026-06-09 10:44 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-09 10:47 | `src/app/(dashboard)/contacts/contacts-client.tsx` |
+| 2026-06-09 10:47 | `src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-09 10:47 | `src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-09 10:55 | `C:/Projetos/CRM WhatsApp/src/types/index.ts` |
+| 2026-06-09 10:55 | `C:/Projetos/CRM WhatsApp/src/usecases/ContactUseCases.ts` |
+| 2026-06-09 10:56 | `C:/Projetos/CRM WhatsApp/src/repositories/contact-source.repository.ts` |
+| 2026-06-09 10:56 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-09 10:56 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-result-summary.tsx` |
+| 2026-06-09 10:56 | `C:/Projetos/CRM WhatsApp/supabase/migrations/20260609120000_contact_source_assignments.sql` |
+| 2026-06-09 10:57 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-09 10:57 | `C:/Projetos/CRM WhatsApp/src/repositories/contact-source.repository.ts` |
+| 2026-06-10 01:45 | `C:/Projetos/CRM WhatsApp/src/lib/impersonation.ts` |
+| 2026-06-10 01:45 | `C:/Projetos/CRM WhatsApp/src/lib/guards.ts` |
+| 2026-06-10 01:45 | `C:/Projetos/CRM WhatsApp/src/lib/user-role.ts` |
+| 2026-06-10 02:11 | `C:/Projetos/CRM WhatsApp/src/tests/security/impersonation-validated-workspace.test.ts` |
+| 2026-06-10 02:11 | `C:/Projetos/CRM WhatsApp/src/tests/security/workspace-context-impersonation.test.ts` |
+| 2026-06-10 02:22 | `C:/Projetos/CRM WhatsApp/README.md` |
+| 2026-06-10 02:22 | `README.md` |
+| 2026-06-10 02:22 | `src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-10 02:22 | `src/components/contacts/import-result-summary.tsx` |
+| 2026-06-10 02:22 | `src/lib/guards.ts` |
+| 2026-06-10 02:22 | `src/lib/impersonation.ts` |
+| 2026-06-10 02:22 | `src/lib/user-role.ts` |
+| 2026-06-10 02:22 | `src/repositories/contact-source.repository.ts` |
+| 2026-06-10 02:22 | `src/tests/security/impersonation-validated-workspace.test.ts` |
+| 2026-06-10 02:22 | `src/tests/security/workspace-context-impersonation.test.ts` |
+| 2026-06-10 02:22 | `src/types/index.ts` |
+| 2026-06-10 02:22 | `src/usecases/ContactUseCases.ts` |
+| 2026-06-10 02:22 | `src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-10 02:22 | `supabase/migrations/20260609120000_contact_source_assignments.sql` |
+| 2026-06-10 02:22 | `criar_skill_next_js_security.md` |
+| 2026-06-10 02:22 | `docs/criar_skill_next_js_security.md` |
+| 2026-06-10 02:22 | `docs/skills_criar_especificao.md` |
+| 2026-06-10 02:22 | `skills_criar_especificao.md` |
