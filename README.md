@@ -20,6 +20,7 @@ Versões exatas: veja `package.json`.
 | [`.claude/checklist.md`](.claude/checklist.md) | Checklist macro de features (o que está feito / pendente) |
 | [`docs/security.md`](docs/security.md) | Rate limit, auditoria, headers, CSP, hardening de erros |
 | [`docs/security/rbac.md`](docs/security/rbac.md) | Modelo RBAC por workspace |
+| [`docs/security/ddl-audit.md`](docs/security/ddl-audit.md) | Auditoria de DDL em produção (event triggers, R-007) |
 | [`docs/settings-admin.md`](docs/settings-admin.md) | Settings, convite de membros, painel super-admin |
 | [`.claude/supabase-production-checklist.md`](.claude/supabase-production-checklist.md) | SMTP, URLs, RLS e secrets antes de produção |
 
