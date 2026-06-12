@@ -529,3 +529,14 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-11 10:02 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-detail-panel.tsx` |
 | 2026-06-11 10:02 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-integrations-section.tsx` |
 | 2026-06-11 10:03 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useWorkspaceIntegrationsViewModel.ts` |
+| 2026-06-12 08:43 | `README.md` |
+| 2026-06-12 08:43 | `src/app/(admin)/admin/integrations-actions.ts` |
+| 2026-06-12 08:43 | `src/components/admin/workspace-detail-panel.tsx` |
+| 2026-06-12 08:43 | `src/components/admin/workspace-integrations-section.tsx` |
+| 2026-06-12 08:43 | `src/lib/audit/audit-log.ts` |
+| 2026-06-12 08:43 | `src/lib/validations/workspace-integration.ts` |
+| 2026-06-12 08:43 | `src/repositories/workspace-integration.repository.ts` |
+| 2026-06-12 08:43 | `src/types/index.ts` |
+| 2026-06-12 08:43 | `src/usecases/WorkspaceIntegrationUseCases.ts` |
+| 2026-06-12 08:43 | `src/viewmodels/useWorkspaceIntegrationsViewModel.ts` |
+| 2026-06-12 08:43 | `supabase/migrations/20260611000000_workspace_integrations_multi_instance.sql` |
