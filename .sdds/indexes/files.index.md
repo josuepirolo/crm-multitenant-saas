@@ -548,3 +548,4 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/02_LOVABLE_SENIOR_FRONTEND.md` |
 | 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/03_UNIFIED_FRONTEND_MASTER.md` |
 | 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/analise_fabel_5/01_.md` |
+| 2026-06-12 09:35 | `.gitignore` |
