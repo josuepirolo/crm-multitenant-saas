@@ -87,6 +87,46 @@ export interface WorkspaceWithStats {
   deal_count: number;
 }
 
+// ── WhatsApp Integrations (bridge para wa_* tables, somente leitura) ─────────
+
+export type IntegrationStatus = "active" | "inactive" | "pending";
+
+export interface WorkspaceIntegration {
+  id: string;
+  workspace_id: string;
+  integration_type: string;
+  provider_id: string | null;
+  wa_tenant_id: string | null;
+  label: string | null;
+  status: IntegrationStatus;
+  settings: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkspaceIntegrationWithWaTenant extends WorkspaceIntegration {
+  wa_tenant_name: string | null;
+  wa_tenant_display_name: string | null;
+  wa_tenant_slug: string | null;
+  wa_instance_count: number;
+}
+
+export interface WaTenantOption {
+  id: string;
+  name: string;
+  display_name: string | null;
+  slug: string;
+  is_active: boolean;
+  plan_status: string;
+  instance_count: number;
+}
+
+export interface WaProviderOption {
+  id: string;
+  name: string;
+  type: string;
+}
+
 // ── Business Niches ───────────────────────────────────────────────────────────
 
 export interface BusinessNiche {

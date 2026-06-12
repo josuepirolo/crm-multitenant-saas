@@ -1,7 +1,7 @@
 # INDEX.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-10
+Atualizado: 2026-06-11
 
 ## Ler primeiro
 1. `CURRENT_STATE.md` — estado atual
@@ -13,7 +13,7 @@ Atualizado: 2026-06-10
 | chat | `specs/chat.summary.md` | `specs/chat.spec.md` | `contracts/chat.contract.md` | `harness/chat.harness.md` |
 | contacts (bulk import) | — | `specs/contacts-bulk-import.spec.md` | — | — |
 
-> ⚠️ Spec de Chat é obsoleta — conversations/messages foram removidas. WA Integrations precisa de nova spec.
+> ⚠️ Spec de Chat é obsoleta — conversations/messages foram removidas. WA Integrations (gestão admin implementada, ADR-005) ainda precisa de spec para a tela `/settings/integrations` do usuário final.
 
 ## Decisões (ADRs)
 | ADR | Decisão |
@@ -22,6 +22,7 @@ Atualizado: 2026-06-10
 | `decisions/ADR-002-bulk-import-sync-batches.md` | Importação de contatos: lotes síncronos (sem job queue) + escolha de `exceljs` sobre `xlsx` (CVEs) |
 | `decisions/ADR-003-contact-multi-origin-junction-table.md` | Múltiplas origens por contato via tabela de junção `contact_source_assignments` (não tags livres) |
 | `decisions/ADR-004-impersonation-owner-like-access.md` | Impersonação concede acesso owner-like ao workspace impersonado, validado via `getValidatedImpersonatedWorkspaceId` |
+| `decisions/ADR-005-admin-wa-tenant-mapping.md` | 1 workspace CRM : N `wa_tenant_id`, com `UNIQUE(wa_tenant_id)` garantindo 1:1 inverso; gestão exclusiva via `/admin` (superadmin) |
 
 ## Discoveries
 | Discovery | Resumo |
@@ -35,6 +36,7 @@ Atualizado: 2026-06-10
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-11 | Admin SaaS: mapeamento 1 workspace : N `wa_tenant_id` (ADR-005) — migration multi-instância, repository/usecases/actions/viewmodel/UI completos em `/admin/workspaces`; 384/384 passando, ainda não commitado (ver `sessions/2026-06-11-0635-session.md`) |
 | 2026-06-10 | R-009 resolvido: `getScopedSupabaseClient()` aplicado nos 16 arquivos restantes (dashboard, kanban, settings, auto-parts, auto-sales, fashion) — gatilho foi dashboard mostrando 0 contatos sob impersonação; 384/384 passando, ainda não commitado |
 | 2026-06-10 | Segunda metade do fix de impersonação: novo `getScopedSupabaseClient()` (service_role durante impersonação validada, contorna RLS de `my_workspace_ids()`) aplicado em `contacts/{actions,import-actions,niche-profile-actions}.ts`; "Criar nova origem" do import dialog extraído para `CreateSourceInline`, sempre visível em preview/result; 326/326 passando; commit `df33790` |
 | 2026-06-09 | SessionTimer adicionado ao `/admin` (fix de "unexpected response" ao impersonar com sessão expirada, commit `4d4efb2`) + remediação de dados: 11 `contact_sources` da Lekazis movidas de volta de PyTec (seguimento R-008, ver `sessions/2026-06-09-2340-session.md`) |

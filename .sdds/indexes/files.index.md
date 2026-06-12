@@ -514,3 +514,18 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-10 04:05 | `src/tests/security/settings-actions.test.ts` |
 | 2026-06-10 04:05 | `src/tests/security/upload-actions.test.ts` |
 | 2026-06-10 04:05 | `src/tests/security/workspace-profile-actions.test.ts` |
+| 2026-06-11 09:46 | `C:/Projetos/CRM WhatsApp/supabase/migrations/20260611000000_workspace_integrations_multi_instance.sql` |
+| 2026-06-11 09:48 | `C:/Projetos/CRM WhatsApp/src/types/index.ts` |
+| 2026-06-11 09:49 | `C:/Projetos/CRM WhatsApp/src/repositories/workspace-integration.repository.ts` |
+| 2026-06-11 09:50 | `C:/Projetos/CRM WhatsApp/src/usecases/WorkspaceIntegrationUseCases.ts` |
+| 2026-06-11 09:50 | `C:/Projetos/CRM WhatsApp/src/lib/validations/workspace-integration.ts` |
+| 2026-06-11 09:50 | `C:/Projetos/CRM WhatsApp/src/lib/audit/audit-log.ts` |
+| 2026-06-11 09:51 | `C:/Projetos/CRM WhatsApp/src/app/(admin)/admin/integrations-actions.ts` |
+| 2026-06-11 09:53 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useWorkspaceIntegrationsViewModel.ts` |
+| 2026-06-11 09:55 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-integrations-section.tsx` |
+| 2026-06-11 09:55 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-detail-panel.tsx` |
+| 2026-06-11 09:56 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-integrations-section.tsx` |
+| 2026-06-11 10:02 | `C:/Projetos/CRM WhatsApp/src/repositories/workspace-integration.repository.ts` |
+| 2026-06-11 10:02 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-detail-panel.tsx` |
+| 2026-06-11 10:02 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-integrations-section.tsx` |
+| 2026-06-11 10:03 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useWorkspaceIntegrationsViewModel.ts` |

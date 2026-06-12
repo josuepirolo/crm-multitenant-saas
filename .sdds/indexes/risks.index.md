@@ -1,10 +1,10 @@
 # Índice de Riscos
 
-Atualizado: 2026-06-10
+Atualizado: 2026-06-11
 
 | ID | Risco | Nível | Status |
 |---|---|---|---|
-| R-001 | WA Integrations não implementada no frontend — tela /settings/integrations inexistente | ALTO | ABERTO |
+| R-001 | WA Integrations não implementada no frontend — tela /settings/integrations inexistente | ALTO | PARCIAL — gestão admin (1 workspace : N `wa_tenant_id`) implementada 2026-06-11 (ADR-005); falta tela `/settings/integrations` para o usuário final |
 | R-002 | Webhooks CRM sem validação HMAC — payload recebido sem verificação de assinatura | ALTO | ABERTO |
 | R-003 | Supabase Vault não configurado — tokens de integração WA armazenados sem criptografia | MÉDIO | ABERTO |
 | R-004 | Kanban sem testes automatizados (harness parcial) | MÉDIO | ABERTO |
