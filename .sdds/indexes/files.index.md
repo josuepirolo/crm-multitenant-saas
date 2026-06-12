@@ -540,3 +540,4 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-12 08:43 | `src/usecases/WorkspaceIntegrationUseCases.ts` |
 | 2026-06-12 08:43 | `src/viewmodels/useWorkspaceIntegrationsViewModel.ts` |
 | 2026-06-12 08:43 | `supabase/migrations/20260611000000_workspace_integrations_multi_instance.sql` |
+| 2026-06-12 08:47 | `.cursor/hooks.json` |
