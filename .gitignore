@@ -6,6 +6,9 @@
 # SDDS private runtime (never expose)
 _sdds_private/
 
+# SDDS stop-hook debounce artifact (efêmero, recriado a cada turno)
+.sdds/.last-stop-git-snapshot
+
 # dependencies
 /node_modules
 /.pnp

@@ -544,3 +544,7 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-12 09:03 | `supabase/migrations/20260612090000_ddl_audit_log_event_triggers.sql` |
 | 2026-06-12 09:08 | `README.md` |
 | 2026-06-12 09:08 | `docs/security/ddl-audit.md` |
+| 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/01_LOVABLE_SENIOR_FRONTEND.md` |
+| 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/02_LOVABLE_SENIOR_FRONTEND.md` |
+| 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/03_UNIFIED_FRONTEND_MASTER.md` |
+| 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/analise_fabel_5/01_.md` |

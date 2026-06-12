@@ -36,6 +36,7 @@ Atualizado: 2026-06-12
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-12 | R-007 mitigado: `ddl_audit_log` + event triggers em produção (`d5f15b7`), documentado em `docs/security/ddl-audit.md` (`950af2a`); prompt frontend unificado `specs/PROMPTS_FRONTEND/03_UNIFIED_FRONTEND_MASTER.md` (`3cfd3fa`) (ver `sessions/2026-06-12-0632-session.md`) |
 | 2026-06-12 | Commit da feature WA admin (ADR-005, `b699270`) + remoção dos hooks `check-file-size`/`validate-spec`/`update-index` de `pre`/`post-tool-use` (`f467ed8`, `--no-verify`) — `enforce-guardrails.js` permanece ativo (ver `sessions/2026-06-11-2336-session.md`, `timeline/2026-06-12.md`) |
 | 2026-06-11 | Admin SaaS: mapeamento 1 workspace : N `wa_tenant_id` (ADR-005) — migration multi-instância, repository/usecases/actions/viewmodel/UI completos em `/admin/workspaces`; 384/384 passando, ainda não commitado (ver `sessions/2026-06-11-0635-session.md`) |
 | 2026-06-10 | R-009 resolvido: `getScopedSupabaseClient()` aplicado nos 16 arquivos restantes (dashboard, kanban, settings, auto-parts, auto-sales, fashion) — gatilho foi dashboard mostrando 0 contatos sob impersonação; 384/384 passando, ainda não commitado |
