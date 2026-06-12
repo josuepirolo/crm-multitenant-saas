@@ -1,7 +1,7 @@
 # INDEX.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-11
+Atualizado: 2026-06-12
 
 ## Ler primeiro
 1. `CURRENT_STATE.md` — estado atual
@@ -36,6 +36,7 @@ Atualizado: 2026-06-11
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-12 | Commit da feature WA admin (ADR-005, `b699270`) + remoção dos hooks `check-file-size`/`validate-spec`/`update-index` de `pre`/`post-tool-use` (`f467ed8`, `--no-verify`) — `enforce-guardrails.js` permanece ativo (ver `sessions/2026-06-11-2336-session.md`, `timeline/2026-06-12.md`) |
 | 2026-06-11 | Admin SaaS: mapeamento 1 workspace : N `wa_tenant_id` (ADR-005) — migration multi-instância, repository/usecases/actions/viewmodel/UI completos em `/admin/workspaces`; 384/384 passando, ainda não commitado (ver `sessions/2026-06-11-0635-session.md`) |
 | 2026-06-10 | R-009 resolvido: `getScopedSupabaseClient()` aplicado nos 16 arquivos restantes (dashboard, kanban, settings, auto-parts, auto-sales, fashion) — gatilho foi dashboard mostrando 0 contatos sob impersonação; 384/384 passando, ainda não commitado |
 | 2026-06-10 | Segunda metade do fix de impersonação: novo `getScopedSupabaseClient()` (service_role durante impersonação validada, contorna RLS de `my_workspace_ids()`) aplicado em `contacts/{actions,import-actions,niche-profile-actions}.ts`; "Criar nova origem" do import dialog extraído para `CreateSourceInline`, sempre visível em preview/result; 326/326 passando; commit `df33790` |

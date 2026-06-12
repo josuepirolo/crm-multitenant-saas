@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-11
+Atualizado: 2026-06-12
 Bootstrap: recuperado de código real (sessão anterior sem persistência de .sdds/)
 
 ---
@@ -21,7 +21,7 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 | Auto Sales | IMPLEMENTADO | inventário, propostas, veículos |
 | Fashion | IMPLEMENTADO | produtos, variantes, estoque |
 | Chat/Inbox | REMOVIDO | conversations/messages dropadas — WA API é fonte de verdade |
-| WA Integrations | PARCIAL | gestão admin (1 workspace : N `wa_tenant_id`, ADR-005) implementada em `/admin/workspaces` (2026-06-11); tela `/settings/integrations` para o usuário final ainda a criar |
+| WA Integrations | PARCIAL | gestão admin (1 workspace : N `wa_tenant_id`, ADR-005) implementada em `/admin/workspaces` e commitada (2026-06-12, commit `b699270`); tela `/settings/integrations` para o usuário final ainda a criar |
 
 ## Riscos atuais
 
@@ -68,15 +68,16 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 
 - **Guardrail ESLint para R-009 — IMPLEMENTADO 2026-06-10 (mesma sessão, não commitado)**: nova regra `no-restricted-imports` em `eslint.config.mjs`, escopada a `src/app/(dashboard)/**/*.{ts,tsx}`, banindo o import de `createClient` de `@/lib/supabase/server` (mensagem aponta para `getScopedSupabaseClient()`/R-009). Ao rodar, a regra revelou mais 5 arquivos com `createClient()` legítimo fora do padrão R-009 (todos escopo do próprio usuário/`auth.uid()` ou catálogo global, não `workspace_id`): `(dashboard)/actions.ts` (signOut/switchWorkspace), `(dashboard)/layout.tsx` (checkIsSuperAdmin), `(dashboard)/session-actions.ts` (refreshSession), `settings/mfa-actions.ts` (TOTP), `setup-niche-action.ts` (profile self + `business_niches` global) — cada um com `// eslint-disable-next-line no-restricted-imports` + comentário justificando. Em `kanban/actions.ts` e `settings/rbac-actions.ts`, `createClient` era usado só como tipo (`Awaited<ReturnType<typeof createClient>>`) — substituído por `SupabaseClient` de `@supabase/supabase-js`, eliminando o import. `npx eslint "src/app/(dashboard)/**/*.{ts,tsx}"` → 0 erros de `no-restricted-imports` (restam 3 erros `no-explicit-any` + 2 warnings `no-unused-vars` pré-existentes, não relacionados). `tsc --noEmit` limpo; `vitest run` → 384/384.
 
-- **Admin SaaS — mapeamento 1 workspace : N `wa_tenant_id` — IMPLEMENTADO 2026-06-11 (branch dev, não commitado, ADR-005)**: superadmin agora vincula múltiplas instâncias WhatsApp (`wa_tenant_id`) a um workspace CRM via `/admin/workspaces` → seção "Integrações WhatsApp" no `WorkspaceDetailPanel`. Migration `20260611000000_workspace_integrations_multi_instance.sql` aplicada em produção: removeu `UNIQUE(workspace_id, integration_type, provider_id)`, adicionou coluna `label TEXT` e `UNIQUE(wa_tenant_id)` (garante 1 `wa_tenant_id` → no máx. 1 workspace; múltiplos `NULL` continuam permitidos para vínculos "pending"). Novo `SupabaseWorkspaceIntegrationRepository` faz leitura cross-domain somente-leitura de `wa_tenants`/`wa_instances`/`wa_providers` (ADR-001 preservado — nunca escreve em `wa_*`, nunca lê `credentials`/`webhook_secret`). 6 use cases, validação Zod, Server Actions atrás de `requireSuperAdmin()` + `createAdminClient()` com auditoria (`AUDIT_ACTIONS.INTEGRATION_LINKED/UPDATED/UNLINKED`), ViewModel com `toast.promise()` + otimista. `tsc --noEmit` limpo; `npx eslint` limpo no código novo; `vitest run` → 384/384 (sem regressão). **Pendente**: commit; teste manual em `/admin/workspaces` (vincular/editar/remover, dark mode, mobile 375px); tela `/settings/integrations` para o usuário final ainda não existe (R-001 segue PARCIAL).
+- **Admin SaaS — mapeamento 1 workspace : N `wa_tenant_id` — IMPLEMENTADO 2026-06-11, COMMITADO 2026-06-12 (commit `b699270`, ADR-005)**: superadmin agora vincula múltiplas instâncias WhatsApp (`wa_tenant_id`) a um workspace CRM via `/admin/workspaces` → seção "Integrações WhatsApp" no `WorkspaceDetailPanel`. Migration `20260611000000_workspace_integrations_multi_instance.sql` aplicada em produção: removeu `UNIQUE(workspace_id, integration_type, provider_id)`, adicionou coluna `label TEXT` e `UNIQUE(wa_tenant_id)` (garante 1 `wa_tenant_id` → no máx. 1 workspace; múltiplos `NULL` continuam permitidos para vínculos "pending"). Novo `SupabaseWorkspaceIntegrationRepository` faz leitura cross-domain somente-leitura de `wa_tenants`/`wa_instances`/`wa_providers` (ADR-001 preservado — nunca escreve em `wa_*`, nunca lê `credentials`/`webhook_secret`). 6 use cases, validação Zod, Server Actions atrás de `requireSuperAdmin()` + `createAdminClient()` com auditoria (`AUDIT_ACTIONS.INTEGRATION_LINKED/UPDATED/UNLINKED`), ViewModel com `toast.promise()` + otimista. `tsc --noEmit` limpo; `npx eslint` limpo no código novo; `vitest run` → 384/384 (sem regressão). README atualizado na mesma sessão. **Pendente**: teste manual em `/admin/workspaces` (vincular/editar/remover, dark mode, mobile 375px); tela `/settings/integrations` para o usuário final ainda não existe (R-001 segue PARCIAL).
+
+- **Hooks SDDS reduzidos — 2026-06-12 (commit `f467ed8`)**: removidos os hooks de `pre`/`post-tool-use` (`.claude/settings.json`, `.cursor/hooks.json`) que rodavam `check-file-size.js`, `validate-spec.js` e `update-index.js` a cada `Write`/`Edit`. `enforce-guardrails.js` permanece ativo (pre-tool-use + git pre-commit). Efeito prático: arquivos grandes e specs deixam de ser validados automaticamente a cada edição (apenas via pre-commit `validate-spec.js --git-staged`), e `files.index.md` deixa de ser atualizado automaticamente por edição — passa a depender de atualização manual/`/sdds-update`.
 
 ## Próximas ações disponíveis
 
 | Ação | Módulo SDDS | Status |
 |---|---|---|
 | Validar manualmente impersonando Lekazis (origens visíveis, dashboard com contatos, criar origem no import, reimportar planilha, demais módulos) | — | Ação do usuário |
-| Commitar fix R-009 + guardrail ESLint (16+7 arquivos, `getScopedSupabaseClient()` + `no-restricted-imports`) | — | PRÓXIMO |
-| Testar manualmente mapeamento WA em `/admin/workspaces` (vincular/editar/remover instância, dark mode, mobile) e commitar (migration + ADR-005 + 7 arquivos novos + 4 alterados) | — | PRÓXIMO |
+| Testar manualmente mapeamento WA em `/admin/workspaces` (vincular/editar/remover instância, dark mode, mobile) | — | PRÓXIMO |
 | Spec módulo WA Integrations (tela `/settings/integrations` para usuário final) | 02_CREATE_MODULE_SPEC | Aguarda |
 | Tela /settings/integrations | 06_IMPLEMENTATION | Aguarda spec |
 | Linkar deal → wa_conversation | 06_IMPLEMENTATION | Aguarda spec |
