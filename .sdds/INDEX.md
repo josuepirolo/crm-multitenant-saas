@@ -12,6 +12,7 @@ Atualizado: 2026-06-12
 |---|---|---|---|---|
 | chat | `specs/chat.summary.md` | `specs/chat.spec.md` | `contracts/chat.contract.md` | `harness/chat.harness.md` |
 | contacts (bulk import) | — | `specs/contacts-bulk-import.spec.md` | — | — |
+| settings (integrations) | — | `specs/settings-integrations.spec.md` | — | — |
 
 > ⚠️ Spec de Chat é obsoleta — conversations/messages foram removidas. WA Integrations (gestão admin implementada, ADR-005) ainda precisa de spec para a tela `/settings/integrations` do usuário final.
 
