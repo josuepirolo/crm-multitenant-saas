@@ -1,5 +1,6 @@
 "use server";
 
+// eslint-disable-next-line no-restricted-imports -- lookups de profile (self) e business_niches (catálogo global), não workspace_id
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCachedUser } from "@/lib/supabase/cached-auth";

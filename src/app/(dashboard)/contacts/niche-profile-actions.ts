@@ -1,7 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { getWorkspaceContext } from "@/lib/guards";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { publicError } from "@/lib/security/security-errors";
 import { z } from "zod";
 
@@ -29,7 +28,7 @@ export async function upsertAutoPartsProfile(_: unknown, formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     const { error } = await supabase
       .from("contact_profiles_auto_parts")
       .upsert({ ...parsed.data, workspace_id: ctx.workspaceId }, { onConflict: "contact_id" });
@@ -48,7 +47,7 @@ export async function upsertFashionProfile(_: unknown, formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     const { error } = await supabase
       .from("contact_profiles_fashion")
       .upsert({ ...parsed.data, workspace_id: ctx.workspaceId }, { onConflict: "contact_id" });

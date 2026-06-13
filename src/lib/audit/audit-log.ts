@@ -38,6 +38,9 @@ export const AUDIT_ACTIONS = {
   CONTACT_SOURCE_CREATED:        "contact_source_created",
   CONTACT_SOURCE_RENAMED:        "contact_source_renamed",
   CONTACT_SOURCE_TOGGLED:        "contact_source_toggled",
+  INTEGRATION_LINKED:            "integration_linked",
+  INTEGRATION_UPDATED:           "integration_updated",
+  INTEGRATION_UNLINKED:          "integration_unlinked",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

@@ -1,5 +1,6 @@
 "use server";
 
+// eslint-disable-next-line no-restricted-imports -- MFA é escopo do próprio usuário (auth.uid()), não do workspace
 import { createClient } from "@/lib/supabase/server";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";

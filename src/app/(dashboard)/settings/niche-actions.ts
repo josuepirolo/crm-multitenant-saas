@@ -1,7 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { getWorkspaceContext } from "@/lib/guards";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { SupabaseNicheRepository } from "@/repositories/niche.repository";
 import { ListNicheTreeUseCase } from "@/usecases/NicheUseCases";
 import { revalidatePath } from "next/cache";
@@ -10,7 +9,7 @@ import { publicError } from "@/lib/security/security-errors";
 export async function listActiveNiches() {
   const ctx = await getWorkspaceContext("settings", "view");
   if ("error" in ctx) return { error: ctx.error, data: [] };
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   try {
     const data = await new ListNicheTreeUseCase(new SupabaseNicheRepository(supabase)).execute(true);
     return { error: undefined, data };
@@ -23,7 +22,7 @@ export async function updateWorkspaceNiche(nicheId: string | null) {
   const ctx = await getWorkspaceContext("settings", "edit");
   if ("error" in ctx) return { error: ctx.error };
 
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   try {
     // Valida que o nicho existe e está ativo (se não for null)
     if (nicheId) {

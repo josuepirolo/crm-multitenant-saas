@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { getWorkspaceContext } from "@/lib/guards";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { publicError } from "@/lib/security/security-errors";
 import { revalidatePath } from "next/cache";
 import { SupabaseDealRepository } from "@/repositories/deal.repository";
@@ -26,7 +26,7 @@ import {
   type CloseDealInput,
 } from "@/lib/validations/deal";
 
-function repo(supabase: Awaited<ReturnType<typeof createClient>>) {
+function repo(supabase: SupabaseClient) {
   return new SupabaseDealRepository(supabase);
 }
 
@@ -35,7 +35,7 @@ export async function getKanbanDataAction() {
   if ("error" in ctx) return { error: ctx.error };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     const data = await new GetKanbanDataUseCase(repo(supabase)).execute(ctx.workspaceId);
     return { ...data, workspaceId: ctx.workspaceId };
   } catch (err) {
@@ -48,7 +48,7 @@ export async function getContactsForSelectAction() {
   if ("error" in ctx) return { error: ctx.error, contacts: [] };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     const contacts = await new GetContactsForSelectUseCase(repo(supabase)).execute(ctx.workspaceId);
     return { contacts };
   } catch {
@@ -64,7 +64,7 @@ export async function createDealAction(input: CreateDealInput) {
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     const deal = await new CreateDealUseCase(repo(supabase)).execute(ctx.workspaceId, parsed.data, ctx.userId);
     revalidatePath("/kanban");
     return { deal };
@@ -81,7 +81,7 @@ export async function updateDealAction(input: UpdateDealInput) {
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     const deal = await new UpdateDealUseCase(repo(supabase)).execute(ctx.workspaceId, parsed.data.deal_id, parsed.data);
     revalidatePath("/kanban");
     return { deal };
@@ -98,7 +98,7 @@ export async function moveDealAction(input: MoveDealInput) {
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     await new MoveDealUseCase(repo(supabase)).execute(
       ctx.workspaceId,
       parsed.data.deal_id,
@@ -119,7 +119,7 @@ export async function closeDealAction(input: CloseDealInput) {
   if (!parsed.success) return { error: "Dados inválidos." };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     await new CloseDealUseCase(repo(supabase)).execute(ctx.workspaceId, parsed.data.deal_id, parsed.data.status);
     revalidatePath("/kanban");
     return { success: true as const };
@@ -135,7 +135,7 @@ export async function archiveDealAction(dealId: string) {
   if (!dealId || typeof dealId !== "string") return { error: "ID inválido." };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     await new ArchiveDealUseCase(repo(supabase)).execute(ctx.workspaceId, dealId);
     revalidatePath("/kanban");
     return { success: true as const };
@@ -149,7 +149,7 @@ export async function createDefaultPipelineAction() {
   if ("error" in ctx) return { error: "Apenas administradores podem criar o funil." };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     const result = await new CreateDefaultPipelineUseCase(repo(supabase)).execute(ctx.workspaceId);
     revalidatePath("/kanban");
     return result;

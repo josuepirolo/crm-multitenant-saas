@@ -13,6 +13,8 @@ export interface IContactSourceRepository {
   create(data: CreateContactSourceDTO): Promise<ContactSource>;
   rename(workspaceId: string, id: string, name: string): Promise<ContactSource>;
   setActive(workspaceId: string, id: string, isActive: boolean): Promise<ContactSource>;
+  assignToContact(workspaceId: string, contactId: string, sourceIds: string[]): Promise<void>;
+  listForContact(contactId: string): Promise<ContactSource[]>;
 }
 
 export class SupabaseContactSourceRepository implements IContactSourceRepository {
@@ -65,5 +67,25 @@ export class SupabaseContactSourceRepository implements IContactSourceRepository
       .single();
     if (error) throw new Error(error.message);
     return source as ContactSource;
+  }
+
+  async assignToContact(workspaceId: string, contactId: string, sourceIds: string[]): Promise<void> {
+    if (sourceIds.length === 0) return;
+    const rows = sourceIds.map((source_id) => ({ workspace_id: workspaceId, contact_id: contactId, source_id }));
+    const { error } = await this.client
+      .from("contact_source_assignments")
+      .upsert(rows, { onConflict: "contact_id,source_id", ignoreDuplicates: true });
+    if (error) throw new Error(error.message);
+  }
+
+  async listForContact(contactId: string): Promise<ContactSource[]> {
+    const { data, error } = await this.client
+      .from("contact_source_assignments")
+      .select("source:contact_sources(*)")
+      .eq("contact_id", contactId);
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as unknown as { source: ContactSource }[])
+      .map((r) => r.source)
+      .filter(Boolean);
   }
 }

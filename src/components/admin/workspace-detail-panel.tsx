@@ -10,6 +10,7 @@ import { appleEase } from "@/components/ui/motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { startImpersonation } from "@/app/(admin)/admin/impersonation-actions";
 import { updateWorkspaceProfileAdmin } from "@/app/(admin)/admin/actions";
+import { WorkspaceIntegrationsSection } from "@/components/admin/workspace-integrations-section";
 import { toast } from "sonner";
 
 interface WorkspaceDetailPanelProps {
@@ -361,6 +362,9 @@ export function WorkspaceDetailPanel({
                 </div>
               )}
             </div>
+
+            {/* Integrações WhatsApp */}
+            <WorkspaceIntegrationsSection key={workspace.id} workspaceId={workspace.id} />
           </div>
 
           {/* Footer — ações + data */}

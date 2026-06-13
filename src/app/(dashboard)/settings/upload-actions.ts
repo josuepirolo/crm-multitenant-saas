@@ -1,10 +1,11 @@
 "use server";
 
+// eslint-disable-next-line no-restricted-imports -- uploadUserAvatar é escopo do próprio usuário (auth.uid()), não do workspace
 import { createClient } from "@/lib/supabase/server";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";
 import { publicError } from "@/lib/security/security-errors";
-import { getWorkspaceContext } from "@/lib/guards";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { SupabaseWorkspaceRepository } from "@/repositories/workspace.repository";
 import { revalidatePath } from "next/cache";
 
@@ -47,7 +48,7 @@ export async function uploadWorkspaceLogo(_: unknown, formData: FormData) {
   const ext  = getExt(file.type as AllowedType);
   const path = `${ctx.workspaceId}/logo.${ext}`;
 
-  const supabase  = await createClient();
+  const supabase  = await getScopedSupabaseClient();
   const arrayBuf  = await file.arrayBuffer();
 
   if (!validateMagicBytes(arrayBuf, file.type)) return { error: "Arquivo inválido." };

@@ -16,6 +16,7 @@ import { getCachedUser } from "@/lib/supabase/cached-auth";
 import { AreaTracker } from "@/components/dashboard/area-tracker";
 import { getImpersonationContext, clearImpersonation } from "@/lib/impersonation";
 import { requireSuperAdmin } from "@/lib/guards";
+// eslint-disable-next-line no-restricted-imports -- checkIsSuperAdmin é self-lookup (auth.uid()), não do workspace
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { BusinessNiche } from "@/types";

@@ -1,10 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { SupabaseContactRepository } from "@/repositories/contact.repository";
 import { SupabaseContactSourceRepository } from "@/repositories/contact-source.repository";
 import { ImportContactsUseCase } from "@/usecases/ContactUseCases";
-import { getWorkspaceContext } from "@/lib/guards";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";
 import { publicError } from "@/lib/security/security-errors";
@@ -100,10 +99,10 @@ export async function importContactsAction(
 
   const parsedFile = await parseContactImportFile(buffer, file.name, { offset, limit: chunkSize });
   if (parsedFile.error) return { error: parsedFile.error };
-  if (parsedFile.rows.length === 0) return { error: undefined, result: { total: 0, created: 0, skipped: 0, errors: [] } };
+  if (parsedFile.rows.length === 0) return { error: undefined, result: { total: 0, created: 0, skipped: 0, already_exists: 0, invalid_count: 0, file_duplicates: 0, errors: [] } };
 
   try {
-    const supabase = await createClient();
+    const supabase = await getScopedSupabaseClient();
     const result = await new ImportContactsUseCase(
       new SupabaseContactRepository(supabase),
       new SupabaseContactSourceRepository(supabase)

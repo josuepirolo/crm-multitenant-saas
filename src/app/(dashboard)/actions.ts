@@ -1,5 +1,6 @@
 "use server";
 
+// eslint-disable-next-line no-restricted-imports -- signOut/switchWorkspace são escopo do próprio usuário (auth.uid()), não do workspace
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";

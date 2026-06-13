@@ -1,7 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { getWorkspaceContext } from "@/lib/guards";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { revalidatePath } from "next/cache";
 import { SupabaseFashionRepository } from "@/repositories/fashion.repository";
 import {
@@ -16,7 +15,7 @@ import { publicError } from "@/lib/security/security-errors";
 import { z } from "zod";
 
 function makeRepo() {
-  return createClient().then(s => new SupabaseFashionRepository(s));
+  return getScopedSupabaseClient().then(s => new SupabaseFashionRepository(s));
 }
 
 const productSchema = z.object({

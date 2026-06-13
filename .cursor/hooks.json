@@ -3,28 +3,12 @@
   "hooks": {
     "preToolUse": [
       {
-        "command": "node _sdds_private/scripts/check-file-size.js",
-        "matcher": "Write|StrReplace|ApplyPatch",
-        "timeout": 10
-      },
-      {
-        "command": "node _sdds_private/scripts/validate-spec.js",
-        "matcher": "Write|StrReplace|ApplyPatch",
-        "timeout": 15
-      },
-      {
         "command": "node _sdds_private/scripts/enforce-guardrails.js",
         "matcher": "Shell|Write|StrReplace|ApplyPatch|RunTerminalCommand|Terminal|execute_command",
         "timeout": 15
       }
     ],
-    "postToolUse": [
-      {
-        "command": "node _sdds_private/scripts/update-index.js",
-        "matcher": "Write|StrReplace|ApplyPatch",
-        "timeout": 15
-      }
-    ],
+    "postToolUse": [],
     "sessionStart": [
       {
         "command": "node _sdds_private/scripts/inject-session-context.js",

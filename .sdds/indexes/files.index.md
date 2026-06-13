@@ -407,3 +407,146 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-09 10:40 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
 | 2026-06-09 10:43 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactImportViewModel.ts` |
 | 2026-06-09 10:44 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-09 10:47 | `src/app/(dashboard)/contacts/contacts-client.tsx` |
+| 2026-06-09 10:47 | `src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-09 10:47 | `src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-09 10:55 | `C:/Projetos/CRM WhatsApp/src/types/index.ts` |
+| 2026-06-09 10:55 | `C:/Projetos/CRM WhatsApp/src/usecases/ContactUseCases.ts` |
+| 2026-06-09 10:56 | `C:/Projetos/CRM WhatsApp/src/repositories/contact-source.repository.ts` |
+| 2026-06-09 10:56 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-09 10:56 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-result-summary.tsx` |
+| 2026-06-09 10:56 | `C:/Projetos/CRM WhatsApp/supabase/migrations/20260609120000_contact_source_assignments.sql` |
+| 2026-06-09 10:57 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-09 10:57 | `C:/Projetos/CRM WhatsApp/src/repositories/contact-source.repository.ts` |
+| 2026-06-10 01:45 | `C:/Projetos/CRM WhatsApp/src/lib/impersonation.ts` |
+| 2026-06-10 01:45 | `C:/Projetos/CRM WhatsApp/src/lib/guards.ts` |
+| 2026-06-10 01:45 | `C:/Projetos/CRM WhatsApp/src/lib/user-role.ts` |
+| 2026-06-10 02:11 | `C:/Projetos/CRM WhatsApp/src/tests/security/impersonation-validated-workspace.test.ts` |
+| 2026-06-10 02:11 | `C:/Projetos/CRM WhatsApp/src/tests/security/workspace-context-impersonation.test.ts` |
+| 2026-06-10 02:22 | `C:/Projetos/CRM WhatsApp/README.md` |
+| 2026-06-10 02:22 | `README.md` |
+| 2026-06-10 02:22 | `src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-10 02:22 | `src/components/contacts/import-result-summary.tsx` |
+| 2026-06-10 02:22 | `src/lib/guards.ts` |
+| 2026-06-10 02:22 | `src/lib/impersonation.ts` |
+| 2026-06-10 02:22 | `src/lib/user-role.ts` |
+| 2026-06-10 02:22 | `src/repositories/contact-source.repository.ts` |
+| 2026-06-10 02:22 | `src/tests/security/impersonation-validated-workspace.test.ts` |
+| 2026-06-10 02:22 | `src/tests/security/workspace-context-impersonation.test.ts` |
+| 2026-06-10 02:22 | `src/types/index.ts` |
+| 2026-06-10 02:22 | `src/usecases/ContactUseCases.ts` |
+| 2026-06-10 02:22 | `src/viewmodels/useContactImportViewModel.ts` |
+| 2026-06-10 02:22 | `supabase/migrations/20260609120000_contact_source_assignments.sql` |
+| 2026-06-10 02:22 | `criar_skill_next_js_security.md` |
+| 2026-06-10 02:22 | `docs/criar_skill_next_js_security.md` |
+| 2026-06-10 02:22 | `docs/skills_criar_especificao.md` |
+| 2026-06-10 02:22 | `skills_criar_especificao.md` |
+| 2026-06-10 02:29 | `C:/Projetos/CRM WhatsApp/src/app/(admin)/layout.tsx` |
+| 2026-06-10 02:31 | `C:/Projetos/CRM WhatsApp/README.md` |
+| 2026-06-10 02:31 | `README.md` |
+| 2026-06-10 02:31 | `src/app/(admin)/layout.tsx` |
+| 2026-06-10 03:20 | `C:/Projetos/CRM WhatsApp/src/lib/guards.ts` |
+| 2026-06-10 03:20 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/actions.ts` |
+| 2026-06-10 03:21 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-10 03:21 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/contacts/niche-profile-actions.ts` |
+| 2026-06-10 03:21 | `C:/Projetos/CRM WhatsApp/src/tests/security/workspace-context-impersonation.test.ts` |
+| 2026-06-10 03:26 | `C:/Projetos/CRM WhatsApp/src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-10 03:27 | `C:/Projetos/CRM WhatsApp/src/tests/tenant-isolation/actions-auth.test.ts` |
+| 2026-06-10 03:37 | `C:/Projetos/CRM WhatsApp/README.md` |
+| 2026-06-10 03:38 | `README.md` |
+| 2026-06-10 03:38 | `src/app/(dashboard)/contacts/actions.ts` |
+| 2026-06-10 03:38 | `src/app/(dashboard)/contacts/import-actions.ts` |
+| 2026-06-10 03:38 | `src/app/(dashboard)/contacts/niche-profile-actions.ts` |
+| 2026-06-10 03:38 | `src/components/contacts/import-contacts-dialog.tsx` |
+| 2026-06-10 03:38 | `src/lib/guards.ts` |
+| 2026-06-10 03:38 | `src/tests/security/workspace-context-impersonation.test.ts` |
+| 2026-06-10 03:38 | `src/tests/tenant-isolation/actions-auth.test.ts` |
+| 2026-06-10 03:40 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/dashboard/page.tsx` |
+| 2026-06-10 03:46 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/kanban/actions.ts` |
+| 2026-06-10 03:46 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/actions.ts` |
+| 2026-06-10 03:46 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/niche-actions.ts` |
+| 2026-06-10 03:47 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/rbac-actions.ts` |
+| 2026-06-10 03:47 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/upload-actions.ts` |
+| 2026-06-10 03:47 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-parts/actions.ts` |
+| 2026-06-10 03:48 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-parts/page.tsx` |
+| 2026-06-10 03:48 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-parts/quotes/page.tsx` |
+| 2026-06-10 03:48 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-sales/actions.ts` |
+| 2026-06-10 03:48 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-sales/page.tsx` |
+| 2026-06-10 03:48 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/auto-sales/proposals/page.tsx` |
+| 2026-06-10 03:49 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/fashion/actions.ts` |
+| 2026-06-10 03:49 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/fashion/page.tsx` |
+| 2026-06-10 03:49 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/fashion/stock/page.tsx` |
+| 2026-06-10 03:50 | `C:/Projetos/CRM WhatsApp/src/tests/security/settings-actions.test.ts` |
+| 2026-06-10 03:50 | `C:/Projetos/CRM WhatsApp/src/tests/security/upload-actions.test.ts` |
+| 2026-06-10 03:50 | `C:/Projetos/CRM WhatsApp/src/tests/security/workspace-profile-actions.test.ts` |
+| 2026-06-10 03:57 | `C:/Projetos/CRM WhatsApp/eslint.config.mjs` |
+| 2026-06-10 03:57 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/upload-actions.ts` |
+| 2026-06-10 03:59 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/kanban/actions.ts` |
+| 2026-06-10 03:59 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/rbac-actions.ts` |
+| 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/actions.ts` |
+| 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/layout.tsx` |
+| 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/session-actions.ts` |
+| 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/settings/mfa-actions.ts` |
+| 2026-06-10 04:00 | `C:/Projetos/CRM WhatsApp/src/app/(dashboard)/setup-niche-action.ts` |
+| 2026-06-10 04:04 | `C:/Projetos/CRM WhatsApp/README.md` |
+| 2026-06-10 04:05 | `README.md` |
+| 2026-06-10 04:05 | `eslint.config.mjs` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-parts/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-parts/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-parts/quotes/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-sales/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-sales/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/auto-sales/proposals/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/dashboard/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/fashion/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/fashion/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/fashion/stock/page.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/kanban/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/layout.tsx` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/session-actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/settings/actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/settings/mfa-actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/settings/niche-actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/settings/rbac-actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/settings/upload-actions.ts` |
+| 2026-06-10 04:05 | `src/app/(dashboard)/setup-niche-action.ts` |
+| 2026-06-10 04:05 | `src/tests/security/settings-actions.test.ts` |
+| 2026-06-10 04:05 | `src/tests/security/upload-actions.test.ts` |
+| 2026-06-10 04:05 | `src/tests/security/workspace-profile-actions.test.ts` |
+| 2026-06-11 09:46 | `C:/Projetos/CRM WhatsApp/supabase/migrations/20260611000000_workspace_integrations_multi_instance.sql` |
+| 2026-06-11 09:48 | `C:/Projetos/CRM WhatsApp/src/types/index.ts` |
+| 2026-06-11 09:49 | `C:/Projetos/CRM WhatsApp/src/repositories/workspace-integration.repository.ts` |
+| 2026-06-11 09:50 | `C:/Projetos/CRM WhatsApp/src/usecases/WorkspaceIntegrationUseCases.ts` |
+| 2026-06-11 09:50 | `C:/Projetos/CRM WhatsApp/src/lib/validations/workspace-integration.ts` |
+| 2026-06-11 09:50 | `C:/Projetos/CRM WhatsApp/src/lib/audit/audit-log.ts` |
+| 2026-06-11 09:51 | `C:/Projetos/CRM WhatsApp/src/app/(admin)/admin/integrations-actions.ts` |
+| 2026-06-11 09:53 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useWorkspaceIntegrationsViewModel.ts` |
+| 2026-06-11 09:55 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-integrations-section.tsx` |
+| 2026-06-11 09:55 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-detail-panel.tsx` |
+| 2026-06-11 09:56 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-integrations-section.tsx` |
+| 2026-06-11 10:02 | `C:/Projetos/CRM WhatsApp/src/repositories/workspace-integration.repository.ts` |
+| 2026-06-11 10:02 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-detail-panel.tsx` |
+| 2026-06-11 10:02 | `C:/Projetos/CRM WhatsApp/src/components/admin/workspace-integrations-section.tsx` |
+| 2026-06-11 10:03 | `C:/Projetos/CRM WhatsApp/src/viewmodels/useWorkspaceIntegrationsViewModel.ts` |
+| 2026-06-12 08:43 | `README.md` |
+| 2026-06-12 08:43 | `src/app/(admin)/admin/integrations-actions.ts` |
+| 2026-06-12 08:43 | `src/components/admin/workspace-detail-panel.tsx` |
+| 2026-06-12 08:43 | `src/components/admin/workspace-integrations-section.tsx` |
+| 2026-06-12 08:43 | `src/lib/audit/audit-log.ts` |
+| 2026-06-12 08:43 | `src/lib/validations/workspace-integration.ts` |
+| 2026-06-12 08:43 | `src/repositories/workspace-integration.repository.ts` |
+| 2026-06-12 08:43 | `src/types/index.ts` |
+| 2026-06-12 08:43 | `src/usecases/WorkspaceIntegrationUseCases.ts` |
+| 2026-06-12 08:43 | `src/viewmodels/useWorkspaceIntegrationsViewModel.ts` |
+| 2026-06-12 08:43 | `supabase/migrations/20260611000000_workspace_integrations_multi_instance.sql` |
+| 2026-06-12 08:47 | `.cursor/hooks.json` |
+| 2026-06-12 09:03 | `supabase/migrations/20260612090000_ddl_audit_log_event_triggers.sql` |
+| 2026-06-12 09:08 | `README.md` |
+| 2026-06-12 09:08 | `docs/security/ddl-audit.md` |
+| 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/01_LOVABLE_SENIOR_FRONTEND.md` |
+| 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/02_LOVABLE_SENIOR_FRONTEND.md` |
+| 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/03_UNIFIED_FRONTEND_MASTER.md` |
+| 2026-06-12 09:31 | `specs/PROMPTS_FRONTEND/analise_fabel_5/01_.md` |
+| 2026-06-12 09:35 | `.gitignore` |
+| 2026-06-13 01:38 | `specs/PROMPTS_FRONTEND/03_UNIFIED_FRONTEND_MASTER.md` |

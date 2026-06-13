@@ -1,5 +1,4 @@
-import { getWorkspaceContext } from "@/lib/guards";
-import { createClient } from "@/lib/supabase/server";
+import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { SupabaseAutoPartsRepository } from "@/repositories/auto-parts.repository";
 import { ListAutoPartsCatalogUseCase } from "@/usecases/AutoPartsUseCases";
 import { SupabaseVehicleCatalogRepository } from "@/repositories/vehicle-catalog.repository";
@@ -10,7 +9,7 @@ export default async function AutoPartsPage() {
   const ctx = await getWorkspaceContext("contacts", "view");
   if ("error" in ctx) return <div className="p-8 text-destructive">{ctx.error}</div>;
 
-  const supabase = await createClient();
+  const supabase = await getScopedSupabaseClient();
   const repo = new SupabaseAutoPartsRepository(supabase);
   const catalogRepo = new SupabaseVehicleCatalogRepository(supabase);
 

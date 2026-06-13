@@ -105,14 +105,24 @@ export class ImportContactsUseCase {
   ) {}
 
   async execute(workspaceId: string, userId: string, rows: ContactImportRow[], fallbackSourceId?: string | null): Promise<ContactImportResult> {
-    const result: ContactImportResult = { total: rows.length, created: 0, skipped: 0, errors: [] };
+    const result: ContactImportResult = {
+      total: rows.length,
+      created: 0,
+      skipped: 0,
+      already_exists: 0,
+      invalid_count: 0,
+      file_duplicates: 0,
+      errors: [],
+    };
 
     for (const row of rows) {
       if (row.status === "invalid") {
         result.skipped += 1;
+        result.invalid_count += 1;
         result.errors.push({ row: row.row, message: row.errors?.[0] ?? "Linha inválida." });
       } else if (row.status === "duplicate") {
         result.skipped += 1;
+        result.file_duplicates += 1;
       }
     }
 
@@ -120,15 +130,21 @@ export class ImportContactsUseCase {
 
     const sources = await this.sourceRepo.findAll(workspaceId, { onlyActive: true });
     const sourceByName = new Map(sources.map((s) => [normalizeSourceName(s.name), s.id]));
-    const resolveSourceId = (rawName?: string): string | null => {
-      if (rawName) return sourceByName.get(normalizeSourceName(rawName)) ?? fallbackSourceId ?? null;
-      return fallbackSourceId ?? null;
+
+    // Resolve comma-separated source names → list of valid source IDs
+    const resolveSourceIds = (rawSource?: string): string[] => {
+      if (!rawSource) return fallbackSourceId ? [fallbackSourceId] : [];
+      const names = rawSource.split(",").map((s) => s.trim()).filter(Boolean);
+      const ids = names.map((n) => sourceByName.get(normalizeSourceName(n))).filter((id): id is string => !!id);
+      if (ids.length === 0 && fallbackSourceId) return [fallbackSourceId];
+      return ids;
     };
 
     for (let i = 0; i < importable.length; i += IMPORT_BATCH_SIZE) {
       const batch = importable.slice(i, i + IMPORT_BATCH_SIZE);
       const settled = await Promise.allSettled(
-        batch.map((row) => {
+        batch.map(async (row) => {
+          const sourceIds = resolveSourceIds(row.data.source);
           const dto: CreateContactDTO = {
             workspace_id: workspaceId,
             created_by: userId,
@@ -139,9 +155,13 @@ export class ImportContactsUseCase {
             company: row.data.company,
             status: row.data.status,
             notes: row.data.notes,
-            source_id: resolveSourceId(row.data.source),
+            source_id: sourceIds[0] ?? null,
           };
-          return this.repo.create(dto);
+          const contact = await this.repo.create(dto);
+          if (sourceIds.length > 0) {
+            await this.sourceRepo.assignToContact(workspaceId, contact.id, sourceIds);
+          }
+          return contact;
         })
       );
 
@@ -151,7 +171,9 @@ export class ImportContactsUseCase {
           return;
         }
         result.skipped += 1;
-        if (!isUniqueViolation(outcome.reason)) {
+        if (isUniqueViolation(outcome.reason)) {
+          result.already_exists += 1;
+        } else {
           result.errors.push({ row: batch[index].row, message: "Erro ao criar este contato. Tente novamente." });
         }
       });
