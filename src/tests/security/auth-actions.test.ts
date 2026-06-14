@@ -38,6 +38,7 @@ const mocks = vi.hoisted(() => {
     getClientIp: vi.fn().mockResolvedValue("127.0.0.1"),
     getUserAgent: vi.fn().mockResolvedValue("vitest"),
     createAuditLog: vi.fn().mockResolvedValue(undefined),
+    clearImpersonation: vi.fn().mockResolvedValue(undefined),
     mockSupabase,
     mockAdmin,
   };
@@ -93,6 +94,7 @@ vi.mock("@/repositories/workspace.repository", () => ({
 }));
 
 vi.mock("@/lib/utils/slug", () => ({ uniqueSlug: vi.fn().mockReturnValue("empresa-a") }));
+vi.mock("@/lib/impersonation", () => ({ clearImpersonation: mocks.clearImpersonation }));
 
 import { signIn, signUp, requestPasswordReset, updatePassword } from "@/app/(auth)/actions";
 

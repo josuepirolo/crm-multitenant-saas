@@ -16,6 +16,7 @@ import {
 import { createAuditLog, AUDIT_ACTIONS, AUDIT_SID_COOKIE } from "@/lib/audit/audit-log";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
+import { clearImpersonation } from "@/lib/impersonation";
 
 export async function signIn(_: unknown, formData: FormData) {
   const captchaToken = formData.get("cf-turnstile-response") as string | null;
@@ -62,6 +63,7 @@ export async function signIn(_: unknown, formData: FormData) {
   // scope: 'others' mantém a sessão atual intacta mas invalida refresh tokens anteriores.
   // Novas abas no mesmo browser continuam válidas (compartilham os mesmos cookies).
   await supabase.auth.signOut({ scope: "others" }).catch(() => {}); // falha silenciosa — não bloqueia login
+  await clearImpersonation();
 
   // Gera session_id opaco para correlação de auditoria — não contém dados do usuário
   const sessionId = randomUUID();

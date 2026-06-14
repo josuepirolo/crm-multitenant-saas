@@ -9,9 +9,9 @@ import type { MemberRole } from "@/types";
 export function SettingsClient() {
   const vm = useSettingsViewModel();
 
-  const userRole: MemberRole | null = vm.members.find(
-    (m) => m.user_id === vm.currentUserId
-  )?.role ?? null;
+  const userRole: MemberRole | null = vm.isImpersonating
+    ? "owner"
+    : vm.members.find((m) => m.user_id === vm.currentUserId)?.role ?? null;
 
   if (vm.fetchError) {
     return (

@@ -8,6 +8,7 @@ export function useSettingsViewModel() {
   const [workspace, setWorkspace]     = useState<Workspace | null>(null);
   const [members, setMembers]         = useState<WorkspaceMemberWithProfile[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isImpersonating, setIsImpersonating] = useState(false);
   const [loading, setLoading]         = useState(true);
   const [fetchError, setFetchError]   = useState<string | null>(null);
   const [isPending, startTransition]  = useTransition();
@@ -24,6 +25,7 @@ export function useSettingsViewModel() {
       setWorkspace(result.workspace);
       setMembers(result.members);
       setCurrentUserId(result.currentUserId ?? null);
+      setIsImpersonating(result.isImpersonating ?? false);
     }
     setLoading(false);
   }, []);
@@ -48,7 +50,7 @@ export function useSettingsViewModel() {
   }
 
   return {
-    workspace, members, currentUserId,
+    workspace, members, currentUserId, isImpersonating,
     loading: loading || isPending,
     fetchError,
     inviteOpen, setInviteOpen,
