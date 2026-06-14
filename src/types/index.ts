@@ -127,6 +127,46 @@ export interface WaProviderOption {
   type: string;
 }
 
+// ── WhatsApp management (BFF — backend WA, ADR-006) ──────────────────────────
+// Tipos do backend WhatsApp (FastAPI) consumidos via BFF. Shapes vêm dos
+// contratos em backend_zapi/frontend/wa-backend-integration-contracts.md.
+// `credentials` da Z-API NUNCA chegam ao frontend (invariante do contrato).
+
+/** Status persistido da instância (espelho no banco do backend WA). */
+export type WaInstanceConnStatus = "connected" | "disconnected" | "connecting" | string;
+
+/** Instância retornada por GET /management/tenants/{tenant_id}/instances. */
+export interface WaInstance {
+  instance_id: string;
+  name: string;
+  phone?: string | null;
+  status: WaInstanceConnStatus;
+  provider_id: string;
+  connected_at?: string | null;
+}
+
+/** Instância + de qual wa_tenant/workspace-integration veio (atado pelo BFF). */
+export interface WaInstanceWithTenant extends WaInstance {
+  tenant_id: string;
+  /** label amigável do vínculo (workspace_integrations.label), se houver. */
+  integration_label: string | null;
+}
+
+/** GET /management/instances/{instance_id}/status — `connected` é o sinal canônico. */
+export interface WaInstanceLiveStatus {
+  instance_id: string;
+  status: WaInstanceConnStatus;
+  connected: boolean;
+  smartphoneConnected?: boolean;
+  session?: string;
+}
+
+/** GET /management/instances/{instance_id}/qrcode — `qrcode` é um data URI. */
+export interface WaInstanceQrCode {
+  instance_id: string;
+  qrcode: string;
+}
+
 // ── Business Niches ───────────────────────────────────────────────────────────
 
 export interface BusinessNiche {

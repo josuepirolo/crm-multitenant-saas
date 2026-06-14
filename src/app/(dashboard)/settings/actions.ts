@@ -10,20 +10,24 @@ import { UpdateWorkspaceUseCase } from "@/usecases/WorkspaceUseCases";
 import { UpdateWorkspaceProfileUseCase } from "@/usecases/WorkspaceProfileUseCases";
 import { ListMembersUseCase, InviteMemberUseCase, UpdateMemberRoleUseCase, DeactivateMemberUseCase } from "@/usecases/MemberUseCases";
 import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
+import { getValidatedImpersonatedWorkspaceId } from "@/lib/impersonation";
 import { updateWorkspaceSchema, inviteMemberSchema, updateMemberRoleSchema, updateWorkspaceProfileSchema } from "@/lib/validations/workspace";
 import { revalidatePath } from "next/cache";
 
 export async function getSettingsData() {
   const ctx = await getWorkspaceContext("settings", "view");
-  if ("error" in ctx) return { error: ctx.error, workspace: null, members: [] };
+  if ("error" in ctx) return { error: ctx.error, workspace: null, members: [], isImpersonating: false };
 
   const supabase = await getScopedSupabaseClient();
+  const impersonatedWsId = await getValidatedImpersonatedWorkspaceId(ctx.userId);
+  const isImpersonating = impersonatedWsId === ctx.workspaceId;
+
   const [ws, members] = await Promise.all([
     new SupabaseWorkspaceRepository(supabase).findById(ctx.workspaceId),
     new ListMembersUseCase(new SupabaseWorkspaceMemberRepository(supabase)).execute(ctx.workspaceId),
   ]);
 
-  return { error: undefined, workspace: ws, members, currentUserId: ctx.userId };
+  return { error: undefined, workspace: ws, members, currentUserId: ctx.userId, isImpersonating };
 }
 
 export async function updateWorkspace(_: unknown, formData: FormData) {

@@ -8,6 +8,7 @@ import { AUDIT_SID_COOKIE, createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/aud
 import { SESSION_COOKIE_STARTED, SESSION_COOKIE_ACTIVITY, SESSION_COOKIE_PROFILE } from "@/lib/security/session-policy";
 import { getClientIp, getUserAgent } from "@/lib/security/client-ip";
 import { getCachedUser } from "@/lib/supabase/cached-auth";
+import { clearImpersonation } from "@/lib/impersonation";
 
 export async function signOut() {
   const supabase = await createClient();
@@ -25,6 +26,7 @@ export async function signOut() {
   }
 
   await supabase.auth.signOut({ scope: "global" });
+  await clearImpersonation();
   const cookieStore = await cookies();
   cookieStore.delete(AUDIT_SID_COOKIE);
   cookieStore.delete(SESSION_COOKIE_STARTED);

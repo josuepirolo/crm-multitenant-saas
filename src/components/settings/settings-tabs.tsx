@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { Building2, Users, Plus, UserCircle, Upload } from "lucide-react";
+import { Building2, Users, Plus, UserCircle, Upload, Plug } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WorkspaceProfileForm } from "./workspace-profile-form";
@@ -9,15 +9,17 @@ import { WorkspaceNicheForm } from "./workspace-niche-form";
 import { TwoFactorSection } from "./two-factor-section";
 import { MembersTable, MembersTableSkeleton } from "./members-table";
 import { InviteMemberModal } from "./invite-member-modal";
+import { IntegrationsTab } from "./integrations/integrations-tab";
 import { uploadUserAvatar } from "@/app/(dashboard)/settings/upload-actions";
 import { cn } from "@/lib/utils";
 import { can } from "@/lib/permissions";
 import type { MemberRole, Workspace, WorkspaceMemberWithProfile } from "@/types";
 
 const TABS = [
-  { id: "general", label: "Empresa",    icon: Building2 },
-  { id: "members", label: "Membros",    icon: Users },
-  { id: "profile", label: "Meu Perfil", icon: UserCircle },
+  { id: "general",      label: "Empresa",      icon: Building2 },
+  { id: "members",      label: "Membros",      icon: Users },
+  { id: "integrations", label: "Integrações",  icon: Plug },
+  { id: "profile",      label: "Meu Perfil",   icon: UserCircle },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -144,6 +146,10 @@ export function SettingsTabs({
 
   const canEditSettings  = can(userRole, "settings", "edit");
   const canManageMembers = can(userRole, "members", "create");
+  const canViewIntegrations = can(userRole, "settings", "view");
+
+  // Integrações exige settings:view (owner/admin/manager) — esconde para os demais.
+  const visibleTabs = TABS.filter((t) => t.id !== "integrations" || canViewIntegrations);
 
   const currentMember    = members.find((m) => m.user_id === currentUserId);
   const currentAvatarUrl = currentMember?.profiles?.avatar_url ?? null;
@@ -151,7 +157,7 @@ export function SettingsTabs({
   return (
     <>
       <div className="flex gap-1 border-b border-border/50">
-        {TABS.map(({ id, label, icon: Icon }) => (
+        {visibleTabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
@@ -235,6 +241,10 @@ export function SettingsTabs({
               />
             )}
           </div>
+        )}
+
+        {activeTab === "integrations" && canViewIntegrations && (
+          <IntegrationsTab userRole={userRole} />
         )}
 
         {activeTab === "profile" && (
