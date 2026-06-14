@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-13
+Atualizado: 2026-06-14
 Bootstrap: recuperado de código real (sessão anterior sem persistência de .sdds/)
 
 ---
@@ -21,13 +21,13 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 | Auto Sales | IMPLEMENTADO | inventário, propostas, veículos |
 | Fashion | IMPLEMENTADO | produtos, variantes, estoque |
 | Chat/Inbox | REMOVIDO | conversations/messages dropadas — WA API é fonte de verdade |
-| WA Integrations | IMPLEMENTADO (v2.1+v2.2) | gestão admin (ADR-005) em `/admin/workspaces`; **aba "Integrações" em `/settings` via BFF (ADR-006) — IMPLEMENTADA 2026-06-13**: lista instâncias WhatsApp do workspace + status ao vivo (polling) + QR Code de pareamento + reiniciar/desconectar, consumindo o backend WA (`https://messageapi.py.tec.br`) com repasse do JWT do usuário, gate `settings` (view=owner/admin/manager, edit=owner/admin), auditoria. 16 testes BFF, 400/400, tsc limpo. Pendente: v2.3 perfil/privacidade + validação manual em navegador |
+| WA Integrations | IMPLEMENTADO (v2.1+v2.2) | gestão admin (ADR-005) em `/admin/workspaces`; **aba "Integrações" em `/settings` via BFF (ADR-006) — IMPLEMENTADA 2026-06-13**: lista instâncias WhatsApp do workspace + status ao vivo (polling) + QR Code de pareamento + reiniciar/desconectar, consumindo o backend WA (`https://messageapi.py.tec.br`) com repasse do JWT do usuário, gate `settings` (view=owner/admin/manager, edit=owner/admin), auditoria. 16 testes BFF, 400/400, tsc limpo. **Dados reais validados fim-a-fim 2026-06-14** (ES256 + claim authz; ver `discoveries/2026-06-14-wa-backend-rejects-es256-jwt.md`). Pendente: v2.3 perfil/privacidade + validação manual completa no navegador |
 
 ## Riscos atuais
 
 | ID | Risco | Nível | Status |
 |---|---|---|---|
-| R-001 | Integração WA não implementada no frontend | ALTO | RESOLVIDO (v2.1+v2.2) 2026-06-13 — aba "Integrações" em `/settings` via BFF (ADR-006): listar/status ao vivo/QR/restart/disconnect contra `https://messageapi.py.tec.br`, gate `settings`, auditoria, 16 testes BFF (400/400). Resta v2.3 (perfil/privacidade) + validação manual em navegador |
+| R-001 | Integração WA não implementada no frontend | ALTO | RESOLVIDO (v2.1+v2.2+v2 BFF) 2026-06-13 — aba Integrações em `/settings`; **dados reais validados fim-a-fim 2026-06-14** (claim authz + ES256). Resta v2.3 (perfil/privacidade) + e2e §5.4 por papel |
 | R-002 | Webhooks CRM sem HMAC | ALTO | ABERTO |
 | R-003 | Supabase Vault não configurado (tokens de integração) | MÉDIO | ABERTO |
 | R-004 | 2FA não obrigatório para todos os admins | MÉDIO | ACEITO |
@@ -74,15 +74,23 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 
 - **Hooks SDDS reduzidos — 2026-06-12 (commit `f467ed8`)**: removidos os hooks de `pre`/`post-tool-use` (`.claude/settings.json`, `.cursor/hooks.json`) que rodavam `check-file-size.js`, `validate-spec.js` e `update-index.js` a cada `Write`/`Edit`. `enforce-guardrails.js` permanece ativo (pre-tool-use + git pre-commit). Efeito prático: arquivos grandes e specs deixam de ser validados automaticamente a cada edição (apenas via pre-commit `validate-spec.js --git-staged`), e `files.index.md` deixa de ser atualizado automaticamente por edição — passa a depender de atualização manual/`/sdds-update`.
 
-- **Autorização cross-service via claim JWT (ADR-007) — passo 3 do CRM IMPLEMENTADO + VALIDADO 2026-06-13 (não commitado)**: migration `20260613190000_integration_permissions_and_authz_hook.sql` **aplicada em produção** via `apply_migration` (projeto `gkzqhlaltnlcpzcapayb`). Semeia 3 permissões `integration.whatsapp.*` (`connection:view`/`instance:manage`/`account:edit`), estende `seed_workspace_system_roles` (manager += `connection:view`; owner/admin herdam via SELECT dinâmico), re-semeia os 3 workspaces existentes, e cria `public.custom_access_token_hook(jsonb)` que carimba o claim `authz` (namespace `https://lekazis.app/authz`, v1) no JWT. **Hook EXCEPTION-SAFE** (`EXCEPTION WHEN OTHERS → RETURN event` — nunca bloqueia emissão de token), `SECURITY DEFINER`+`STABLE`, execute só para `supabase_auth_admin`. **Validado read-only**: owner/admin→3 perms, manager→`connection:view`, sales/support→`[]`, superadmin→`true`, user_id malformado→event intacto sem erro, uuid inexistente→`{v:1,superadmin:false,workspaces:{}}`. `perms` carrega **só chaves `integration.*`** (token compacto; formato do claim inalterado). `src/lib/permissions.ts` **não** estendido (ações de integração com dois `:` não cabem no enum TS; hook resolve pelo banco — ver ADR-007). Contrato congelado em `.sdds/contracts/authz-claims.md`. **PENDENTE: (a)** habilitar o hook em Supabase Auth → Hooks → Custom Access Token (passo manual, é o go-live do claim); **(b)** commitar a migration + arquivos (aplicada em prod mas ainda não commitada = risco de drift, ver R-007); **(c)** validação e2e §5.4 com tokens reais de cada papel; depois libera WA Fase 1 (passo 4).
+- **Autorização cross-service via claim JWT (ADR-007) — passo 3 do CRM IMPLEMENTADO + VALIDADO 2026-06-13 (não commitado)**: migration `20260613190000_integration_permissions_and_authz_hook.sql` **aplicada em produção** via `apply_migration` (projeto `gkzqhlaltnlcpzcapayb`). Semeia 3 permissões `integration.whatsapp.*` (`connection:view`/`instance:manage`/`account:edit`), estende `seed_workspace_system_roles` (manager += `connection:view`; owner/admin herdam via SELECT dinâmico), re-semeia os 3 workspaces existentes, e cria `public.custom_access_token_hook(jsonb)` que carimba o claim `authz` (namespace `https://lekazis.app/authz`, v1) no JWT. **Hook EXCEPTION-SAFE** (`EXCEPTION WHEN OTHERS → RETURN event` — nunca bloqueia emissão de token), `SECURITY DEFINER`+`STABLE`, execute só para `supabase_auth_admin`. **Validado read-only**: owner/admin→3 perms, manager→`connection:view`, sales/support→`[]`, superadmin→`true`, user_id malformado→event intacto sem erro, uuid inexistente→`{v:1,superadmin:false,workspaces:{}}`. `perms` carrega **só chaves `integration.*`** (token compacto; formato do claim inalterado). `src/lib/permissions.ts` **não** estendido (ações de integração com dois `:` não cabem no enum TS; hook resolve pelo banco — ver ADR-007). Contrato congelado em `.sdds/contracts/authz-claims.md`. Commitado (commits `c3c89bc` T1 / `a3e350c` T2 / `d5e917f` e2e, branch dev — push pendente do usuário).
+  - **Hook HABILITADO em produção (Auth → Hooks → Custom Access Token) e CONFIRMADO AO VIVO 2026-06-14**: token real do superadmin `jdredes` sai com `{v:1, superadmin:true, workspaces:{PyTec:{role:owner, perms:[3 integration.whatsapp.*]}}}`. Emissão validada por usuário descartável também (`HOOK_LIVE: SIM`). O 400 que apareceu numa tentativa foi `captcha_failed` (Turnstile no password-grant), **não** o hook. Grants OK (`supabase_auth_admin` executa). Login **não** foi afetado.
+  - **passo 4 (WA Fase 1) — VALIDADO FIM-A-FIM 2026-06-14 ✅**: o 401 do backend WA (que rejeitava ES256) foi corrigido pelo time do backend (passou a validar via JWKS/ES256). Confirmado ao vivo: `jdredes` adicionado como **manager** do workspace **Lekazis** (`1ae64f35…`) → seu token passou a trazer `workspaces["1ae64f35…"]={role:manager,perms:[connection:view]}` → `GET /management/tenants/14ee144b/instances` retornou **200** com a instância real (`"Lekazis Disparos"`, connected). A Fase 1 lê o **claim** e resolve o binding `tenant→workspace` — o *membership gap* do ADR-006 (`wa_tenant_members`) deixou de valer. Ver `discoveries/2026-06-14-wa-backend-rejects-es256-jwt.md`.
+  - **Artefato de teste:** membership `jdredes`→Lekazis (manager) inserida para validar; remover se for só teste (Settings → Membros → desativar).
+  - **Achado de UX (CORRIGIDO 2026-06-14):** durante impersonação, o botão "Convidar" sumia em `/settings` porque `settings-client.tsx` derivava `userRole` só de `workspace_members`; agora `getSettingsData` retorna `isImpersonating` e a UI trata como `owner` (ADR-004 owner-like).
+  - **Logout/login persistia impersonação (CORRIGIDO 2026-06-14):** cookies `imp-*` não eram apagados em `signOut()` nem em `signIn()` — adicionado `clearImpersonation()` em ambos.
+  - **PENDENTE:** (a) e2e §5.4 por papel (sales/admin → 403/200 com usuários de teste); (b) validação manual da UI no navegador (re-login + trocar workspace p/ Lekazis → aba Integrações); (c) push dos commits; (d) remover membership de teste `jdredes`→Lekazis se não for permanente.
 
 ## Próximas ações disponíveis
 
 | Ação | Módulo SDDS | Status |
 |---|---|---|
-| Validar manualmente impersonando Lekazis (origens visíveis, dashboard com contatos, criar origem no import, reimportar planilha, demais módulos) | — | Ação do usuário |
-| Testar manualmente mapeamento WA em `/admin/workspaces` (vincular/editar/remover instância, dark mode, mobile) | — | PRÓXIMO |
-| Spec módulo WA Integrations (tela `/settings/integrations` para usuário final) | 02_CREATE_MODULE_SPEC | Aguarda |
-| Tela /settings/integrations | 06_IMPLEMENTATION | Aguarda spec |
+| Validar manualmente `/settings` → Integrações no Lekazis (re-login, status ao vivo, manager=só leitura) | — | **PRÓXIMO** (usuário) |
+| e2e §5.4 por papel (`authz-e2e.mjs --admin` ou convites) | harness/authz-e2e-checklist.md | Pendente |
+| Commit + push: 3 commits ADR-006/007 + fixes desta sessão | — | Pendente |
+| Remover membership teste `jdredes`→Lekazis se temporária | — | Opcional |
+| Testar mapeamento WA em `/admin/workspaces` (dark mode, mobile) | — | Pendente |
+| v2.3 perfil/privacidade WhatsApp | settings-integrations | Backlog |
 | Linkar deal → wa_conversation | 06_IMPLEMENTATION | Aguarda spec |
 | Auditar Kanban implementado | 04_AUDITOR | Disponível |
