@@ -22,6 +22,12 @@ export interface UpdateWorkspaceIntegrationDTO {
   provider_id?: string;
 }
 
+/** Vínculo WhatsApp resolvido para o BFF: qual wa_tenant_id + label do workspace. */
+export interface WaTenantLink {
+  wa_tenant_id: string;
+  label: string | null;
+}
+
 export interface IWorkspaceIntegrationRepository {
   listByWorkspace(workspaceId: string): Promise<WorkspaceIntegrationWithWaTenant[]>;
   listAvailableWaTenants(): Promise<WaTenantOption[]>;
@@ -29,6 +35,13 @@ export interface IWorkspaceIntegrationRepository {
   create(dto: CreateWorkspaceIntegrationDTO): Promise<WorkspaceIntegration>;
   update(id: string, dto: UpdateWorkspaceIntegrationDTO): Promise<void>;
   remove(id: string): Promise<void>;
+  /**
+   * Vínculos WhatsApp ativos do workspace (apenas colunas de
+   * workspace_integrations — sem tocar wa_*). Usado pelo BFF (ADR-006) para
+   * resolver/validar os wa_tenant_id que o workspace pode operar. Lê via o
+   * cliente injetado (RLS do membro ou escopado durante impersonação, R-009).
+   */
+  listWaTenantLinksByWorkspace(workspaceId: string): Promise<WaTenantLink[]>;
 }
 
 // Leitura cross-domain de wa_tenants/wa_instances/wa_providers é sempre
@@ -164,5 +177,18 @@ export class SupabaseWorkspaceIntegrationRepository implements IWorkspaceIntegra
       .delete()
       .eq("id", id);
     if (error) throw new Error(error.message);
+  }
+
+  async listWaTenantLinksByWorkspace(workspaceId: string): Promise<WaTenantLink[]> {
+    const { data, error } = await this.client
+      .from("workspace_integrations")
+      .select("wa_tenant_id, label")
+      .eq("workspace_id", workspaceId)
+      .eq("integration_type", "whatsapp")
+      .not("wa_tenant_id", "is", null);
+    if (error) throw new Error(error.message);
+    return (data ?? [])
+      .filter((r): r is { wa_tenant_id: string; label: string | null } => !!r.wa_tenant_id)
+      .map((r) => ({ wa_tenant_id: r.wa_tenant_id, label: r.label ?? null }));
   }
 }

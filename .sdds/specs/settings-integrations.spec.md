@@ -1,9 +1,16 @@
 # Integrações WhatsApp — tela do usuário final (`/settings/integrations`) — Spec
 
 Módulo: settings (sub-feature: integrations)
-Versão: 1.0
-Data: 2026-06-12
+Versão: 2.0 (v1 read-only via RLS → v2 BFF de gestão de instância, ver §11 e [[ADR-006]])
+Data: 2026-06-13
 Status: SPEC
+
+> **v2 (BFF) — decisão do produto em 2026-06-13:** a tela passa a consumir a API REST do
+> backend WhatsApp como **BFF** (Server Action repassa o JWT do usuário), destravando status real,
+> QR Code e perfil/privacidade — não só a leitura de `workspace_integrations` via RLS. A arquitetura
+> dessa evolução está em **[[ADR-006]]**; os cenários, em `harness/settings-integrations.harness.md`.
+> As seções §1–§10 abaixo descrevem a **v1 read-only** (continua válida como fallback quando
+> `WA_BACKEND_URL` não está configurada ou o backend WA está fora). A **§11** descreve a v2.
 
 ---
 
@@ -167,3 +174,73 @@ Consequência: a tela do usuário final, lendo via RLS, **só tem acesso garanti
 | Componentes | `src/components/settings/integrations/*` (novo) |
 | Aba | `src/components/settings/settings-tabs.tsx` (editar) |
 | (opcional) RPC | `supabase/migrations/<ts>_count_wa_instances_for_workspace.sql` (só se §6.4 opcional for adotado) |
+
+---
+
+## 11. Evolução v2 — BFF de gestão de instância ([[ADR-006]])
+
+### 11.1 Objetivo da v2
+Além de listar os vínculos (v1), dar ao owner/admin os dados **reais** da conexão WhatsApp
+(status, QR de pareamento) e, em fase posterior, gestão (restart/disconnect) e perfil/privacidade —
+consumindo a API REST do backend WA via **BFF**, já que `wa_*` não é legível por RLS ao membro.
+
+### 11.2 Princípios herdados de [[ADR-006]]
+- Client **nunca** chama o backend WA direto; tudo passa por Server Action/Route Handler do CRM.
+- A action repassa o **`access_token` do próprio usuário** como `Bearer` (sem secret novo, sem
+  `service_role`). Autorização final é do backend WA (`wa_tenant_members`).
+- Base URL em `WA_BACKEND_URL` (server-only). Ausente → feature degrada com erro genérico.
+- `workspace_id` do contexto autenticado; `wa_tenant_id`/`instance_id` resolvidos e **validados**
+  no servidor (pertencem ao workspace via `workspace_integrations`) — defesa contra IDOR.
+- **RBAC do CRM por cima**: leitura → `settings:view`; mutação → `settings:edit` (módulo `settings`,
+  pois não há `PermissionModule` "integrations"). Backend WA é mais permissivo (qualquer role);
+  o CRM restringe.
+- Erros não-2xx do backend → genéricos (`publicError`): `401/403` → "sem acesso, falar com suporte";
+  `409` QR → "número já conectado"; `5xx`/timeout → "serviço indisponível". Nunca vaza corpo/stack/
+  token. Timeout via AbortController.
+- Mutações auditadas (`source: "user"`), sem payload sensível. Nada de token/QR/credentials em log.
+
+### 11.3 Faseamento da v2
+- **v2.1 (leitura/pareamento) — IMPLEMENTADO 2026-06-13** — listar instâncias + status ao vivo
+  (polling 20s) + QR Code (`QrCodeDialog`, polling 4s, 409 = já conectado). Endpoints:
+  `GET /management/tenants/{tenant_id}/instances`, `GET /management/instances/{id}/status`,
+  `GET /management/instances/{id}/qrcode`. Gate `settings:view`.
+- **v2.2 (gestão) — IMPLEMENTADO 2026-06-13** — `POST .../restart`, `POST .../disconnect`,
+  gate `settings:edit` + auditoria (`WA_INSTANCE_RESTARTED`/`WA_INSTANCE_DISCONNECTED`).
+- **v2.3 (perfil/privacidade) — pendente** — `GET|PUT .../profile`, `GET|PUT .../privacy`,
+  gate `settings:edit` (account-settings, contratos §2 já disponíveis).
+
+> **Reconciliação confirmada (2026-06-13):** o gate de papel do backend WA bate **exatamente** na
+> permissão `settings` existente — read (owner/admin/manager) = `settings:view`; write (owner/admin)
+> = `settings:edit`. `WA_BACKEND_URL = https://messageapi.py.tec.br`. Auth = mesmo JWT Supabase da
+> sessão (não há login separado). 16 testes em `src/tests/security/wa-backend-bff.test.ts`;
+> suíte 400/400; `tsc` limpo.
+
+### 11.4 Camadas (Clean Arch + MVVM) da v2
+- **Infra** `src/lib/wa-backend/client.ts` — fetch genérico: base URL de `WA_BACKEND_URL`, injeta
+  `Bearer <jwt>`, `AbortController` (timeout), mapeia non-2xx para erro tipado, **nunca loga token**.
+  Helper `getUserAccessToken()` (server-side, via `supabase.auth.getSession()`).
+- **Repository** `src/repositories/wa-management.repository.ts` — `IWaManagementRepository` +
+  impl que usa o client; um método por endpoint. (Tipos exatos das respostas **aguardam os contratos
+  do backend** — `.sdds/contracts/management-instances.md`/`account-settings.md` do repo do backend.)
+  Resolver auxiliar (Supabase, contract-independent): `listWaTenantIdsByWorkspace(workspaceId)` em
+  `workspace-integration.repository.ts`.
+- **UseCases** `src/usecases/WaManagementUseCases.ts` — `ListWaInstancesUseCase`,
+  `GetWaInstanceStatusUseCase`, `GetWaInstanceQrCodeUseCase` (v2.2/2.3 depois).
+- **Server Actions** `src/app/(dashboard)/settings/integrations-actions.ts` — gate via
+  `getWorkspaceContext("settings", "view"|"edit")`; resolve+valida `instance_id ∈ workspace`;
+  obtém JWT; chama usecase; retorna `{ error?, data }`.
+- **ViewModel** `useSettingsIntegrationsViewModel` — estado por instância (status/qr/loading/error),
+  `reload()`, polling opcional do status enquanto "conectando".
+- **Componentes** `src/components/settings/integrations/*` — `IntegrationCard` ganha status badge ao
+  vivo + botão "Conectar"/"Ver QR"; `QrCodeDialog`; (v2.2) ações restart/disconnect com confirmação +
+  `toast.promise`.
+
+### 11.5 Gap conhecido (ver [[ADR-006]])
+Membro do workspace CRM pode **não** ser `wa_tenant_members` no backend → 403 legítimo. Tratar como
+erro amigável; fechar o gap é trabalho do backend WA (sincronizar membership), fora do CRM.
+
+### 11.6 Pendências bloqueantes da v2 (insumos externos)
+1. **`WA_BACKEND_URL`** — host do backend WA (deploy). Sem isso, só a infra contract-independent é
+   construível; chamadas reais não funcionam.
+2. **Contratos** dos endpoints (`management-instances.md`/`account-settings.md` do repo do backend) —
+   sem os schemas de `/status` e `/qrcode`, tipar respostas e a UI seria adivinhar JSON.
