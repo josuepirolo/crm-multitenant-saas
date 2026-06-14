@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-12
+Atualizado: 2026-06-13
 Bootstrap: recuperado de código real (sessão anterior sem persistência de .sdds/)
 
 ---
@@ -21,13 +21,13 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 | Auto Sales | IMPLEMENTADO | inventário, propostas, veículos |
 | Fashion | IMPLEMENTADO | produtos, variantes, estoque |
 | Chat/Inbox | REMOVIDO | conversations/messages dropadas — WA API é fonte de verdade |
-| WA Integrations | PARCIAL | gestão admin (1 workspace : N `wa_tenant_id`, ADR-005) implementada em `/admin/workspaces` e commitada (2026-06-12, commit `b699270`); tela `/settings/integrations` para o usuário final ainda a criar |
+| WA Integrations | IMPLEMENTADO (v2.1+v2.2) | gestão admin (ADR-005) em `/admin/workspaces`; **aba "Integrações" em `/settings` via BFF (ADR-006) — IMPLEMENTADA 2026-06-13**: lista instâncias WhatsApp do workspace + status ao vivo (polling) + QR Code de pareamento + reiniciar/desconectar, consumindo o backend WA (`https://messageapi.py.tec.br`) com repasse do JWT do usuário, gate `settings` (view=owner/admin/manager, edit=owner/admin), auditoria. 16 testes BFF, 400/400, tsc limpo. Pendente: v2.3 perfil/privacidade + validação manual em navegador |
 
 ## Riscos atuais
 
 | ID | Risco | Nível | Status |
 |---|---|---|---|
-| R-001 | Integração WA não implementada no frontend | ALTO | PARCIAL — gestão admin (1 workspace : N `wa_tenant_id`) implementada 2026-06-11 (ADR-005); falta tela `/settings/integrations` para o usuário final |
+| R-001 | Integração WA não implementada no frontend | ALTO | RESOLVIDO (v2.1+v2.2) 2026-06-13 — aba "Integrações" em `/settings` via BFF (ADR-006): listar/status ao vivo/QR/restart/disconnect contra `https://messageapi.py.tec.br`, gate `settings`, auditoria, 16 testes BFF (400/400). Resta v2.3 (perfil/privacidade) + validação manual em navegador |
 | R-002 | Webhooks CRM sem HMAC | ALTO | ABERTO |
 | R-003 | Supabase Vault não configurado (tokens de integração) | MÉDIO | ABERTO |
 | R-004 | 2FA não obrigatório para todos os admins | MÉDIO | ACEITO |
@@ -73,6 +73,8 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 - **Auditoria de DDL em produção (R-007, camada 1) — IMPLEMENTADA 2026-06-12**: migration `20260612090000_ddl_audit_log_event_triggers.sql` aplicada em produção via `apply_migration` — tabela `ddl_audit_log` (append-only, RLS com SELECT só para superadmin, REVOKE de escrita para anon/authenticated) + event triggers `ddl_audit_command_end` (`ON ddl_command_end`) e `ddl_audit_sql_drop` (`ON sql_drop`) com funções `SECURITY DEFINER` exception-safe (auditoria nunca bloqueia DDL; objetos `pg_temp%` ignorados; query truncada em 10k chars). Verificado em produção: ambos os triggers `enabled='O'` e a autoverificação (o `COMMENT` final da própria migration) registrada como `id=1`. Um `DROP TABLE` ad-hoc como o do incidente de 2026-06-08 agora deixa rastro imediato (role, timestamp, objeto, SQL). **Camada 2 pendente** (drift check periódico `supabase db diff` em CI). R-003 (Vault) decidido: resolver junto com R-002/tela `/settings/integrations`, quando houver secrets do CRM a guardar.
 
 - **Hooks SDDS reduzidos — 2026-06-12 (commit `f467ed8`)**: removidos os hooks de `pre`/`post-tool-use` (`.claude/settings.json`, `.cursor/hooks.json`) que rodavam `check-file-size.js`, `validate-spec.js` e `update-index.js` a cada `Write`/`Edit`. `enforce-guardrails.js` permanece ativo (pre-tool-use + git pre-commit). Efeito prático: arquivos grandes e specs deixam de ser validados automaticamente a cada edição (apenas via pre-commit `validate-spec.js --git-staged`), e `files.index.md` deixa de ser atualizado automaticamente por edição — passa a depender de atualização manual/`/sdds-update`.
+
+- **Autorização cross-service via claim JWT (ADR-007) — passo 3 do CRM IMPLEMENTADO + VALIDADO 2026-06-13 (não commitado)**: migration `20260613190000_integration_permissions_and_authz_hook.sql` **aplicada em produção** via `apply_migration` (projeto `gkzqhlaltnlcpzcapayb`). Semeia 3 permissões `integration.whatsapp.*` (`connection:view`/`instance:manage`/`account:edit`), estende `seed_workspace_system_roles` (manager += `connection:view`; owner/admin herdam via SELECT dinâmico), re-semeia os 3 workspaces existentes, e cria `public.custom_access_token_hook(jsonb)` que carimba o claim `authz` (namespace `https://lekazis.app/authz`, v1) no JWT. **Hook EXCEPTION-SAFE** (`EXCEPTION WHEN OTHERS → RETURN event` — nunca bloqueia emissão de token), `SECURITY DEFINER`+`STABLE`, execute só para `supabase_auth_admin`. **Validado read-only**: owner/admin→3 perms, manager→`connection:view`, sales/support→`[]`, superadmin→`true`, user_id malformado→event intacto sem erro, uuid inexistente→`{v:1,superadmin:false,workspaces:{}}`. `perms` carrega **só chaves `integration.*`** (token compacto; formato do claim inalterado). `src/lib/permissions.ts` **não** estendido (ações de integração com dois `:` não cabem no enum TS; hook resolve pelo banco — ver ADR-007). Contrato congelado em `.sdds/contracts/authz-claims.md`. **PENDENTE: (a)** habilitar o hook em Supabase Auth → Hooks → Custom Access Token (passo manual, é o go-live do claim); **(b)** commitar a migration + arquivos (aplicada em prod mas ainda não commitada = risco de drift, ver R-007); **(c)** validação e2e §5.4 com tokens reais de cada papel; depois libera WA Fase 1 (passo 4).
 
 ## Próximas ações disponíveis
 

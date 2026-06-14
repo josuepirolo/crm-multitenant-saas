@@ -1,7 +1,7 @@
 # INDEX.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-12
+Atualizado: 2026-06-13
 
 ## Ler primeiro
 1. `CURRENT_STATE.md` — estado atual
@@ -12,9 +12,9 @@ Atualizado: 2026-06-12
 |---|---|---|---|---|
 | chat | `specs/chat.summary.md` | `specs/chat.spec.md` | `contracts/chat.contract.md` | `harness/chat.harness.md` |
 | contacts (bulk import) | — | `specs/contacts-bulk-import.spec.md` | — | — |
-| settings (integrations) | — | `specs/settings-integrations.spec.md` | — | — |
+| settings (integrations) | — | `specs/settings-integrations.spec.md` (v2 BFF, ADR-006) | — | `harness/settings-integrations.harness.md` |
 
-> ⚠️ Spec de Chat é obsoleta — conversations/messages foram removidas. WA Integrations (gestão admin implementada, ADR-005) ainda precisa de spec para a tela `/settings/integrations` do usuário final.
+> ⚠️ Spec de Chat é obsoleta — conversations/messages foram removidas. `/settings/integrations`: v1 read-only (RLS) e v2 BFF (ADR-006) especificadas; v2 aguarda dois insumos externos — valor de `WA_BACKEND_URL` e contratos dos endpoints de management do backend WA — antes de tipar client/UseCases/UI.
 
 ## Decisões (ADRs)
 | ADR | Decisão |
@@ -24,6 +24,8 @@ Atualizado: 2026-06-12
 | `decisions/ADR-003-contact-multi-origin-junction-table.md` | Múltiplas origens por contato via tabela de junção `contact_source_assignments` (não tags livres) |
 | `decisions/ADR-004-impersonation-owner-like-access.md` | Impersonação concede acesso owner-like ao workspace impersonado, validado via `getValidatedImpersonatedWorkspaceId` |
 | `decisions/ADR-005-admin-wa-tenant-mapping.md` | 1 workspace CRM : N `wa_tenant_id`, com `UNIQUE(wa_tenant_id)` garantindo 1:1 inverso; gestão exclusiva via `/admin` (superadmin) |
+| `decisions/ADR-006-bff-wa-backend-management.md` | `/settings/integrations` consome o backend WA como **BFF** (Server Action repassa o JWT do usuário); base URL em `WA_BACKEND_URL`; RBAC `settings` por cima do gate permissivo do backend. Implementação gated por `WA_BACKEND_URL` + contratos dos endpoints |
+| `decisions/ADR-007-autorizacao-cross-service-claims-jwt.md` | CRM é dono único do RBAC; permissões `integration.whatsapp.*` no catálogo; Custom Access Token Hook carimba o claim `authz` (v1, CONGELADO) no JWT; integradores só leem o claim. Migration `20260613190000` aplicada+validada; hook inerte até habilitar no Auth. Contrato: `contracts/authz-claims.md` |
 
 ## Discoveries
 | Discovery | Resumo |
@@ -37,6 +39,7 @@ Atualizado: 2026-06-12
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-13 | Design v2 (BFF) de `/settings/integrations`: ADR-006 (CRM consome backend WA repassando JWT do usuário), spec v2 §11, harness BFF-01..12, infra `WA_BACKEND_URL` + `src/lib/wa-backend/client.ts` (typecheck limpo). Implementação tipada/UI gated por valor de `WA_BACKEND_URL` + contratos dos endpoints (backend WA gerando) — ver `sessions/2026-06-13-0729-session.md` |
 | 2026-06-12 | R-007 mitigado: `ddl_audit_log` + event triggers em produção (`d5f15b7`), documentado em `docs/security/ddl-audit.md` (`950af2a`); prompt frontend unificado `specs/PROMPTS_FRONTEND/03_UNIFIED_FRONTEND_MASTER.md` (`3cfd3fa`), evoluído para v2 com posicionamento/AEO-GEO/growth/backend-router/baseline de segurança (`2e22a96`); push de todos os commits para `origin/dev` (ver `sessions/2026-06-12-0632-session.md`) |
 | 2026-06-12 | Commit da feature WA admin (ADR-005, `b699270`) + remoção dos hooks `check-file-size`/`validate-spec`/`update-index` de `pre`/`post-tool-use` (`f467ed8`, `--no-verify`) — `enforce-guardrails.js` permanece ativo (ver `sessions/2026-06-11-2336-session.md`, `timeline/2026-06-12.md`) |
 | 2026-06-11 | Admin SaaS: mapeamento 1 workspace : N `wa_tenant_id` (ADR-005) — migration multi-instância, repository/usecases/actions/viewmodel/UI completos em `/admin/workspaces`; 384/384 passando, ainda não commitado (ver `sessions/2026-06-11-0635-session.md`) |
