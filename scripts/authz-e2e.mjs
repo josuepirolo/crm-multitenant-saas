@@ -2,28 +2,16 @@
 /**
  * e2e §5.4 — valida o claim `authz` emitido pelo Custom Access Token Hook (ADR-007).
  *
- * Faz login real (grant_type=password) com as credenciais de um usuário de teste,
- * decodifica o access token e confere o claim `https://lekazis.app/authz`:
- *   - v === 1, superadmin coerente, e perms `integration.whatsapp.*` por papel.
- * Opcionalmente prova o gate do backend WA com uma LEITURA segura (GET instances).
+ * Modo senha (Turnstile no password-grant — precisa captcha no login real do app):
+ *   node scripts/authz-e2e.mjs <email> <senha> [papelEsperado] [tenantId] [workspaceId]
  *
- * Segurança: NUNCA imprime o access token (é segredo). Só imprime o claim authz,
- * que carrega apenas papéis/permissões (não sensível).
+ * Modo admin (sem captcha — generate_link → verify; requer service_role):
+ *   node scripts/authz-e2e.mjs --admin <email> [papelEsperado] [tenantId] [workspaceId]
  *
- * Pré-requisitos:
- *   - Node 18+ (fetch global) — testado em v22.
- *   - Hook habilitado em Supabase → Authentication → Hooks → Custom Access Token.
- *   - Usuário de teste com senha conhecida e papel conhecido no workspace.
+ * Segurança: NUNCA imprime o access token. Só imprime o claim authz (papéis/perms).
  *
- * Uso:
- *   node scripts/authz-e2e.mjs <email> <senha> [papelEsperado] [tenantId]
- *
- * Exemplos:
- *   node scripts/authz-e2e.mjs admin@ex.com 'senha' admin
- *   node scripts/authz-e2e.mjs sales@ex.com 'senha' sales 550e8400-...   # + gate de leitura no WA
- *
- * Lê NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / WA_BACKEND_URL
- * de .env.local (ou do ambiente).
+ * Lê NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY /
+ * WA_BACKEND_URL de .env.local (ou do ambiente).
  */
 
 import { readFileSync } from "node:fs";
@@ -54,40 +42,103 @@ const EXPECT = {
   support: { "connection:view": false, "instance:manage": false, "account:edit": false, read: false },
 };
 
-const [email, password, expectedRole, tenantId] = process.argv.slice(2);
-if (!email || !password) {
-  console.error("uso: node scripts/authz-e2e.mjs <email> <senha> [papelEsperado] [tenantId]");
-  process.exit(2);
+const argv = process.argv.slice(2);
+const adminMode = argv[0] === "--admin";
+if (adminMode) argv.shift();
+
+const email = argv[0];
+const passwordOrRole = argv[1];
+const maybeRole = argv[2];
+const maybeTenant = argv[3];
+const maybeWorkspace = argv[4];
+
+let password;
+let expectedRole;
+let tenantId;
+let workspaceId;
+
+if (adminMode) {
+  if (!email) {
+    console.error("uso: node scripts/authz-e2e.mjs --admin <email> [papelEsperado] [tenantId] [workspaceId]");
+    process.exit(2);
+  }
+  expectedRole = passwordOrRole && EXPECT[passwordOrRole] ? passwordOrRole : undefined;
+  tenantId = expectedRole ? maybeRole : passwordOrRole;
+  workspaceId = expectedRole ? maybeTenant : maybeRole;
+  if (expectedRole && maybeWorkspace) workspaceId = maybeWorkspace;
+} else {
+  password = passwordOrRole;
+  expectedRole = maybeRole && EXPECT[maybeRole] ? maybeRole : undefined;
+  tenantId = expectedRole ? maybeTenant : maybeRole;
+  workspaceId = expectedRole ? maybeWorkspace : maybeTenant;
+  if (!email || !password) {
+    console.error("uso: node scripts/authz-e2e.mjs <email> <senha> [papelEsperado] [tenantId] [workspaceId]");
+    console.error("     node scripts/authz-e2e.mjs --admin <email> [papelEsperado] [tenantId] [workspaceId]");
+    process.exit(2);
+  }
 }
 
 const env = loadEnv();
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SR = env.SUPABASE_SERVICE_ROLE_KEY;
 const WA = env.WA_BACKEND_URL;
 if (!SUPABASE_URL || !ANON) {
   console.error("faltando NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY (.env.local ou env)");
   process.exit(2);
 }
+if (adminMode && !SR) {
+  console.error("modo --admin requer SUPABASE_SERVICE_ROLE_KEY (.env.local ou env)");
+  process.exit(2);
+}
 
 const fails = [];
+let token;
 
-// 1) login real → access token
-const loginRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json", apikey: ANON },
-  body: JSON.stringify({ email, password }),
-});
-if (!loginRes.ok) {
-  console.error(`❌ login falhou (${loginRes.status}). Confira email/senha do usuário de teste.`);
-  process.exit(1);
+if (adminMode) {
+  const adminH = { apikey: SR, Authorization: `Bearer ${SR}`, "Content-Type": "application/json" };
+  const gl = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
+    method: "POST",
+    headers: adminH,
+    body: JSON.stringify({ type: "magiclink", email }),
+  });
+  const glb = await gl.json();
+  const hashed = glb.hashed_token ?? glb.properties?.hashed_token;
+  if (!gl.ok || !hashed) {
+    console.error(`❌ generate_link falhou (${gl.status}):`, JSON.stringify(glb).slice(0, 200));
+    process.exit(1);
+  }
+  const vr = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
+    method: "POST",
+    headers: { apikey: ANON, "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "magiclink", token_hash: hashed }),
+  });
+  const vrb = await vr.json();
+  if (!vr.ok || !vrb.access_token) {
+    console.error(`❌ verify falhou (${vr.status}):`, JSON.stringify(vrb).slice(0, 200));
+    process.exit(1);
+  }
+  token = vrb.access_token;
+  console.log(`\n# modo: --admin (sem captcha)`);
+} else {
+  const loginRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: ANON },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!loginRes.ok) {
+    const body = await loginRes.text();
+    console.error(`❌ login falhou (${loginRes.status}). Turnstile bloqueia password-grant — use --admin.`);
+    if (body.includes("captcha")) console.error("   (captcha_failed — esperado sem captchaToken)");
+    process.exit(1);
+  }
+  token = (await loginRes.json()).access_token;
 }
-const token = (await loginRes.json()).access_token;
 
-// 2) claim authz
 const payload = decodeJwtPayload(token);
 const authz = payload["https://lekazis.app/authz"];
 
-console.log(`\n# usuário: ${email}${expectedRole ? ` (papel esperado: ${expectedRole})` : ""}`);
+console.log(`# usuário: ${email}${expectedRole ? ` (papel esperado: ${expectedRole})` : ""}`);
 if (!authz) {
   console.error("❌ claim `authz` AUSENTE no token. O hook está habilitado em Auth → Hooks → Custom Access Token?");
   process.exit(1);
@@ -97,26 +148,35 @@ console.log("claim authz:\n" + JSON.stringify(authz, null, 2));
 if (authz.v !== 1) fails.push(`v esperado 1, veio ${authz.v}`);
 if (typeof authz.superadmin !== "boolean") fails.push("superadmin ausente/!boolean");
 
-const wsIds = Object.keys(authz.workspaces ?? {});
+const workspaces = authz.workspaces ?? {};
+const wsIds = Object.keys(workspaces);
 let entry = null;
+
 if (expectedRole) {
   if (wsIds.length === 0) {
     fails.push("nenhum workspace no claim (usuário sem membership ativo?)");
   } else {
-    entry = authz.workspaces[wsIds[0]];
-    if (entry.role !== expectedRole) fails.push(`papel: esperado ${expectedRole}, veio ${entry.role}`);
-    const perms = entry.perms ?? [];
-    const has = (k) => perms.includes(`integration.whatsapp.${k}`);
-    const exp = EXPECT[expectedRole];
-    if (exp) {
-      for (const k of ["connection:view", "instance:manage", "account:edit"]) {
-        if (has(k) !== exp[k]) fails.push(`perms ${k}: esperado ${exp[k]}, veio ${has(k)}`);
+    let wsId = workspaceId;
+    if (!wsId) {
+      wsId = wsIds.find((id) => workspaces[id].role === expectedRole) ?? wsIds[0];
+    }
+    if (!workspaces[wsId]) {
+      fails.push(`workspace ${wsId} ausente no claim (disponíveis: ${wsIds.join(", ")})`);
+    } else {
+      entry = workspaces[wsId];
+      if (entry.role !== expectedRole) fails.push(`papel: esperado ${expectedRole}, veio ${entry.role}`);
+      const perms = entry.perms ?? [];
+      const has = (k) => perms.includes(`integration.whatsapp.${k}`);
+      const exp = EXPECT[expectedRole];
+      if (exp) {
+        for (const k of ["connection:view", "instance:manage", "account:edit"]) {
+          if (has(k) !== exp[k]) fails.push(`perms ${k}: esperado ${exp[k]}, veio ${has(k)}`);
+        }
       }
     }
   }
 }
 
-// 3) (opcional) gate de LEITURA no backend WA — seguro, sem efeito colateral
 if (tenantId) {
   if (!WA) {
     fails.push("WA_BACKEND_URL ausente — não dá para provar o gate do backend");

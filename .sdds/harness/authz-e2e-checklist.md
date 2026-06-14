@@ -47,7 +47,11 @@ Rode o script com qualquer usuário de teste. Se o claim vier `null`, o hook **n
 está habilitado (volte ao passo 0).
 
 ```bash
+# com senha (Turnstile bloqueia password-grant fora do app — prefira --admin)
 node scripts/authz-e2e.mjs <email> <senha>
+
+# sem captcha (service_role + generate_link → verify)
+node scripts/authz-e2e.mjs --admin <email>
 ```
 - [ ] Imprime `claim authz: { "v": 1, "superadmin": ..., "workspaces": { ... } }`.
 
@@ -57,6 +61,16 @@ node scripts/authz-e2e.mjs <email> <senha>
 
 Rode um por papel. O script valida `v=1` e as `perms integration.whatsapp.*`
 esperadas (sem efeito colateral — só decodifica o token).
+
+```bash
+node scripts/authz-e2e.mjs --admin owner@ex.com   owner
+node scripts/authz-e2e.mjs --admin admin@ex.com   admin
+node scripts/authz-e2e.mjs --admin manager@ex.com manager
+node scripts/authz-e2e.mjs --admin sales@ex.com   sales
+node scripts/authz-e2e.mjs --admin support@ex.com support
+```
+
+Ou com senha (só funciona se o projeto não exigir captcha no password-grant):
 
 ```bash
 node scripts/authz-e2e.mjs owner@ex.com   'senha' owner
