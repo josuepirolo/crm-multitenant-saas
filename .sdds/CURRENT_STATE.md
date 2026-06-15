@@ -79,16 +79,17 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
   - **passo 4 (WA Fase 1) — VALIDADO FIM-A-FIM 2026-06-14 ✅**: o 401 do backend WA (que rejeitava ES256) foi corrigido pelo time do backend (passou a validar via JWKS/ES256). Confirmado ao vivo: `jdredes` adicionado como **manager** do workspace **Lekazis** (`1ae64f35…`) → seu token passou a trazer `workspaces["1ae64f35…"]={role:manager,perms:[connection:view]}` → `GET /management/tenants/14ee144b/instances` retornou **200** com a instância real (`"Lekazis Disparos"`, connected). A Fase 1 lê o **claim** e resolve o binding `tenant→workspace` — o *membership gap* do ADR-006 (`wa_tenant_members`) deixou de valer. Ver `discoveries/2026-06-14-wa-backend-rejects-es256-jwt.md`.
   - **Artefato de teste:** membership `jdredes`→Lekazis (manager) inserida para validar; remover se for só teste (Settings → Membros → desativar).
   - **Achado de UX (CORRIGIDO 2026-06-14):** durante impersonação, o botão "Convidar" sumia em `/settings` porque `settings-client.tsx` derivava `userRole` só de `workspace_members`; agora `getSettingsData` retorna `isImpersonating` e a UI trata como `owner` (ADR-004 owner-like).
-  - **Logout/login persistia impersonação (CORRIGIDO 2026-06-14):** cookies `imp-*` não eram apagados em `signOut()` nem em `signIn()` — adicionado `clearImpersonation()` em ambos.
-  - **PENDENTE:** (a) e2e §5.4 por papel (sales/admin → 403/200 com usuários de teste); (b) validação manual da UI no navegador (re-login + trocar workspace p/ Lekazis → aba Integrações); (c) push dos commits; (d) remover membership de teste `jdredes`→Lekazis se não for permanente.
+  - **Logout/login persistia impersonação (CORRIGIDO 2026-06-14, commit `feb63dc`):** cookies `imp-*` não eram apagados em `signOut()` nem em `signIn()` — adicionado `clearImpersonation()` em ambos. **Validado pelo usuário** após relogar.
+  - **Commits consolidados 2026-06-14:** `feb63dc` (impersonação) / `0a9fc92` (e2e `--admin`) / `27391f1` (SDDS) — somados aos 3 anteriores ADR-006/007 → **6 commits** em `dev`, **push pendente**.
+  - **PENDENTE:** (a) e2e §5.4 por papel (sales/admin → 403/200 com usuários de teste); (b) validação manual da UI no navegador (Integrações no Lekazis — bloqueada temporariamente por rate limit de login); (c) **`git push origin dev`**; (d) remover membership de teste `jdredes`→Lekazis se não for permanente.
 
 ## Próximas ações disponíveis
 
 | Ação | Módulo SDDS | Status |
 |---|---|---|
-| Validar manualmente `/settings` → Integrações no Lekazis (re-login, status ao vivo, manager=só leitura) | — | **PRÓXIMO** (usuário) |
+| Push `origin/dev` (6 commits: ADR-006/007 + impersonação + e2e `--admin` + SDDS) | — | **PRÓXIMO** |
+| Validar manualmente `/settings` → Integrações no Lekazis (após rate limit liberar login) | — | Pendente (usuário) |
 | e2e §5.4 por papel (`authz-e2e.mjs --admin` ou convites) | harness/authz-e2e-checklist.md | Pendente |
-| Commit + push: 3 commits ADR-006/007 + fixes desta sessão | — | Pendente |
 | Remover membership teste `jdredes`→Lekazis se temporária | — | Opcional |
 | Testar mapeamento WA em `/admin/workspaces` (dark mode, mobile) | — | Pendente |
 | v2.3 perfil/privacidade WhatsApp | settings-integrations | Backlog |

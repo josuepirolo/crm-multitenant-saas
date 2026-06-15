@@ -40,6 +40,7 @@ Atualizado: 2026-06-14
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-14 | Commits `feb63dc`/`0a9fc92`/`27391f1` (impersonação, e2e `--admin`, SDDS); 6 commits push pendente; logout fix e e2e `--admin` validados — ver `sessions/2026-06-14-1951-session.md` |
 | 2026-06-14 | Hook authz habilitado + WA Fase 1 validado (ES256/JWKS); fixes logout/impersonação e UI settings; `authz-e2e.mjs --admin` — ver `sessions/2026-06-14-1923-session.md` |
 | 2026-06-13 | Design v2 (BFF) de `/settings/integrations`: ADR-006 (CRM consome backend WA repassando JWT do usuário), spec v2 §11, harness BFF-01..12, infra `WA_BACKEND_URL` + `src/lib/wa-backend/client.ts` (typecheck limpo). Implementação tipada/UI gated por valor de `WA_BACKEND_URL` + contratos dos endpoints (backend WA gerando) — ver `sessions/2026-06-13-0729-session.md` |
 | 2026-06-12 | R-007 mitigado: `ddl_audit_log` + event triggers em produção (`d5f15b7`), documentado em `docs/security/ddl-audit.md` (`950af2a`); prompt frontend unificado `specs/PROMPTS_FRONTEND/03_UNIFIED_FRONTEND_MASTER.md` (`3cfd3fa`), evoluído para v2 com posicionamento/AEO-GEO/growth/backend-router/baseline de segurança (`2e22a96`); push de todos os commits para `origin/dev` (ver `sessions/2026-06-12-0632-session.md`) |
