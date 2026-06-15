@@ -1,7 +1,7 @@
 # INDEX.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-14
+Atualizado: 2026-06-14 (22:42)
 
 ## Ler primeiro
 1. `CURRENT_STATE.md` — estado atual
@@ -40,7 +40,9 @@ Atualizado: 2026-06-14
 ## Sessões recentes
 | Data | Evento |
 |---|---|
-| 2026-06-14 | SDDS `d9a68af` commitado e pushed (memória pós-push 2211) — HEAD `origin/dev` — ver `sessions/2026-06-14-2216-session.md` |
+| 2026-06-14 | Esclarecimento produto: switcher multi-workspace (só com 2+ memberships) + RBAC membros (superadmin ≠ admin; manager não convida) — ver `sessions/2026-06-14-2242-session.md` |
+| 2026-06-14 | SDDS `d2f7706` pushed — memória 2216 sincronizada; HEAD remoto atualizado — ver `sessions/2026-06-14-2219-session.md` |
+| 2026-06-14 | SDDS `d9a68af` commitado e pushed (memória pós-push 2211) — ver `sessions/2026-06-14-2216-session.md` |
 | 2026-06-14 | Push `origin/dev` concluído (7 commits código, até `578ef09`) — ver `sessions/2026-06-14-2211-session.md` |
 | 2026-06-14 | Commits `feb63dc`/`0a9fc92`/`27391f1`/`578ef09`; logout fix e e2e `--admin` validados — ver `sessions/2026-06-14-1951-session.md` |
 | 2026-06-14 | Hook authz habilitado + WA Fase 1 validado (ES256/JWKS); fixes logout/impersonação e UI settings; `authz-e2e.mjs --admin` — ver `sessions/2026-06-14-1923-session.md` |

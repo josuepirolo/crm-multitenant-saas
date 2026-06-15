@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-14
+Atualizado: 2026-06-14 (22:42 — esclarecimento multi-workspace + RBAC membros)
 Bootstrap: recuperado de código real (sessão anterior sem persistência de .sdds/)
 
 ---
@@ -80,8 +80,12 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
   - **Artefato de teste:** membership `jdredes`→Lekazis (manager) inserida para validar; remover se for só teste (Settings → Membros → desativar).
   - **Achado de UX (CORRIGIDO 2026-06-14):** durante impersonação, o botão "Convidar" sumia em `/settings` porque `settings-client.tsx` derivava `userRole` só de `workspace_members`; agora `getSettingsData` retorna `isImpersonating` e a UI trata como `owner` (ADR-004 owner-like).
   - **Logout/login persistia impersonação (CORRIGIDO 2026-06-14, commit `feb63dc`):** cookies `imp-*` não eram apagados em `signOut()` nem em `signIn()` — adicionado `clearImpersonation()` em ambos. **Validado pelo usuário** após relogar.
-  - **Commits consolidados 2026-06-14:** `feb63dc` / `0a9fc92` / `27391f1` / `578ef09` / `d9a68af` — stack ADR-006/007 + fixes + SDDS; **`origin/dev` sincronizado** (HEAD `d9a68af`).
+  - **Commits consolidados 2026-06-14:** `feb63dc` / `0a9fc92` / `27391f1` / `578ef09` / `d9a68af` / `d2f7706` — stack ADR-006/007 + fixes + SDDS; **`origin/dev` sincronizado** (HEAD `d2f7706`).
   - **PENDENTE:** (a) e2e §5.4 por papel (sales/admin → 403/200 com usuários de teste); (b) validação manual da UI no navegador (Integrações no Lekazis); (c) remover membership de teste `jdredes`→Lekazis se não for permanente.
+
+- **Multi-workspace sidebar — CONFIRMADO 2026-06-14 (sessão esclarecimento):** switcher em `sidebar.tsx` só aparece se `workspaces.length > 1`; lista vem de `getActiveWorkspaceContext()` → RLS `my_workspace_ids()` (membership + `workspaces.is_active`); `is_superadmin` **não** expande a lista (só link Admin SaaS); durante impersonação a lista tem 1 item → sem switcher. Ver `sessions/2026-06-14-2242-session.md`.
+
+- **RBAC membros vs superadmin — CONFIRMADO 2026-06-14 (sessão esclarecimento):** fora de impersonação, superadmin segue a **role de membro** no workspace atual — `getWorkspaceContext("members", "create")` exige `owner`/`admin` (app + RLS `is_admin_in_workspace()`); `manager` = `members:view` apenas (vê lista, não convida). Membership teste `jdredes`→Lekazis como **manager** explica bloqueio ao convidar. Alternativas: promover a admin, impersonar (ADR-004), ou gestão via Admin SaaS. Convite exige e-mail já cadastrado. Ver `sessions/2026-06-14-2242-session.md`.
 
 ## Próximas ações disponíveis
 
