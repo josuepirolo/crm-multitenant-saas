@@ -4,6 +4,10 @@ import type {
   WaInstanceLiveStatus,
   WaInstanceQrCode,
   WaInstanceWithTenant,
+  WaProfile,
+  WaProfileField,
+  WaApplied,
+  WaPrivacySettings,
 } from "@/types";
 
 /**
@@ -65,5 +69,34 @@ export class DisconnectWaInstanceUseCase {
   constructor(private readonly waRepo: IWaManagementRepository) {}
   async execute(instanceId: string, accessToken: string): Promise<void> {
     return this.waRepo.disconnect(instanceId, accessToken);
+  }
+}
+
+// ── account-settings (v2.3) ─────────────────────────────────────────────────
+
+export class GetWaProfileUseCase {
+  constructor(private readonly waRepo: IWaManagementRepository) {}
+  async execute(tenantId: string, instanceId: string, accessToken: string): Promise<WaProfile> {
+    return this.waRepo.getProfile(tenantId, instanceId, accessToken);
+  }
+}
+
+export class UpdateWaProfileFieldUseCase {
+  constructor(private readonly waRepo: IWaManagementRepository) {}
+  async execute(
+    tenantId: string,
+    instanceId: string,
+    field: WaProfileField,
+    value: string,
+    accessToken: string
+  ): Promise<WaApplied> {
+    return this.waRepo.updateProfileField(tenantId, instanceId, field, value, accessToken);
+  }
+}
+
+export class GetWaPrivacyUseCase {
+  constructor(private readonly waRepo: IWaManagementRepository) {}
+  async execute(tenantId: string, instanceId: string, accessToken: string): Promise<WaPrivacySettings> {
+    return this.waRepo.getPrivacy(tenantId, instanceId, accessToken);
   }
 }

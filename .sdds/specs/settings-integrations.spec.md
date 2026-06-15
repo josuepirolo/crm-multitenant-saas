@@ -206,8 +206,15 @@ consumindo a API REST do backend WA via **BFF**, já que `wa_*` não é legível
   `GET /management/instances/{id}/qrcode`. Gate `settings:view`.
 - **v2.2 (gestão) — IMPLEMENTADO 2026-06-13** — `POST .../restart`, `POST .../disconnect`,
   gate `settings:edit` + auditoria (`WA_INSTANCE_RESTARTED`/`WA_INSTANCE_DISCONNECTED`).
-- **v2.3 (perfil/privacidade) — pendente** — `GET|PUT .../profile`, `GET|PUT .../privacy`,
-  gate `settings:edit` (account-settings, contratos §2 já disponíveis).
+- **v2.3a (perfil + privacidade-leitura) — IMPLEMENTADO 2026-06-14** — `WaAccountDialog` (botão
+  "Perfil" no card de instância conectada): `GET .../profile` + editar `name`/`description`
+  (`PUT .../profile/{field}`, gate `settings:edit`, auditoria `WA_PROFILE_UPDATED` sem o valor) +
+  `GET .../privacy` (exibição read-only dos 8 controles). Camadas: repo `getProfile`/`updateProfileField`/
+  `getPrivacy`, usecases `Get/UpdateWaProfile*`/`GetWaPrivacy`, actions com anti-IDOR, `useWaAccountViewModel`.
+  6 testes novos em `wa-backend-bff.test.ts`. `perms`: leitura=`connection:view`(settings:view), edição=`account:edit`(settings:edit).
+- **v2.3b (edição de privacidade + upload de foto) — pendente** — `PUT .../privacy/*` (visualizationType
+  ALL/NONE/CONTACT_BLACKLIST + blacklist de contatos, `read-receipts`, `messages-duration`, `group-add`) e
+  `PUT .../profile/picture` via upload de mídia (`POST .../media/uploads`). Deferido por escopo.
 
 > **Reconciliação confirmada (2026-06-13):** o gate de papel do backend WA bate **exatamente** na
 > permissão `settings` existente — read (owner/admin/manager) = `settings:view`; write (owner/admin)

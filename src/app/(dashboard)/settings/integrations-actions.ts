@@ -16,11 +16,14 @@ import {
   GetWaInstanceQrCodeUseCase,
   RestartWaInstanceUseCase,
   DisconnectWaInstanceUseCase,
+  GetWaProfileUseCase,
+  UpdateWaProfileFieldUseCase,
+  GetWaPrivacyUseCase,
 } from "@/usecases/WaManagementUseCases";
 import { createAuditLog, AUDIT_ACTIONS, type AuditAction } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { WaInstanceWithTenant, WaInstanceLiveStatus } from "@/types";
+import type { WaInstanceWithTenant, WaInstanceLiveStatus, WaProfile, WaPrivacySettings } from "@/types";
 
 // Mensagens públicas genéricas — nunca vaza corpo/stack/token do backend WA.
 const NO_ACCESS = "Sua conta não tem acesso a esta instância WhatsApp. Fale com o suporte.";
@@ -187,4 +190,93 @@ export async function disconnectWaInstance(tenantId: string, instanceId: string)
     AUDIT_ACTIONS.WA_INSTANCE_DISCONNECTED,
     (id, token) => new DisconnectWaInstanceUseCase(new WaBackendManagementRepository()).execute(id, token)
   );
+}
+
+// ── account-settings: perfil/privacidade (v2.3) ──────────────────────────────
+
+/** Gate + validações comuns das rotas de account-settings (tenant+instance). */
+async function authorizeAccountAction(
+  tenantId: string,
+  instanceId: string,
+  action: "view" | "edit"
+): Promise<{ error: string } | { workspaceId: string; userId: string; token: string }> {
+  const ctx = await getWorkspaceContext("settings", action);
+  if ("error" in ctx) return { error: ctx.error };
+  if (!uuid.safeParse(tenantId).success || !uuid.safeParse(instanceId).success) {
+    return { error: INVALID };
+  }
+  const client = await getScopedSupabaseClient();
+  if (!(await tenantBelongsToWorkspace(client, ctx.workspaceId, tenantId))) {
+    return { error: NO_ACCESS };
+  }
+  const token = await getUserAccessToken();
+  if (!token) return { error: NO_ACCESS };
+  return { workspaceId: ctx.workspaceId, userId: ctx.userId, token };
+}
+
+export async function getWaProfile(
+  tenantId: string,
+  instanceId: string
+): Promise<{ error?: string; profile?: WaProfile }> {
+  const auth = await authorizeAccountAction(tenantId, instanceId, "view");
+  if ("error" in auth) return { error: auth.error };
+  try {
+    const profile = await new GetWaProfileUseCase(new WaBackendManagementRepository())
+      .execute(tenantId, instanceId, auth.token);
+    return { profile };
+  } catch (err) {
+    return { error: mapWaError(err) };
+  }
+}
+
+export async function getWaPrivacy(
+  tenantId: string,
+  instanceId: string
+): Promise<{ error?: string; privacy?: WaPrivacySettings }> {
+  const auth = await authorizeAccountAction(tenantId, instanceId, "view");
+  if ("error" in auth) return { error: auth.error };
+  try {
+    const privacy = await new GetWaPrivacyUseCase(new WaBackendManagementRepository())
+      .execute(tenantId, instanceId, auth.token);
+    return { privacy };
+  } catch (err) {
+    return { error: mapWaError(err) };
+  }
+}
+
+const profileFieldSchema = z.object({
+  field: z.enum(["name", "description", "picture"]),
+  value: z.string().trim().min(1, "Valor obrigatório.").max(2000),
+});
+
+export async function updateWaProfileField(
+  tenantId: string,
+  instanceId: string,
+  field: string,
+  value: string
+): Promise<{ error?: string }> {
+  const auth = await authorizeAccountAction(tenantId, instanceId, "edit");
+  if ("error" in auth) return { error: auth.error };
+
+  const parsed = profileFieldSchema.safeParse({ field, value });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  try {
+    await new UpdateWaProfileFieldUseCase(new WaBackendManagementRepository())
+      .execute(tenantId, instanceId, parsed.data.field, parsed.data.value, auth.token);
+
+    await createAuditLog({
+      action: AUDIT_ACTIONS.WA_PROFILE_UPDATED,
+      workspace_id: auth.workspaceId,
+      user_id: auth.userId,
+      entity_type: "wa_instance",
+      entity_id: instanceId,
+      ip_address: await getClientIp(),
+      // metadata sem o valor (pode conter URL/PII) — só qual campo mudou
+      metadata: { tenant_id: tenantId, field: parsed.data.field, source: "user" },
+    });
+    return {};
+  } catch (err) {
+    return { error: mapWaError(err) };
+  }
 }

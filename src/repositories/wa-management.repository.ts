@@ -6,6 +6,10 @@ import type {
   WaInstance,
   WaInstanceLiveStatus,
   WaInstanceQrCode,
+  WaProfile,
+  WaProfileField,
+  WaApplied,
+  WaPrivacySettings,
 } from "@/types";
 
 /**
@@ -26,6 +30,16 @@ export interface IWaManagementRepository {
   ): Promise<{ alreadyConnected: false; qr: WaInstanceQrCode } | { alreadyConnected: true }>;
   restart(instanceId: string, accessToken: string): Promise<void>;
   disconnect(instanceId: string, accessToken: string): Promise<void>;
+  // account-settings (v2.3) — base /tenants/{tenantId}/instances/{instanceId}
+  getProfile(tenantId: string, instanceId: string, accessToken: string): Promise<WaProfile>;
+  updateProfileField(
+    tenantId: string,
+    instanceId: string,
+    field: WaProfileField,
+    value: string,
+    accessToken: string
+  ): Promise<WaApplied>;
+  getPrivacy(tenantId: string, instanceId: string, accessToken: string): Promise<WaPrivacySettings>;
 }
 
 export class WaBackendManagementRepository implements IWaManagementRepository {
@@ -74,6 +88,37 @@ export class WaBackendManagementRepository implements IWaManagementRepository {
     await waBackendFetch<{ ok: boolean; instance_id: string }>({
       path: `/management/instances/${instanceId}/disconnect`,
       method: "POST",
+      accessToken,
+    });
+  }
+
+  // ── account-settings ───────────────────────────────────────────────────────
+
+  async getProfile(tenantId: string, instanceId: string, accessToken: string): Promise<WaProfile> {
+    return waBackendFetch<WaProfile>({
+      path: `/tenants/${tenantId}/instances/${instanceId}/profile`,
+      accessToken,
+    });
+  }
+
+  async updateProfileField(
+    tenantId: string,
+    instanceId: string,
+    field: WaProfileField,
+    value: string,
+    accessToken: string
+  ): Promise<WaApplied> {
+    return waBackendFetch<WaApplied>({
+      path: `/tenants/${tenantId}/instances/${instanceId}/profile/${field}`,
+      method: "PUT",
+      accessToken,
+      body: { value },
+    });
+  }
+
+  async getPrivacy(tenantId: string, instanceId: string, accessToken: string): Promise<WaPrivacySettings> {
+    return waBackendFetch<WaPrivacySettings>({
+      path: `/tenants/${tenantId}/instances/${instanceId}/privacy`,
       accessToken,
     });
   }

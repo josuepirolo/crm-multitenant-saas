@@ -43,6 +43,7 @@ export const AUDIT_ACTIONS = {
   INTEGRATION_UNLINKED:          "integration_unlinked",
   WA_INSTANCE_RESTARTED:         "wa_instance_restarted",
   WA_INSTANCE_DISCONNECTED:      "wa_instance_disconnected",
+  WA_PROFILE_UPDATED:            "wa_profile_updated",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

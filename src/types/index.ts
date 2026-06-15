@@ -167,6 +167,51 @@ export interface WaInstanceQrCode {
   qrcode: string;
 }
 
+// ── account-settings (perfil/privacidade da conta WhatsApp, v2.3) ────────────
+// Base: /tenants/{tenant_id}/instances/{instance_id}. Contratos em
+// backend_zapi/frontend/wa-backend-integration-contracts.md §2.
+
+/** GET .../profile — campos nunca configurados vêm null. */
+export interface WaProfile {
+  instance_id: string;
+  name: string | null;
+  picture_url: string | null;
+  description: string | null;
+  synced_at: string | null;
+}
+
+export type WaProfileField = "name" | "description" | "picture";
+
+/** Envelope padrão das mutações de account-settings. */
+export interface WaApplied {
+  applied: boolean;
+  field: string;
+  value: unknown;
+  updated_at: string;
+}
+
+export type WaVisualizationType = "ALL" | "NONE" | "CONTACT_BLACKLIST";
+
+export interface WaPrivacyControl {
+  visualizationType?: WaVisualizationType;
+  /** group-add usa a chave `type` no lugar de `visualizationType` (peculiaridade Z-API). */
+  type?: WaVisualizationType;
+  contactsBlacklist?: string[];
+}
+
+/** GET .../privacy — cache consolidado dos 8 controles. */
+export interface WaPrivacySettings {
+  instance_id: string;
+  last_seen: WaPrivacyControl;
+  photo: WaPrivacyControl;
+  description: WaPrivacyControl;
+  online: WaPrivacyControl;
+  group_add: WaPrivacyControl;
+  read_receipts: "enable" | "disable" | string;
+  messages_duration: "days90" | "days7" | "hours24" | "disable" | string;
+  synced_at: string | null;
+}
+
 // ── Business Niches ───────────────────────────────────────────────────────────
 
 export interface BusinessNiche {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Smartphone, QrCode, RotateCw, Power } from "lucide-react";
+import { Smartphone, QrCode, RotateCw, Power, UserCircle } from "lucide-react";
 import { WaStatusBadge, toneFromStatus } from "./wa-status-badge";
 import type { WaInstanceLiveStatus, WaInstanceWithTenant } from "@/types";
 
@@ -12,6 +12,7 @@ interface WaInstanceCardProps {
   onConnect: (inst: WaInstanceWithTenant) => void;
   onRestart: (inst: WaInstanceWithTenant) => void;
   onDisconnect: (inst: WaInstanceWithTenant) => void;
+  onOpenAccount: (inst: WaInstanceWithTenant) => void;
 }
 
 export function WaInstanceCard({
@@ -21,6 +22,7 @@ export function WaInstanceCard({
   onConnect,
   onRestart,
   onDisconnect,
+  onOpenAccount,
 }: WaInstanceCardProps) {
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
 
@@ -58,6 +60,16 @@ export function WaInstanceCard({
           >
             <QrCode size={13} />
             Conectar
+          </button>
+        )}
+
+        {isConnected && (
+          <button
+            onClick={() => onOpenAccount(instance)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <UserCircle size={13} />
+            Perfil
           </button>
         )}
 

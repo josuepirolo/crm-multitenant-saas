@@ -19,6 +19,9 @@ const mocks = vi.hoisted(() => {
     getQrCode: vi.fn(),
     restart: vi.fn(),
     disconnect: vi.fn(),
+    getProfile: vi.fn(),
+    updateProfileField: vi.fn(),
+    getPrivacy: vi.fn(),
     // repo workspace-integration
     listWaTenantLinksByWorkspace: vi.fn(),
     mockClient,
@@ -39,6 +42,7 @@ vi.mock("@/lib/audit/audit-log", () => ({
   AUDIT_ACTIONS: {
     WA_INSTANCE_RESTARTED:    "wa_instance_restarted",
     WA_INSTANCE_DISCONNECTED: "wa_instance_disconnected",
+    WA_PROFILE_UPDATED:       "wa_profile_updated",
   },
 }));
 vi.mock("@/lib/security/client-ip", () => ({ getClientIp: mocks.getClientIp }));
@@ -58,6 +62,9 @@ import {
   getWaInstanceQrCode,
   restartWaInstance,
   disconnectWaInstance,
+  getWaProfile,
+  getWaPrivacy,
+  updateWaProfileField,
 } from "@/app/(dashboard)/settings/integrations-actions";
 
 const CTX = { workspaceId: "ws-aaa", userId: "user-aaa" };
@@ -83,6 +90,9 @@ beforeEach(() => {
       getQrCode: mocks.getQrCode,
       restart: mocks.restart,
       disconnect: mocks.disconnect,
+      getProfile: mocks.getProfile,
+      updateProfileField: mocks.updateProfileField,
+      getPrivacy: mocks.getPrivacy,
     } as never;
   });
   vi.mocked(SupabaseWorkspaceIntegrationRepository).mockImplementation(function () {
@@ -256,5 +266,68 @@ describe("listagem de instâncias", () => {
     const r = await listWorkspaceWaInstances();
     expect(r.instances).toHaveLength(0);
     expect(mocks.listInstances).not.toHaveBeenCalled();
+  });
+});
+
+// ── account-settings (v2.3): perfil/privacidade ─────────────────────────────
+
+describe("perfil/privacidade (account-settings)", () => {
+  it("getWaProfile usa settings:view e repassa o JWT", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    mocks.getProfile.mockResolvedValue({ instance_id: INSTANCE, name: "Loja", description: null, picture_url: null, synced_at: null });
+    const r = await getWaProfile(TENANT, INSTANCE);
+    expect(mocks.getWorkspaceContext).toHaveBeenCalledWith("settings", "view");
+    expect(mocks.getProfile).toHaveBeenCalledWith(TENANT, INSTANCE, TOKEN);
+    expect(r.profile?.name).toBe("Loja");
+  });
+
+  it("getWaProfile bloqueia tenant fora do workspace (anti-IDOR)", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    const r = await getWaProfile(OTHER_TENANT, INSTANCE);
+    expect(r.error).toContain("não tem acesso");
+    expect(mocks.getProfile).not.toHaveBeenCalled();
+  });
+
+  it("getWaPrivacy retorna as configurações (settings:view)", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    mocks.getPrivacy.mockResolvedValue({ instance_id: INSTANCE, read_receipts: "enable" });
+    const r = await getWaPrivacy(TENANT, INSTANCE);
+    expect(mocks.getWorkspaceContext).toHaveBeenCalledWith("settings", "view");
+    expect(r.privacy?.read_receipts).toBe("enable");
+  });
+
+  it("updateWaProfileField usa settings:edit, chama o repo e audita sem o valor", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    mocks.updateProfileField.mockResolvedValue({ applied: true, field: "name", value: "Nova", updated_at: "x" });
+    const r = await updateWaProfileField(TENANT, INSTANCE, "name", "Nova Loja");
+    expect(mocks.getWorkspaceContext).toHaveBeenCalledWith("settings", "edit");
+    expect(mocks.updateProfileField).toHaveBeenCalledWith(TENANT, INSTANCE, "name", "Nova Loja", TOKEN);
+    expect(r.error).toBeUndefined();
+    expect(mocks.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "wa_profile_updated",
+        entity_id: INSTANCE,
+        metadata: expect.objectContaining({ field: "name", source: "user" }),
+      })
+    );
+    // o valor não vai para a auditoria
+    expect(JSON.stringify(mocks.createAuditLog.mock.calls[0][0].metadata)).not.toContain("Nova Loja");
+  });
+
+  it("updateWaProfileField rejeita campo inválido e valor vazio sem chamar o backend", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    const bad = await updateWaProfileField(TENANT, INSTANCE, "telefone", "x");
+    expect(bad.error).toBeDefined();
+    const empty = await updateWaProfileField(TENANT, INSTANCE, "name", "   ");
+    expect(empty.error).toBeDefined();
+    expect(mocks.updateProfileField).not.toHaveBeenCalled();
+    expect(mocks.createAuditLog).not.toHaveBeenCalled();
+  });
+
+  it("403 do backend no perfil → mensagem amigável", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    mocks.getProfile.mockRejectedValue(new WaBackendHttpError(403));
+    const r = await getWaProfile(TENANT, INSTANCE);
+    expect(r.error).toContain("não tem acesso");
   });
 });
