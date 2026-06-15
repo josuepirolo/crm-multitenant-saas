@@ -212,9 +212,17 @@ consumindo a API REST do backend WA via **BFF**, já que `wa_*` não é legível
   `GET .../privacy` (exibição read-only dos 8 controles). Camadas: repo `getProfile`/`updateProfileField`/
   `getPrivacy`, usecases `Get/UpdateWaProfile*`/`GetWaPrivacy`, actions com anti-IDOR, `useWaAccountViewModel`.
   6 testes novos em `wa-backend-bff.test.ts`. `perms`: leitura=`connection:view`(settings:view), edição=`account:edit`(settings:edit).
-- **v2.3b (edição de privacidade + upload de foto) — pendente** — `PUT .../privacy/*` (visualizationType
-  ALL/NONE/CONTACT_BLACKLIST + blacklist de contatos, `read-receipts`, `messages-duration`, `group-add`) e
-  `PUT .../profile/picture` via upload de mídia (`POST .../media/uploads`). Deferido por escopo.
+- **v2.3b (edição de privacidade + foto) — IMPLEMENTADO 2026-06-14** — `WaPrivacySection` editável no
+  `WaAccountDialog`: `read-receipts` (Ativado/Desativado), `messages-duration` (select), e os 5 controles
+  de visibilidade (`last-seen`/`photo`/`description`/`online` + `group-add`) como ALL/NONE/CONTACT_BLACKLIST
+  — com `BlacklistEditor` inline (add/remove de contatos via `GET .../privacy/disallowed-contacts` +
+  `PUT` com `contactsBlacklist`); `online` só ALL/NONE (sem disallowed). Foto: **upload** (`POST .../media/uploads`
+  multipart → `PUT .../profile/picture` com o caminho retornado) **ou URL**. Camadas: client `waBackendUpload`,
+  repo (`updateVisibility`/`updateGroupAdd`/`updateReadReceipts`/`updateMessagesDuration`/`getDisallowedContacts`/
+  `uploadMedia`), usecases, actions (gate `settings:edit`, Zod, anti-IDOR, auditoria `WA_PRIVACY_UPDATED`/
+  `WA_PROFILE_UPDATED` sem PII), VM handlers. 10 testes novos (`wa-backend-bff.test.ts`, suíte 417/417, tsc limpo).
+  > `group-add` usa a chave `type` (não `visualizationType`); CONTACT_BLACKLIST exige `contactsBlacklist`
+  > não-vazia (validado). Resposta de `media/uploads` lida defensivamente (`media_url`/`file_path`/`path`/`url`).
 
 > **Reconciliação confirmada (2026-06-13):** o gate de papel do backend WA bate **exatamente** na
 > permissão `settings` existente — read (owner/admin/manager) = `settings:view`; write (owner/admin)

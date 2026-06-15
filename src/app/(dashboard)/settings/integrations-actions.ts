@@ -19,11 +19,29 @@ import {
   GetWaProfileUseCase,
   UpdateWaProfileFieldUseCase,
   GetWaPrivacyUseCase,
+  UpdateWaVisibilityUseCase,
+  UpdateWaGroupAddUseCase,
+  UpdateWaReadReceiptsUseCase,
+  UpdateWaMessagesDurationUseCase,
+  GetWaDisallowedContactsUseCase,
+  UploadWaProfilePictureUseCase,
 } from "@/usecases/WaManagementUseCases";
 import { createAuditLog, AUDIT_ACTIONS, type AuditAction } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { WaInstanceWithTenant, WaInstanceLiveStatus, WaProfile, WaPrivacySettings } from "@/types";
+import type {
+  WaInstanceWithTenant,
+  WaInstanceLiveStatus,
+  WaProfile,
+  WaPrivacySettings,
+  WaVisibilitySetting,
+  WaVisualizationType,
+  WaBlacklistOp,
+  WaReadReceiptsValue,
+  WaMessagesDurationValue,
+  WaDisallowedType,
+  WaDisallowedContacts,
+} from "@/types";
 
 // Mensagens públicas genéricas — nunca vaza corpo/stack/token do backend WA.
 const NO_ACCESS = "Sua conta não tem acesso a esta instância WhatsApp. Fale com o suporte.";
@@ -274,6 +292,179 @@ export async function updateWaProfileField(
       ip_address: await getClientIp(),
       // metadata sem o valor (pode conter URL/PII) — só qual campo mudou
       metadata: { tenant_id: tenantId, field: parsed.data.field, source: "user" },
+    });
+    return {};
+  } catch (err) {
+    return { error: mapWaError(err) };
+  }
+}
+
+// ── privacidade — edição (v2.3b) ─────────────────────────────────────────────
+
+const vizSchema = z.enum(["ALL", "NONE", "CONTACT_BLACKLIST"]);
+const blacklistSchema = z
+  .array(z.object({ action: z.enum(["add", "remove"]), phone: z.string().regex(/^\d{8,15}$/, "Telefone inválido.") }))
+  .max(200);
+
+/** Valida visualizationType + blacklist (obrigatória só p/ CONTACT_BLACKLIST). */
+function validateVizBody(
+  viz: string,
+  blacklist: WaBlacklistOp[] | undefined
+): { error: string } | { viz: WaVisualizationType; blacklist?: WaBlacklistOp[] } {
+  const v = vizSchema.safeParse(viz);
+  if (!v.success) return { error: INVALID };
+  if (v.data === "CONTACT_BLACKLIST") {
+    const bl = blacklistSchema.safeParse(blacklist ?? []);
+    if (!bl.success) return { error: bl.error.issues[0].message };
+    if (bl.data.length === 0) return { error: "Informe ao menos um contato para a lista de exceções." };
+    return { viz: v.data, blacklist: bl.data };
+  }
+  return { viz: v.data }; // ALL/NONE — sem blacklist
+}
+
+async function auditPrivacy(workspaceId: string, userId: string, instanceId: string, tenantId: string, setting: string) {
+  await createAuditLog({
+    action: AUDIT_ACTIONS.WA_PRIVACY_UPDATED,
+    workspace_id: workspaceId,
+    user_id: userId,
+    entity_type: "wa_instance",
+    entity_id: instanceId,
+    ip_address: await getClientIp(),
+    metadata: { tenant_id: tenantId, setting, source: "user" }, // sem telefones (PII)
+  });
+}
+
+export async function getWaDisallowedContacts(
+  tenantId: string,
+  instanceId: string,
+  type: WaDisallowedType
+): Promise<{ error?: string; contacts?: string[] }> {
+  const auth = await authorizeAccountAction(tenantId, instanceId, "view");
+  if ("error" in auth) return { error: auth.error };
+  if (!["lastSeen", "photo", "description", "groupAdd"].includes(type)) return { error: INVALID };
+  try {
+    const res: WaDisallowedContacts = await new GetWaDisallowedContactsUseCase(new WaBackendManagementRepository())
+      .execute(tenantId, instanceId, type, auth.token);
+    return { contacts: res.contacts ?? [] };
+  } catch (err) {
+    return { error: mapWaError(err) };
+  }
+}
+
+const VIS_SETTINGS: WaVisibilitySetting[] = ["last-seen", "photo", "description", "online"];
+
+export async function updateWaVisibility(
+  tenantId: string,
+  instanceId: string,
+  setting: string,
+  visualizationType: string,
+  blacklist?: WaBlacklistOp[]
+): Promise<{ error?: string }> {
+  const auth = await authorizeAccountAction(tenantId, instanceId, "edit");
+  if ("error" in auth) return { error: auth.error };
+  if (!VIS_SETTINGS.includes(setting as WaVisibilitySetting)) return { error: INVALID };
+  const body = validateVizBody(visualizationType, blacklist);
+  if ("error" in body) return { error: body.error };
+  try {
+    await new UpdateWaVisibilityUseCase(new WaBackendManagementRepository())
+      .execute(tenantId, instanceId, setting as WaVisibilitySetting, body.viz, body.blacklist, auth.token);
+    await auditPrivacy(auth.workspaceId, auth.userId, instanceId, tenantId, setting);
+    return {};
+  } catch (err) {
+    return { error: mapWaError(err) };
+  }
+}
+
+export async function updateWaGroupAdd(
+  tenantId: string,
+  instanceId: string,
+  visualizationType: string,
+  blacklist?: WaBlacklistOp[]
+): Promise<{ error?: string }> {
+  const auth = await authorizeAccountAction(tenantId, instanceId, "edit");
+  if ("error" in auth) return { error: auth.error };
+  const body = validateVizBody(visualizationType, blacklist);
+  if ("error" in body) return { error: body.error };
+  try {
+    await new UpdateWaGroupAddUseCase(new WaBackendManagementRepository())
+      .execute(tenantId, instanceId, body.viz, body.blacklist, auth.token);
+    await auditPrivacy(auth.workspaceId, auth.userId, instanceId, tenantId, "group-add");
+    return {};
+  } catch (err) {
+    return { error: mapWaError(err) };
+  }
+}
+
+export async function updateWaReadReceipts(
+  tenantId: string,
+  instanceId: string,
+  value: string
+): Promise<{ error?: string }> {
+  const auth = await authorizeAccountAction(tenantId, instanceId, "edit");
+  if ("error" in auth) return { error: auth.error };
+  const v = z.enum(["enable", "disable"]).safeParse(value);
+  if (!v.success) return { error: INVALID };
+  try {
+    await new UpdateWaReadReceiptsUseCase(new WaBackendManagementRepository())
+      .execute(tenantId, instanceId, v.data as WaReadReceiptsValue, auth.token);
+    await auditPrivacy(auth.workspaceId, auth.userId, instanceId, tenantId, "read-receipts");
+    return {};
+  } catch (err) {
+    return { error: mapWaError(err) };
+  }
+}
+
+export async function updateWaMessagesDuration(
+  tenantId: string,
+  instanceId: string,
+  value: string
+): Promise<{ error?: string }> {
+  const auth = await authorizeAccountAction(tenantId, instanceId, "edit");
+  if ("error" in auth) return { error: auth.error };
+  const v = z.enum(["days90", "days7", "hours24", "disable"]).safeParse(value);
+  if (!v.success) return { error: INVALID };
+  try {
+    await new UpdateWaMessagesDurationUseCase(new WaBackendManagementRepository())
+      .execute(tenantId, instanceId, v.data as WaMessagesDurationValue, auth.token);
+    await auditPrivacy(auth.workspaceId, auth.userId, instanceId, tenantId, "messages-duration");
+    return {};
+  } catch (err) {
+    return { error: mapWaError(err) };
+  }
+}
+
+// ── foto de perfil via upload (v2.3b) ────────────────────────────────────────
+
+const PIC_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+export async function uploadWaProfilePicture(
+  tenantId: string,
+  instanceId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const auth = await authorizeAccountAction(tenantId, instanceId, "edit");
+  if ("error" in auth) return { error: auth.error };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Arquivo inválido." };
+  if (file.size > 5 * 1024 * 1024) return { error: "Imagem muito grande (máx 5 MB)." };
+  if (!PIC_TYPES.includes(file.type)) return { error: "Formato inválido. Use JPG, PNG ou WebP." };
+
+  const form = new FormData();
+  form.append("file", file);
+  form.append("media_type", "image");
+
+  try {
+    await new UploadWaProfilePictureUseCase(new WaBackendManagementRepository())
+      .execute(tenantId, instanceId, form, auth.token);
+    await createAuditLog({
+      action: AUDIT_ACTIONS.WA_PROFILE_UPDATED,
+      workspace_id: auth.workspaceId,
+      user_id: auth.userId,
+      entity_type: "wa_instance",
+      entity_id: instanceId,
+      ip_address: await getClientIp(),
+      metadata: { tenant_id: tenantId, field: "picture", source: "user" },
     });
     return {};
   } catch (err) {

@@ -212,6 +212,30 @@ export interface WaPrivacySettings {
   synced_at: string | null;
 }
 
+// edição de privacidade (v2.3b)
+/** Controles de visibilidade que usam `visualizationType` (PUT .../privacy/{setting}). */
+export type WaVisibilitySetting = "last-seen" | "photo" | "description" | "online";
+/** Tipos aceitos por GET .../privacy/disallowed-contacts (camelCase). */
+export type WaDisallowedType = "lastSeen" | "photo" | "description" | "groupAdd";
+export type WaReadReceiptsValue = "enable" | "disable";
+export type WaMessagesDurationValue = "days90" | "days7" | "hours24" | "disable";
+/** Operação na blacklist de contatos de um controle CONTACT_BLACKLIST. */
+export interface WaBlacklistOp {
+  action: "add" | "remove";
+  phone: string;
+}
+export interface WaDisallowedContacts {
+  type: string;
+  contacts: string[];
+}
+/** Resposta do upload de mídia (POST .../media/uploads) — chaves variam por versão. */
+export interface WaMediaUpload {
+  media_url?: string;
+  file_path?: string;
+  path?: string;
+  url?: string;
+}
+
 // ── Business Niches ───────────────────────────────────────────────────────────
 
 export interface BusinessNiche {

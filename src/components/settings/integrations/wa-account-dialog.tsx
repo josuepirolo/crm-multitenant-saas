@@ -1,33 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
-import { X, RefreshCw, UserCircle, ShieldCheck } from "lucide-react";
+import { X, RefreshCw, UserCircle, ShieldCheck, Upload, Link2 } from "lucide-react";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 import { Skeleton } from "@/components/ui/skeleton";
 import { appleEase } from "@/components/ui/motion";
 import { useWaAccountViewModel } from "@/viewmodels/useWaAccountViewModel";
-import type { WaInstanceWithTenant, WaPrivacyControl } from "@/types";
-
-const VIS_LABEL: Record<string, string> = {
-  ALL: "Todos",
-  NONE: "Ninguém",
-  CONTACT_BLACKLIST: "Exceto alguns contatos",
-};
-const RR_LABEL: Record<string, string> = { enable: "Ativado", disable: "Desativado" };
-const DUR_LABEL: Record<string, string> = {
-  days90: "90 dias",
-  days7: "7 dias",
-  hours24: "24 horas",
-  disable: "Desativado",
-};
-
-function visText(c: WaPrivacyControl | undefined): string {
-  if (!c) return "—";
-  const v = c.visualizationType ?? c.type;
-  return v ? VIS_LABEL[v] ?? v : "—";
-}
+import { WaPrivacySection } from "./wa-privacy-section";
+import type { WaInstanceWithTenant } from "@/types";
 
 interface WaAccountDialogProps {
   instance: WaInstanceWithTenant;
@@ -39,6 +21,9 @@ export function WaAccountDialog({ instance, canManage, onClose }: WaAccountDialo
   const vm = useWaAccountViewModel(instance);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [pictureUrl, setPictureUrl] = useState("");
+  const [showUrl, setShowUrl] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (vm.profile) {
@@ -50,6 +35,12 @@ export function WaAccountDialog({ instance, canManage, onClose }: WaAccountDialo
   const title = instance.integration_label || instance.name || "Conta WhatsApp";
   const nameDirty = vm.profile != null && name.trim() !== (vm.profile.name ?? "").trim();
   const descDirty = vm.profile != null && description.trim() !== (vm.profile.description ?? "").trim();
+
+  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) vm.uploadPicture(file);
+    e.target.value = "";
+  }
 
   const dialog = (
     <AnimatePresence>
@@ -108,16 +99,54 @@ export function WaAccountDialog({ instance, canManage, onClose }: WaAccountDialo
                     Perfil do número
                   </div>
 
-                  {vm.profile?.picture_url && (
-                    <div className="flex justify-center">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={vm.profile.picture_url}
-                        alt="Foto do perfil"
-                        className="h-20 w-20 rounded-full border border-border/60 object-cover"
-                      />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-20 w-20 overflow-hidden rounded-full border border-border/60 bg-muted/50">
+                      {vm.profile?.picture_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={vm.profile.picture_url} alt="Foto do perfil" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                          <UserCircle size={32} />
+                        </div>
+                      )}
                     </div>
-                  )}
+                    {canManage && (
+                      <div className="flex items-center gap-2">
+                        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onPickFile} />
+                        <button
+                          onClick={() => fileRef.current?.click()}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                        >
+                          <Upload size={12} />
+                          Enviar foto
+                        </button>
+                        <button
+                          onClick={() => setShowUrl((v) => !v)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <Link2 size={12} />
+                          URL
+                        </button>
+                      </div>
+                    )}
+                    {canManage && showUrl && (
+                      <div className="flex w-full gap-2">
+                        <input
+                          value={pictureUrl}
+                          onChange={(e) => setPictureUrl(e.target.value)}
+                          placeholder="https://…/foto.jpg"
+                          className="h-8 flex-1 rounded-lg border border-input bg-background px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                        <button
+                          onClick={() => pictureUrl.trim() && vm.savePictureUrl(pictureUrl.trim()).then((ok) => ok && setShowUrl(false))}
+                          disabled={!pictureUrl.trim()}
+                          className="rounded-lg bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                        >
+                          Aplicar
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   <Field label="Nome">
                     <input
@@ -147,28 +176,25 @@ export function WaAccountDialog({ instance, canManage, onClose }: WaAccountDialo
                   </Field>
                 </section>
 
-                {/* Privacidade (somente leitura nesta versão) */}
+                {/* Privacidade */}
                 <section className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <ShieldCheck size={16} className="text-muted-foreground" />
                     Privacidade
                   </div>
                   {vm.privacy ? (
-                    <dl className="divide-y divide-border/50 overflow-hidden rounded-xl border border-border/50">
-                      <Row label="Visto por último" value={visText(vm.privacy.last_seen)} />
-                      <Row label="Foto do perfil" value={visText(vm.privacy.photo)} />
-                      <Row label="Recados (descrição)" value={visText(vm.privacy.description)} />
-                      <Row label="Online" value={visText(vm.privacy.online)} />
-                      <Row label="Adicionar a grupos" value={visText(vm.privacy.group_add)} />
-                      <Row label="Confirmações de leitura" value={RR_LABEL[vm.privacy.read_receipts] ?? vm.privacy.read_receipts} />
-                      <Row label="Mensagens temporárias" value={DUR_LABEL[vm.privacy.messages_duration] ?? vm.privacy.messages_duration} />
-                    </dl>
+                    <WaPrivacySection
+                      privacy={vm.privacy}
+                      canManage={canManage}
+                      onSaveVisibility={vm.saveVisibility}
+                      onSaveGroupAdd={vm.saveGroupAdd}
+                      onSaveReadReceipts={vm.saveReadReceipts}
+                      onSaveMessagesDuration={vm.saveMessagesDuration}
+                      loadDisallowed={vm.loadDisallowed}
+                    />
                   ) : (
                     <p className="text-xs text-muted-foreground">Configurações de privacidade indisponíveis.</p>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    A edição de privacidade será habilitada em breve.
-                  </p>
                 </section>
               </div>
             )}
@@ -199,14 +225,5 @@ function SaveButton({ onClick }: { onClick: () => void }) {
     >
       Salvar
     </button>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 px-3 py-2.5">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="text-sm font-medium">{value}</dd>
-    </div>
   );
 }

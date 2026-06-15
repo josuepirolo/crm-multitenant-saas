@@ -113,6 +113,46 @@ export async function waBackendFetch<T>(req: WaBackendRequest): Promise<T> {
   return (await res.json()) as T;
 }
 
+/**
+ * Upload multipart (mídia) ao backend WA. Mesmos invariantes de erro/timeout do
+ * `waBackendFetch`, mas envia `FormData` (sem Content-Type manual — o fetch define
+ * o boundary). Repassa o JWT do usuário. NUNCA loga o token nem o corpo de erro.
+ */
+export async function waBackendUpload<T>(req: {
+  path: string;
+  accessToken: string;
+  form: FormData;
+  timeoutMs?: number;
+}): Promise<T> {
+  const baseUrl = getBaseUrl();
+  const { path, accessToken, form, timeoutMs = 30_000 } = req;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}${path}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: form,
+      signal: controller.signal,
+      cache: "no-store",
+    });
+  } catch {
+    throw new WaBackendUnreachableError();
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!res.ok) {
+    await res.text().catch(() => undefined);
+    throw new WaBackendHttpError(res.status);
+  }
+  if (res.status === 204) return undefined as T;
+  return (await res.json()) as T;
+}
+
 /** True se o backend WA está configurado (sem expor a URL). */
 export function isWaBackendConfigured(): boolean {
   return Boolean(process.env.WA_BACKEND_URL?.trim());

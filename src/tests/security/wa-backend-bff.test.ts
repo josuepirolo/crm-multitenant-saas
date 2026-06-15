@@ -22,6 +22,12 @@ const mocks = vi.hoisted(() => {
     getProfile: vi.fn(),
     updateProfileField: vi.fn(),
     getPrivacy: vi.fn(),
+    updateVisibility: vi.fn(),
+    updateGroupAdd: vi.fn(),
+    updateReadReceipts: vi.fn(),
+    updateMessagesDuration: vi.fn(),
+    getDisallowedContacts: vi.fn(),
+    uploadMedia: vi.fn(),
     // repo workspace-integration
     listWaTenantLinksByWorkspace: vi.fn(),
     mockClient,
@@ -43,6 +49,7 @@ vi.mock("@/lib/audit/audit-log", () => ({
     WA_INSTANCE_RESTARTED:    "wa_instance_restarted",
     WA_INSTANCE_DISCONNECTED: "wa_instance_disconnected",
     WA_PROFILE_UPDATED:       "wa_profile_updated",
+    WA_PRIVACY_UPDATED:       "wa_privacy_updated",
   },
 }));
 vi.mock("@/lib/security/client-ip", () => ({ getClientIp: mocks.getClientIp }));
@@ -65,6 +72,10 @@ import {
   getWaProfile,
   getWaPrivacy,
   updateWaProfileField,
+  updateWaVisibility,
+  updateWaReadReceipts,
+  updateWaMessagesDuration,
+  uploadWaProfilePicture,
 } from "@/app/(dashboard)/settings/integrations-actions";
 
 const CTX = { workspaceId: "ws-aaa", userId: "user-aaa" };
@@ -93,6 +104,12 @@ beforeEach(() => {
       getProfile: mocks.getProfile,
       updateProfileField: mocks.updateProfileField,
       getPrivacy: mocks.getPrivacy,
+      updateVisibility: mocks.updateVisibility,
+      updateGroupAdd: mocks.updateGroupAdd,
+      updateReadReceipts: mocks.updateReadReceipts,
+      updateMessagesDuration: mocks.updateMessagesDuration,
+      getDisallowedContacts: mocks.getDisallowedContacts,
+      uploadMedia: mocks.uploadMedia,
     } as never;
   });
   vi.mocked(SupabaseWorkspaceIntegrationRepository).mockImplementation(function () {
@@ -329,5 +346,103 @@ describe("perfil/privacidade (account-settings)", () => {
     mocks.getProfile.mockRejectedValue(new WaBackendHttpError(403));
     const r = await getWaProfile(TENANT, INSTANCE);
     expect(r.error).toContain("não tem acesso");
+  });
+});
+
+// ── privacidade — edição (v2.3b) ────────────────────────────────────────────
+
+describe("edição de privacidade (v2.3b)", () => {
+  it("updateWaVisibility (ALL) usa settings:edit, chama o repo e audita sem PII", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    mocks.updateVisibility.mockResolvedValue({ applied: true, field: "last-seen", value: "ALL", updated_at: "x" });
+    const r = await updateWaVisibility(TENANT, INSTANCE, "last-seen", "ALL");
+    expect(mocks.getWorkspaceContext).toHaveBeenCalledWith("settings", "edit");
+    expect(mocks.updateVisibility).toHaveBeenCalledWith(TENANT, INSTANCE, "last-seen", "ALL", undefined, TOKEN);
+    expect(r.error).toBeUndefined();
+    expect(mocks.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "wa_privacy_updated", metadata: expect.objectContaining({ setting: "last-seen", source: "user" }) })
+    );
+  });
+
+  it("CONTACT_BLACKLIST sem contatos é rejeitado sem chamar o backend", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    const r = await updateWaVisibility(TENANT, INSTANCE, "photo", "CONTACT_BLACKLIST");
+    expect(r.error).toBeDefined();
+    expect(mocks.updateVisibility).not.toHaveBeenCalled();
+  });
+
+  it("CONTACT_BLACKLIST com telefone inválido é rejeitado", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    const r = await updateWaVisibility(TENANT, INSTANCE, "photo", "CONTACT_BLACKLIST", [{ action: "add", phone: "abc" }]);
+    expect(r.error).toBeDefined();
+    expect(mocks.updateVisibility).not.toHaveBeenCalled();
+  });
+
+  it("setting inválido é rejeitado", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    const r = await updateWaVisibility(TENANT, INSTANCE, "telefone", "ALL");
+    expect(r.error).toBe("Requisição inválida.");
+    expect(mocks.updateVisibility).not.toHaveBeenCalled();
+  });
+
+  it("read-receipts: valor fora do enum é rejeitado; válido salva", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    const bad = await updateWaReadReceipts(TENANT, INSTANCE, "talvez");
+    expect(bad.error).toBe("Requisição inválida.");
+    mocks.updateReadReceipts.mockResolvedValue({ applied: true });
+    const ok = await updateWaReadReceipts(TENANT, INSTANCE, "disable");
+    expect(ok.error).toBeUndefined();
+    expect(mocks.updateReadReceipts).toHaveBeenCalledWith(TENANT, INSTANCE, "disable", TOKEN);
+  });
+
+  it("messages-duration: enum validado", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    const bad = await updateWaMessagesDuration(TENANT, INSTANCE, "days5");
+    expect(bad.error).toBe("Requisição inválida.");
+    expect(mocks.updateMessagesDuration).not.toHaveBeenCalled();
+  });
+
+  it("edição de privacidade exige settings:edit (manager bloqueado)", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(ERR_PERM);
+    const r = await updateWaVisibility(TENANT, INSTANCE, "online", "NONE");
+    expect(r.error).toContain("permissão");
+    expect(mocks.updateVisibility).not.toHaveBeenCalled();
+  });
+});
+
+describe("upload de foto (v2.3b)", () => {
+  function imgFile() {
+    return new File([new Uint8Array([1, 2, 3])], "foto.png", { type: "image/png" });
+  }
+  it("arquivo válido chama o usecase e audita field=picture", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    mocks.uploadMedia.mockResolvedValue({ media_url: "https://wa/m/abc" });
+    mocks.updateProfileField.mockResolvedValue({ applied: true, field: "picture", value: "https://wa/m/abc", updated_at: "x" });
+    const fd = new FormData();
+    fd.append("file", imgFile());
+    const r = await uploadWaProfilePicture(TENANT, INSTANCE, fd);
+    expect(r.error).toBeUndefined();
+    expect(mocks.uploadMedia).toHaveBeenCalled();
+    expect(mocks.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "wa_profile_updated", metadata: expect.objectContaining({ field: "picture" }) })
+    );
+  });
+
+  it("rejeita arquivo não-imagem sem chamar o backend", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    const fd = new FormData();
+    fd.append("file", new File(["x"], "a.txt", { type: "text/plain" }));
+    const r = await uploadWaProfilePicture(TENANT, INSTANCE, fd);
+    expect(r.error).toContain("Formato inválido");
+    expect(mocks.uploadMedia).not.toHaveBeenCalled();
+  });
+
+  it("upload exige settings:edit", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(ERR_PERM);
+    const fd = new FormData();
+    fd.append("file", imgFile());
+    const r = await uploadWaProfilePicture(TENANT, INSTANCE, fd);
+    expect(r.error).toContain("permissão");
+    expect(mocks.uploadMedia).not.toHaveBeenCalled();
   });
 });
