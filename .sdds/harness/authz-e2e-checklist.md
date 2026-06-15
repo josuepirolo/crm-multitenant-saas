@@ -142,6 +142,19 @@ node scripts/authz-e2e.mjs superadmin@ex.com 'senha'
 
 ---
 
+## Resultado da execução (2026-06-14)
+
+- ✅ **Claim por papel** validado: hook resolve owner/admin→3 perms, manager→`connection:view`,
+  sales/support→`[]` (validação sintética read-only + `jdredes` admin/manager ao vivo).
+- ✅ **Enforcement positivo no WA** ao vivo: `node scripts/authz-e2e.mjs --admin jdredes@gmail.com admin
+  14ee144b… 1ae64f35…` → claim admin (3 perms) + `GET /management/.../instances` **200**
+  ("Lekazis Disparos"). manager também (200, sessão anterior).
+- ⏸️ **Enforcement negativo ao vivo** (sales/support → 403): requer um membro de teste com papel
+  sales/support num workspace com instância (Lekazis = produção do cliente). Não executado
+  autonomamente — injetar membro de teste em workspace de produção precisa de autorização explícita
+  (guardrail) ou via tela de convite do app. É a 2ª barreira (Fase 1 do WA); o lado CRM (claim
+  sales→`[]`) já está provado. **Decisão do usuário** para fechar.
+
 ## 5. Critério de pronto
 
 - [ ] Passos 1–4 verdes.
