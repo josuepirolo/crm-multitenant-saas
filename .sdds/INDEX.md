@@ -40,7 +40,8 @@ Atualizado: 2026-06-14
 ## Sessões recentes
 | Data | Evento |
 |---|---|
-| 2026-06-14 | Push `origin/dev` concluído (7 commits, HEAD `578ef09`) — arco ADR-006/007 fechado no remoto — ver `sessions/2026-06-14-2211-session.md` |
+| 2026-06-14 | SDDS `d9a68af` commitado e pushed (memória pós-push 2211) — HEAD `origin/dev` — ver `sessions/2026-06-14-2216-session.md` |
+| 2026-06-14 | Push `origin/dev` concluído (7 commits código, até `578ef09`) — ver `sessions/2026-06-14-2211-session.md` |
 | 2026-06-14 | Commits `feb63dc`/`0a9fc92`/`27391f1`/`578ef09`; logout fix e e2e `--admin` validados — ver `sessions/2026-06-14-1951-session.md` |
 | 2026-06-14 | Hook authz habilitado + WA Fase 1 validado (ES256/JWKS); fixes logout/impersonação e UI settings; `authz-e2e.mjs --admin` — ver `sessions/2026-06-14-1923-session.md` |
 | 2026-06-13 | Design v2 (BFF) de `/settings/integrations`: ADR-006 (CRM consome backend WA repassando JWT do usuário), spec v2 §11, harness BFF-01..12, infra `WA_BACKEND_URL` + `src/lib/wa-backend/client.ts` (typecheck limpo). Implementação tipada/UI gated por valor de `WA_BACKEND_URL` + contratos dos endpoints (backend WA gerando) — ver `sessions/2026-06-13-0729-session.md` |
