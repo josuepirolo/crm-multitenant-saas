@@ -614,3 +614,12 @@ Rastreamento automático: hook Cursor `postToolUse`, e opcionalmente Git `post-c
 | 2026-06-15 02:25 | `src/types/index.ts` |
 | 2026-06-15 02:25 | `src/usecases/WaManagementUseCases.ts` |
 | 2026-06-15 02:25 | `src/viewmodels/useWaAccountViewModel.ts` |
+| 2026-06-15 02:36 | `README.md` |
+| 2026-06-15 02:36 | `src/components/settings/integrations/wa-account-dialog.tsx` |
+| 2026-06-15 02:36 | `src/components/settings/integrations/wa-privacy-section.tsx` |
+| 2026-06-15 02:36 | `src/types/index.ts` |
+| 2026-06-15 09:46 | `README.md` |
+| 2026-06-15 09:46 | `src/app/(dashboard)/settings/integrations-actions.ts` |
+| 2026-06-15 09:46 | `src/components/settings/integrations/qr-code-dialog.tsx` |
+| 2026-06-15 09:46 | `src/tests/security/wa-backend-bff.test.ts` |
+| 2026-06-15 09:46 | `src/types/index.ts` |

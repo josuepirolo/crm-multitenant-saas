@@ -36,6 +36,7 @@ Atualizado: 2026-06-14 (22:42)
 | `discoveries/2026-06-09-impersonation-tenant-isolation-bug.md` | `getWorkspaceContext`/`getCurrentWorkspaceId`/`getUserRole` ignoravam o cookie de impersonação — escritas durante impersonação iam para o workspace do superadmin, não o impersonado; corrigido com `getValidatedImpersonatedWorkspaceId` |
 | `discoveries/2026-06-10-impersonation-rls-blocks-data-access.md` | Mesmo com `workspaceId` impersonado correto, `createClient()` (RLS-bound ao superadmin) bloqueava leitura/escrita via `my_workspace_ids()`; corrigido com `getScopedSupabaseClient()` (service_role durante impersonação validada) em `contacts/` e, na sequência, nos 16 arquivos restantes (R-009 RESOLVIDO) |
 | `discoveries/2026-06-14-wa-backend-rejects-es256-jwt.md` | Backend WA rejeitava JWT ES256 (401) — **RESOLVIDO** 2026-06-14; hook authz + Fase 1 validados fim-a-fim (200 com instância Lekazis). Histórico do 401 mantido na discovery |
+| `discoveries/2026-06-15-qrcode-contract-mismatch.md` | `/qrcode` do backend WA devolve `{value: URL de pareamento}`, não `{qrcode: data-URI}` como o contrato diz → QR não gerava. CRM corrigido (lê `value`, renderiza QR localmente com `qrcode.react`, sem serviço externo); recomendado backend corrigir o doc do contrato |
 
 ## Sessões recentes
 | Data | Evento |
