@@ -195,6 +195,14 @@ describe("tradução de erros do backend WA", () => {
     expect(r.error).toBeUndefined();
   });
 
+  it("QR: extrai a string `value` do backend (não o campo `qrcode`)", async () => {
+    mocks.getWorkspaceContext.mockResolvedValue(CTX);
+    mocks.getQrCode.mockResolvedValue({ alreadyConnected: false, qr: { instance_id: INSTANCE, value: "https://wa.me/x" } });
+    const r = await getWaInstanceQrCode(TENANT, INSTANCE);
+    expect(r.qrcode).toBe("https://wa.me/x");
+    expect(r.alreadyConnected).toBeUndefined();
+  });
+
   it("BFF-09: timeout/inacessível → serviço indisponível", async () => {
     mocks.getWorkspaceContext.mockResolvedValue(CTX);
     mocks.getStatus.mockRejectedValue(new WaBackendUnreachableError());

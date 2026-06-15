@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 import { createPortal } from "react-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 import { Skeleton } from "@/components/ui/skeleton";
 import { appleEase } from "@/components/ui/motion";
@@ -118,9 +119,15 @@ export function QrCodeDialog({
 
             {phase === "qr" && qr && (
               <div className="flex flex-col items-center gap-4">
-                <div className="rounded-xl border border-border/60 bg-background p-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={qr} alt="QR Code para parear o WhatsApp" className="h-56 w-56" />
+                {/* QR precisa ser preto-sobre-branco para o scanner do celular —
+                    fundo branco é requisito funcional, não tema. */}
+                <div className="rounded-xl border border-border/60 bg-white p-3">
+                  {qr.startsWith("data:") ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={qr} alt="QR Code para parear o WhatsApp" className="h-56 w-56" />
+                  ) : (
+                    <QRCodeSVG value={qr} size={224} level="M" marginSize={0} />
+                  )}
                 </div>
                 <ol className="w-full space-y-1 text-xs text-muted-foreground">
                   <li>1. Abra o WhatsApp no celular</li>

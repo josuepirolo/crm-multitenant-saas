@@ -163,10 +163,15 @@ export interface WaInstanceLiveStatus {
   session?: string | boolean;
 }
 
-/** GET /management/instances/{instance_id}/qrcode — `qrcode` é um data URI. */
+/** GET /management/instances/{instance_id}/qrcode.
+ * O backend real devolve `value` = URL/código de pareamento (ex.:
+ * `https://wa.me/settings/linked_devices#...`) — NÃO um data URI. O frontend
+ * renderiza o QR a partir dessa string. `qrcode` mantido por compat (o contrato
+ * antigo previa data URI). */
 export interface WaInstanceQrCode {
   instance_id: string;
-  qrcode: string;
+  value?: string;
+  qrcode?: string;
 }
 
 // ── account-settings (perfil/privacidade da conta WhatsApp, v2.3) ────────────

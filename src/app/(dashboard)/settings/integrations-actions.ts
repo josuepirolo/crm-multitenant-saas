@@ -147,7 +147,8 @@ export async function getWaInstanceQrCode(
     const result = await new GetWaInstanceQrCodeUseCase(new WaBackendManagementRepository())
       .execute(instanceId, token);
     if (result.alreadyConnected) return { alreadyConnected: true };
-    return { qrcode: result.qr.qrcode };
+    // backend devolve `value` (URL de pareamento); `qrcode` por compat (data URI antigo)
+    return { qrcode: result.qr.value ?? result.qr.qrcode };
   } catch (err) {
     return { error: mapWaError(err) };
   }
