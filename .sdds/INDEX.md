@@ -1,7 +1,7 @@
 # INDEX.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-14 (22:42)
+Atualizado: 2026-06-15
 
 ## Ler primeiro
 1. `CURRENT_STATE.md` — estado atual
@@ -41,6 +41,7 @@ Atualizado: 2026-06-14 (22:42)
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-15 | WA Integrations v2.3 (perfil/privacidade/foto, commits `36b6c10`/`cc3ffba`) + fixes RLS workspaces owner+admin (`da21a30`), perfil/privacidade "Não definido" (`99cfbc3`) e QR `value` vs `qrcode` (`ccdd920`); validação live ADR-007 fim-a-fim; discovery `/qrcode` (`790afa9`). Backend respondeu o recado (contratos atualizados — revisar). Ver `sessions/2026-06-15-0649-session.md` |
 | 2026-06-14 | Esclarecimento produto: switcher multi-workspace (só com 2+ memberships) + RBAC membros (superadmin ≠ admin; manager não convida) — ver `sessions/2026-06-14-2242-session.md` |
 | 2026-06-14 | SDDS `d2f7706` pushed — memória 2216 sincronizada; HEAD remoto atualizado — ver `sessions/2026-06-14-2219-session.md` |
 | 2026-06-14 | SDDS `d9a68af` commitado e pushed (memória pós-push 2211) — ver `sessions/2026-06-14-2216-session.md` |

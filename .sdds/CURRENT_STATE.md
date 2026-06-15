@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-14 (22:42 — esclarecimento multi-workspace + RBAC membros)
+Atualizado: 2026-06-15 (v2.3 perfil/privacidade/foto + fixes RLS/QR + discovery `/qrcode`)
 Bootstrap: recuperado de código real (sessão anterior sem persistência de .sdds/)
 
 ---
@@ -97,10 +97,11 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 
 | Ação | Módulo SDDS | Status |
 |---|---|---|
-| Validar manualmente `/settings` → Integrações no Lekazis (login + workspace Lekazis) | — | **PRÓXIMO** (usuário) |
-| e2e §5.4 por papel (`authz-e2e.mjs --admin` ou convites) | harness/authz-e2e-checklist.md | Pendente |
-| Remover membership teste `jdredes`→Lekazis se temporária | — | Opcional |
+| **Revisar contratos atualizados pelo backend** (`backend_zapi/frontend/*.md` editados + `frontend_v3/` novo — resposta ao recado do `/qrcode`); ver mudanças que afetam o CRM | — | **PRÓXIMO** |
+| Validar pareamento ponta-a-ponta (gerar QR → escanear → conectar) | — | Pendente (usuário) |
+| e2e §5.4 negativo (sales→403) — autorizar membro de teste ou via app | harness/authz-e2e-checklist.md | Pendente |
+| Validar upload de foto (v2.3) contra backend real (resposta de `media/uploads` lida defensivamente) | settings-integrations | Pendente |
+| Remover/manter membership teste `jdredes`→Lekazis (hoje **admin**) | — | Opcional |
 | Testar mapeamento WA em `/admin/workspaces` (dark mode, mobile) | — | Pendente |
-| v2.3 perfil/privacidade WhatsApp | settings-integrations | Backlog |
 | Linkar deal → wa_conversation | 06_IMPLEMENTATION | Aguarda spec |
 | Auditar Kanban implementado | 04_AUDITOR | Disponível |
