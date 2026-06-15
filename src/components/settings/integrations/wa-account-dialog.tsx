@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
-import { X, RefreshCw, UserCircle, ShieldCheck, Upload, Link2 } from "lucide-react";
+import { X, RefreshCw, UserCircle, ShieldCheck, Upload, Link2, Info } from "lucide-react";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 import { Skeleton } from "@/components/ui/skeleton";
 import { appleEase } from "@/components/ui/motion";
@@ -92,6 +92,16 @@ export function WaAccountDialog({ instance, canManage, onClose }: WaAccountDialo
               </div>
             ) : (
               <div className="space-y-6">
+                {!vm.profile?.synced_at && !vm.privacy?.synced_at && (
+                  <div className="flex items-start gap-2 rounded-xl border border-border/50 bg-muted/40 px-3 py-2.5">
+                    <Info size={15} className="mt-0.5 shrink-0 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
+                      O WhatsApp (Z-API) não permite ler o perfil/privacidade já configurados no número.
+                      Aqui aparece apenas o que for definido por este painel — defina os valores para configurá-los.
+                    </p>
+                  </div>
+                )}
+
                 {/* Perfil */}
                 <section className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-semibold">

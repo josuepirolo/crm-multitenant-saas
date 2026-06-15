@@ -29,8 +29,11 @@ interface Props extends Handlers {
   canManage: boolean;
 }
 
-function vizOf(c: WaPrivacyControl | undefined): WaVisualizationType {
-  return (c?.visualizationType ?? c?.type ?? "ALL") as WaVisualizationType;
+/** Retorna o visualizationType atual, ou undefined quando o controle nunca foi
+ * sincronizado/definido (backend devolve null — Z-API não expõe leitura). */
+function vizOf(c: WaPrivacyControl | null | undefined): WaVisualizationType | undefined {
+  if (!c) return undefined;
+  return (c.visualizationType ?? c.type) as WaVisualizationType | undefined;
 }
 
 export function WaPrivacySection({ privacy, canManage, ...h }: Props) {
@@ -94,16 +97,24 @@ function Shell({ label, children }: { label: string; children: React.ReactNode }
 function SimpleSelectRow({
   label, value, options, canManage, onSave,
 }: {
-  label: string; value: string; canManage: boolean;
+  label: string; value: string | null; canManage: boolean;
   options: { v: string; label: string }[];
   onSave: (v: string) => Promise<boolean>;
 }) {
-  const current = options.find((o) => o.v === value);
-  if (!canManage) return <Shell label={label}><span className="block text-right text-sm font-medium">{current?.label ?? value}</span></Shell>;
+  const current = value ? options.find((o) => o.v === value) : undefined;
+  if (!canManage) {
+    return (
+      <Shell label={label}>
+        <span className="block text-right text-sm font-medium">
+          {current?.label ?? <span className="text-muted-foreground">Não definido</span>}
+        </span>
+      </Shell>
+    );
+  }
   return (
     <Shell label={label}>
-      <Select value={value} onValueChange={(v) => v && onSave(v)}>
-        <SelectTrigger size="sm" className="w-full"><SelectValue /></SelectTrigger>
+      <Select value={value ?? null} onValueChange={(v) => v && onSave(v)}>
+        <SelectTrigger size="sm" className="w-full"><SelectValue placeholder="Não definido" /></SelectTrigger>
         <SelectContent>
           {options.map((o) => <SelectItem key={o.v} value={o.v}>{o.label}</SelectItem>)}
         </SelectContent>
@@ -117,12 +128,12 @@ function VisibilityRow({
 }: {
   label: string;
   disallowed: WaDisallowedType | null;
-  viz: WaVisualizationType;
+  viz: WaVisualizationType | undefined;
   canManage: boolean;
   onSave: (v: WaVisualizationType, bl?: WaBlacklistOp[]) => Promise<boolean>;
   loadDisallowed: (t: WaDisallowedType) => Promise<string[]>;
 }) {
-  const [selected, setSelected] = useState<WaVisualizationType>(viz);
+  const [selected, setSelected] = useState<WaVisualizationType | undefined>(viz);
   useEffect(() => setSelected(viz), [viz]);
 
   const opts = disallowed ? VIS_OPTS : VIS_OPTS.filter((o) => o.v !== "CONTACT_BLACKLIST");
@@ -142,15 +153,15 @@ function VisibilityRow({
         <span className="text-sm text-muted-foreground">{label}</span>
         <div className="w-40 shrink-0">
           {canManage ? (
-            <Select value={selected} onValueChange={onChange}>
-              <SelectTrigger size="sm" className="w-full"><SelectValue /></SelectTrigger>
+            <Select value={selected ?? null} onValueChange={onChange}>
+              <SelectTrigger size="sm" className="w-full"><SelectValue placeholder="Não definido" /></SelectTrigger>
               <SelectContent>
                 {opts.map((o) => <SelectItem key={o.v} value={o.v}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
           ) : (
             <span className="block text-right text-sm font-medium">
-              {VIS_OPTS.find((o) => o.v === viz)?.label ?? viz}
+              {VIS_OPTS.find((o) => o.v === viz)?.label ?? <span className="text-muted-foreground">Não definido</span>}
             </span>
           )}
         </div>

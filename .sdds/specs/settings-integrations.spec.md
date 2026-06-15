@@ -223,6 +223,14 @@ consumindo a API REST do backend WA via **BFF**, já que `wa_*` não é legível
   `WA_PROFILE_UPDATED` sem PII), VM handlers. 10 testes novos (`wa-backend-bff.test.ts`, suíte 417/417, tsc limpo).
   > `group-add` usa a chave `type` (não `visualizationType`); CONTACT_BLACKLIST exige `contactsBlacklist`
   > não-vazia (validado). Resposta de `media/uploads` lida defensivamente (`media_url`/`file_path`/`path`/`url`).
+  >
+  > **LIMITAÇÃO DE LEITURA (confirmada em produção 2026-06-14):** `GET .../profile` e `GET .../privacy`
+  > são **cache local do backend WA** — a Z-API **não expõe leitura** do perfil/privacidade reais já
+  > configurados no número. Para um número configurado fora (ex.: Lekazis), os GETs respondem `200` com
+  > **todos os campos `null`** (`synced_at: null`). Não é bug do CRM. A UI trata `null` como **"Não definido"**
+  > (não finge "Todos") e exibe uma **nota explicativa** quando nada foi sincronizado; os valores só passam a
+  > aparecer **depois** de definidos por este painel. `status` (`/status`) e foto via `picture_url` (após set)
+  > funcionam normalmente — só o "estado atual herdado" do WhatsApp é inacessível pelo provedor.
 
 > **Reconciliação confirmada (2026-06-13):** o gate de papel do backend WA bate **exatamente** na
 > permissão `settings` existente — read (owner/admin/manager) = `settings:view`; write (owner/admin)

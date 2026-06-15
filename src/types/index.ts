@@ -152,13 +152,15 @@ export interface WaInstanceWithTenant extends WaInstance {
   integration_label: string | null;
 }
 
-/** GET /management/instances/{instance_id}/status — `connected` é o sinal canônico. */
+/** GET /management/instances/{instance_id}/status — `connected` é o sinal canônico.
+ * `status` pode não vir (a resposta de /status traz `connected`; o espelho `status`
+ * aparece no list). `session` vem cru da Z-API (string ou boolean). */
 export interface WaInstanceLiveStatus {
   instance_id: string;
-  status: WaInstanceConnStatus;
+  status?: WaInstanceConnStatus;
   connected: boolean;
   smartphoneConnected?: boolean;
-  session?: string;
+  session?: string | boolean;
 }
 
 /** GET /management/instances/{instance_id}/qrcode — `qrcode` é um data URI. */
@@ -199,16 +201,18 @@ export interface WaPrivacyControl {
   contactsBlacklist?: string[];
 }
 
-/** GET .../privacy — cache consolidado dos 8 controles. */
+/** GET .../privacy — cache consolidado dos 8 controles.
+ * Campos nunca definidos pelo backend vêm `null` (Z-API não expõe leitura própria
+ * do número — só reflete o que foi setado via este backend). */
 export interface WaPrivacySettings {
   instance_id: string;
-  last_seen: WaPrivacyControl;
-  photo: WaPrivacyControl;
-  description: WaPrivacyControl;
-  online: WaPrivacyControl;
-  group_add: WaPrivacyControl;
-  read_receipts: "enable" | "disable" | string;
-  messages_duration: "days90" | "days7" | "hours24" | "disable" | string;
+  last_seen: WaPrivacyControl | null;
+  photo: WaPrivacyControl | null;
+  description: WaPrivacyControl | null;
+  online: WaPrivacyControl | null;
+  group_add: WaPrivacyControl | null;
+  read_receipts: "enable" | "disable" | string | null;
+  messages_duration: "days90" | "days7" | "hours24" | "disable" | string | null;
   synced_at: string | null;
 }
 
