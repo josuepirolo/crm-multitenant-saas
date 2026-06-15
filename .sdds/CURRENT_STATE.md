@@ -80,15 +80,14 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
   - **Artefato de teste:** membership `jdredes`→Lekazis (manager) inserida para validar; remover se for só teste (Settings → Membros → desativar).
   - **Achado de UX (CORRIGIDO 2026-06-14):** durante impersonação, o botão "Convidar" sumia em `/settings` porque `settings-client.tsx` derivava `userRole` só de `workspace_members`; agora `getSettingsData` retorna `isImpersonating` e a UI trata como `owner` (ADR-004 owner-like).
   - **Logout/login persistia impersonação (CORRIGIDO 2026-06-14, commit `feb63dc`):** cookies `imp-*` não eram apagados em `signOut()` nem em `signIn()` — adicionado `clearImpersonation()` em ambos. **Validado pelo usuário** após relogar.
-  - **Commits consolidados 2026-06-14:** `feb63dc` (impersonação) / `0a9fc92` (e2e `--admin`) / `27391f1` (SDDS) — somados aos 3 anteriores ADR-006/007 → **6 commits** em `dev`, **push pendente**.
-  - **PENDENTE:** (a) e2e §5.4 por papel (sales/admin → 403/200 com usuários de teste); (b) validação manual da UI no navegador (Integrações no Lekazis — bloqueada temporariamente por rate limit de login); (c) **`git push origin dev`**; (d) remover membership de teste `jdredes`→Lekazis se não for permanente.
+  - **Commits consolidados 2026-06-14:** `feb63dc` / `0a9fc92` / `27391f1` / `578ef09` — stack ADR-006/007 + fixes + SDDS; **`git push origin dev` concluído** (`578ef09` = HEAD em `origin/dev`).
+  - **PENDENTE:** (a) e2e §5.4 por papel (sales/admin → 403/200 com usuários de teste); (b) validação manual da UI no navegador (Integrações no Lekazis); (c) remover membership de teste `jdredes`→Lekazis se não for permanente.
 
 ## Próximas ações disponíveis
 
 | Ação | Módulo SDDS | Status |
 |---|---|---|
-| Push `origin/dev` (6 commits: ADR-006/007 + impersonação + e2e `--admin` + SDDS) | — | **PRÓXIMO** |
-| Validar manualmente `/settings` → Integrações no Lekazis (após rate limit liberar login) | — | Pendente (usuário) |
+| Validar manualmente `/settings` → Integrações no Lekazis (login + workspace Lekazis) | — | **PRÓXIMO** (usuário) |
 | e2e §5.4 por papel (`authz-e2e.mjs --admin` ou convites) | harness/authz-e2e-checklist.md | Pendente |
 | Remover membership teste `jdredes`→Lekazis se temporária | — | Opcional |
 | Testar mapeamento WA em `/admin/workspaces` (dark mode, mobile) | — | Pendente |
