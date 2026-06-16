@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
-import { Building2, Users, Plus, UserCircle, Upload, Plug } from "lucide-react";
+import { Building2, Users, Plus, UserCircle, Upload, Plug, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WorkspaceProfileForm } from "./workspace-profile-form";
@@ -244,7 +245,22 @@ export function SettingsTabs({
         )}
 
         {activeTab === "integrations" && canViewIntegrations && (
-          <IntegrationsTab userRole={userRole} />
+          <>
+            <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+              <p className="text-sm text-foreground">
+                A conexão WhatsApp agora fica no menu{" "}
+                <Link
+                  href="/whatsapp/conexao"
+                  className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                >
+                  WhatsApp → Conexão
+                  <ArrowRight size={14} />
+                </Link>
+                . Esta aba permanece como atalho.
+              </p>
+            </div>
+            <IntegrationsTab userRole={userRole} />
+          </>
         )}
 
         {activeTab === "profile" && (

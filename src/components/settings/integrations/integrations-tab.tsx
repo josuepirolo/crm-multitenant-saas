@@ -9,6 +9,7 @@ import { can } from "@/lib/permissions";
 import { useSettingsIntegrationsViewModel } from "@/viewmodels/useSettingsIntegrationsViewModel";
 import { WaInstanceCard } from "./wa-instance-card";
 import { QrCodeDialog } from "./qr-code-dialog";
+import { WaAccountDialog } from "./wa-account-dialog";
 import type { MemberRole, WaInstanceWithTenant } from "@/types";
 
 function IntegrationsSkeleton() {
@@ -36,6 +37,7 @@ function IntegrationsSkeleton() {
 export function IntegrationsTab({ userRole }: { userRole: MemberRole | null }) {
   const vm = useSettingsIntegrationsViewModel();
   const [qrInstance, setQrInstance] = useState<WaInstanceWithTenant | null>(null);
+  const [accountInstance, setAccountInstance] = useState<WaInstanceWithTenant | null>(null);
 
   const canManage = can(userRole, "settings", "edit");
 
@@ -107,6 +109,7 @@ export function IntegrationsTab({ userRole }: { userRole: MemberRole | null }) {
                 onConnect={setQrInstance}
                 onRestart={vm.restart}
                 onDisconnect={vm.disconnect}
+                onOpenAccount={setAccountInstance}
               />
             </motion.div>
           ))}
@@ -120,6 +123,14 @@ export function IntegrationsTab({ userRole }: { userRole: MemberRole | null }) {
           fetchStatus={vm.fetchStatus}
           onClose={() => setQrInstance(null)}
           onConnected={() => vm.refreshStatus(qrInstance)}
+        />
+      )}
+
+      {accountInstance && (
+        <WaAccountDialog
+          instance={accountInstance}
+          canManage={canManage}
+          onClose={() => setAccountInstance(null)}
         />
       )}
     </div>

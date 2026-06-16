@@ -152,19 +152,219 @@ export interface WaInstanceWithTenant extends WaInstance {
   integration_label: string | null;
 }
 
-/** GET /management/instances/{instance_id}/status — `connected` é o sinal canônico. */
+/** GET /management/instances/{instance_id}/status — `connected` é o sinal canônico.
+ * `status` pode não vir (a resposta de /status traz `connected`; o espelho `status`
+ * aparece no list). `session` vem cru da Z-API (string ou boolean). */
 export interface WaInstanceLiveStatus {
   instance_id: string;
-  status: WaInstanceConnStatus;
+  status?: WaInstanceConnStatus;
   connected: boolean;
   smartphoneConnected?: boolean;
-  session?: string;
+  session?: string | boolean;
 }
 
-/** GET /management/instances/{instance_id}/qrcode — `qrcode` é um data URI. */
+/** GET /management/instances/{instance_id}/qrcode.
+ * O backend real devolve `value` = URL/código de pareamento (ex.:
+ * `https://wa.me/settings/linked_devices#...`) — NÃO um data URI. O frontend
+ * renderiza o QR a partir dessa string. `qrcode` mantido por compat (o contrato
+ * antigo previa data URI). */
 export interface WaInstanceQrCode {
   instance_id: string;
-  qrcode: string;
+  value?: string;
+  qrcode?: string;
+}
+
+// ── account-settings (perfil/privacidade da conta WhatsApp, v2.3) ────────────
+// Base: /tenants/{tenant_id}/instances/{instance_id}. Contratos em
+// backend_zapi/frontend/wa-backend-integration-contracts.md §2.
+
+/** GET .../profile — campos nunca configurados vêm null. */
+export interface WaProfile {
+  instance_id: string;
+  name: string | null;
+  picture_url: string | null;
+  description: string | null;
+  synced_at: string | null;
+}
+
+export type WaProfileField = "name" | "description" | "picture";
+
+/** Envelope padrão das mutações de account-settings. */
+export interface WaApplied {
+  applied: boolean;
+  field: string;
+  value: unknown;
+  updated_at: string;
+}
+
+export type WaVisualizationType = "ALL" | "NONE" | "CONTACT_BLACKLIST";
+
+export interface WaPrivacyControl {
+  visualizationType?: WaVisualizationType;
+  /** group-add usa a chave `type` no lugar de `visualizationType` (peculiaridade Z-API). */
+  type?: WaVisualizationType;
+  contactsBlacklist?: string[];
+}
+
+/** GET .../privacy — cache consolidado dos 8 controles.
+ * Campos nunca definidos pelo backend vêm `null` (Z-API não expõe leitura própria
+ * do número — só reflete o que foi setado via este backend). */
+export interface WaPrivacySettings {
+  instance_id: string;
+  last_seen: WaPrivacyControl | null;
+  photo: WaPrivacyControl | null;
+  description: WaPrivacyControl | null;
+  online: WaPrivacyControl | null;
+  group_add: WaPrivacyControl | null;
+  read_receipts: "enable" | "disable" | string | null;
+  messages_duration: "days90" | "days7" | "hours24" | "disable" | string | null;
+  synced_at: string | null;
+}
+
+// edição de privacidade (v2.3b)
+/** Controles de visibilidade que usam `visualizationType` (PUT .../privacy/{setting}). */
+export type WaVisibilitySetting = "last-seen" | "photo" | "description" | "online";
+/** Tipos aceitos por GET .../privacy/disallowed-contacts (camelCase). */
+export type WaDisallowedType = "lastSeen" | "photo" | "description" | "groupAdd";
+export type WaReadReceiptsValue = "enable" | "disable";
+export type WaMessagesDurationValue = "days90" | "days7" | "hours24" | "disable";
+/** Operação na blacklist de contatos de um controle CONTACT_BLACKLIST. */
+export interface WaBlacklistOp {
+  action: "add" | "remove";
+  phone: string;
+}
+export interface WaDisallowedContacts {
+  type: string;
+  contacts: string[];
+}
+/** Resposta do upload de mídia (POST .../media/uploads) — chaves variam por versão. */
+export interface WaMediaUpload {
+  media_url?: string;
+  file_path?: string;
+  path?: string;
+  url?: string;
+}
+
+// ── WhatsApp operacional (grupos, mensagens, campanhas, conversas — §3–§8) ────
+// Contratos em backend_zapi/frontend/wa-backend-integration-contracts.md.
+// Nenhum campo de credentials/webhook_secret chega ao frontend (invariante ADR-001).
+
+// §6.1 conversas (inbox + grupos)
+export type WaConversationStatus = "open" | "closed" | "archived";
+export interface WaContactPreview {
+  id: string;
+  display_name: string;
+  phone: string;
+  profile_photo_url: string | null;
+}
+export interface WaConversation {
+  id: string;
+  instance_id: string;
+  is_group: boolean;
+  group_name: string | null;
+  /** ID Z-API do grupo — formato "120363...-group". Usar em chamadas §4. */
+  group_provider_id: string | null;
+  status: WaConversationStatus;
+  assigned_to: string | null;
+  last_message_at: string | null;
+  last_message_preview: string | null;
+  unread_count: number;
+  contact: WaContactPreview;
+}
+export interface WaConversationsPage {
+  data: WaConversation[];
+  limit: number;
+  offset: number;
+}
+
+// §4 grupos
+export interface WaGroupCreated {
+  created: boolean;
+  group_id: string;
+  group_name: string;
+  conversation_id: string | null;
+}
+/** Envelope padrão de mutações de grupo (name/photo/description/settings/participants). */
+export interface WaGroupApplied {
+  applied: boolean;
+  group_id: string;
+  action: string;
+  value?: unknown;
+  applied_at: string;
+}
+export interface WaGroupReadinessCheck {
+  name: string;
+  passed: boolean;
+  detail: string;
+  required: boolean;
+}
+export interface WaGroupReadiness {
+  group_id: string;
+  ready: boolean;
+  checks: WaGroupReadinessCheck[];
+  synced_at: string;
+}
+
+// §5 mensagens avulsas
+export type WaMessageType = "text" | "image" | "audio" | "video" | "document";
+export interface WaSendMessageBody {
+  to: string;
+  type: WaMessageType;
+  text?: string;
+  media_url?: string;
+  caption?: string;
+  filename?: string;
+}
+export interface WaMessageSent {
+  message_id: string;
+  conversation_id: string;
+  contact_id?: string;
+  provider_message_id: string;
+  status: string;
+}
+
+// §7 campanhas
+export type WaCampaignStatus =
+  | "draft" | "scheduled" | "sending" | "paused"
+  | "completed" | "cancelled" | "failed";
+export type WaCampaignType = "text" | "image" | "audio" | "video" | "document";
+export interface WaCampaign {
+  campaign_id: string;
+  name: string;
+  status: WaCampaignStatus;
+  type: WaCampaignType;
+  instance_id: string;
+  recipient_count: number;
+  sent_count?: number;
+  failed_count?: number;
+  pending_count?: number;
+  scheduled_at: string | null;
+  started_at?: string | null;
+  created_at: string;
+}
+export interface WaCampaignsPage {
+  items: WaCampaign[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+export interface WaCampaignAudienceResult {
+  campaign_id: string;
+  audience_type: string;
+  recipient_count: number;
+  excluded_opt_out: number;
+  excluded_no_whatsapp: number;
+}
+export interface WaCampaignLaunched {
+  campaign_id: string;
+  status: WaCampaignStatus;
+  send_origin_id: string;
+  started_at: string;
+}
+export interface WaCampaignLifecycle {
+  campaign_id: string;
+  status: WaCampaignStatus;
+  skipped_count?: number;
 }
 
 // ── Business Niches ───────────────────────────────────────────────────────────

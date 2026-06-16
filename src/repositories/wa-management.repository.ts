@@ -1,11 +1,24 @@
 import {
   waBackendFetch,
+  waBackendUpload,
   WaBackendHttpError,
 } from "@/lib/wa-backend/client";
 import type {
   WaInstance,
   WaInstanceLiveStatus,
   WaInstanceQrCode,
+  WaProfile,
+  WaProfileField,
+  WaApplied,
+  WaPrivacySettings,
+  WaVisibilitySetting,
+  WaVisualizationType,
+  WaBlacklistOp,
+  WaReadReceiptsValue,
+  WaMessagesDurationValue,
+  WaDisallowedType,
+  WaDisallowedContacts,
+  WaMediaUpload,
 } from "@/types";
 
 /**
@@ -26,6 +39,36 @@ export interface IWaManagementRepository {
   ): Promise<{ alreadyConnected: false; qr: WaInstanceQrCode } | { alreadyConnected: true }>;
   restart(instanceId: string, accessToken: string): Promise<void>;
   disconnect(instanceId: string, accessToken: string): Promise<void>;
+  // account-settings (v2.3) — base /tenants/{tenantId}/instances/{instanceId}
+  getProfile(tenantId: string, instanceId: string, accessToken: string): Promise<WaProfile>;
+  updateProfileField(
+    tenantId: string,
+    instanceId: string,
+    field: WaProfileField,
+    value: string,
+    accessToken: string
+  ): Promise<WaApplied>;
+  getPrivacy(tenantId: string, instanceId: string, accessToken: string): Promise<WaPrivacySettings>;
+  // privacidade — edição (v2.3b)
+  updateVisibility(
+    tenantId: string,
+    instanceId: string,
+    setting: WaVisibilitySetting,
+    visualizationType: WaVisualizationType,
+    contactsBlacklist: WaBlacklistOp[] | undefined,
+    accessToken: string
+  ): Promise<WaApplied>;
+  updateGroupAdd(
+    tenantId: string,
+    instanceId: string,
+    type: WaVisualizationType,
+    contactsBlacklist: WaBlacklistOp[] | undefined,
+    accessToken: string
+  ): Promise<WaApplied>;
+  updateReadReceipts(tenantId: string, instanceId: string, value: WaReadReceiptsValue, accessToken: string): Promise<WaApplied>;
+  updateMessagesDuration(tenantId: string, instanceId: string, value: WaMessagesDurationValue, accessToken: string): Promise<WaApplied>;
+  getDisallowedContacts(tenantId: string, instanceId: string, type: WaDisallowedType, accessToken: string): Promise<WaDisallowedContacts>;
+  uploadMedia(tenantId: string, form: FormData, accessToken: string): Promise<WaMediaUpload>;
 }
 
 export class WaBackendManagementRepository implements IWaManagementRepository {
@@ -75,6 +118,106 @@ export class WaBackendManagementRepository implements IWaManagementRepository {
       path: `/management/instances/${instanceId}/disconnect`,
       method: "POST",
       accessToken,
+    });
+  }
+
+  // ── account-settings ───────────────────────────────────────────────────────
+
+  async getProfile(tenantId: string, instanceId: string, accessToken: string): Promise<WaProfile> {
+    return waBackendFetch<WaProfile>({
+      path: `/tenants/${tenantId}/instances/${instanceId}/profile`,
+      accessToken,
+    });
+  }
+
+  async updateProfileField(
+    tenantId: string,
+    instanceId: string,
+    field: WaProfileField,
+    value: string,
+    accessToken: string
+  ): Promise<WaApplied> {
+    return waBackendFetch<WaApplied>({
+      path: `/tenants/${tenantId}/instances/${instanceId}/profile/${field}`,
+      method: "PUT",
+      accessToken,
+      body: { value },
+    });
+  }
+
+  async getPrivacy(tenantId: string, instanceId: string, accessToken: string): Promise<WaPrivacySettings> {
+    return waBackendFetch<WaPrivacySettings>({
+      path: `/tenants/${tenantId}/instances/${instanceId}/privacy`,
+      accessToken,
+    });
+  }
+
+  private base(tenantId: string, instanceId: string) {
+    return `/tenants/${tenantId}/instances/${instanceId}`;
+  }
+
+  async updateVisibility(
+    tenantId: string,
+    instanceId: string,
+    setting: WaVisibilitySetting,
+    visualizationType: WaVisualizationType,
+    contactsBlacklist: WaBlacklistOp[] | undefined,
+    accessToken: string
+  ): Promise<WaApplied> {
+    return waBackendFetch<WaApplied>({
+      path: `${this.base(tenantId, instanceId)}/privacy/${setting}`,
+      method: "PUT",
+      accessToken,
+      body: { visualizationType, ...(contactsBlacklist ? { contactsBlacklist } : {}) },
+    });
+  }
+
+  async updateGroupAdd(
+    tenantId: string,
+    instanceId: string,
+    type: WaVisualizationType,
+    contactsBlacklist: WaBlacklistOp[] | undefined,
+    accessToken: string
+  ): Promise<WaApplied> {
+    // group-add usa a chave `type` em vez de `visualizationType` (peculiaridade Z-API).
+    return waBackendFetch<WaApplied>({
+      path: `${this.base(tenantId, instanceId)}/privacy/group-add`,
+      method: "PUT",
+      accessToken,
+      body: { type, ...(contactsBlacklist ? { contactsBlacklist } : {}) },
+    });
+  }
+
+  async updateReadReceipts(tenantId: string, instanceId: string, value: WaReadReceiptsValue, accessToken: string): Promise<WaApplied> {
+    return waBackendFetch<WaApplied>({
+      path: `${this.base(tenantId, instanceId)}/privacy/read-receipts`,
+      method: "PUT",
+      accessToken,
+      body: { value },
+    });
+  }
+
+  async updateMessagesDuration(tenantId: string, instanceId: string, value: WaMessagesDurationValue, accessToken: string): Promise<WaApplied> {
+    return waBackendFetch<WaApplied>({
+      path: `${this.base(tenantId, instanceId)}/privacy/messages-duration`,
+      method: "PUT",
+      accessToken,
+      body: { value },
+    });
+  }
+
+  async getDisallowedContacts(tenantId: string, instanceId: string, type: WaDisallowedType, accessToken: string): Promise<WaDisallowedContacts> {
+    return waBackendFetch<WaDisallowedContacts>({
+      path: `${this.base(tenantId, instanceId)}/privacy/disallowed-contacts?type=${type}`,
+      accessToken,
+    });
+  }
+
+  async uploadMedia(tenantId: string, form: FormData, accessToken: string): Promise<WaMediaUpload> {
+    return waBackendUpload<WaMediaUpload>({
+      path: `/tenants/${tenantId}/media/uploads`,
+      accessToken,
+      form,
     });
   }
 }

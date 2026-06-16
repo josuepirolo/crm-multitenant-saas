@@ -206,8 +206,31 @@ consumindo a API REST do backend WA via **BFF**, já que `wa_*` não é legível
   `GET /management/instances/{id}/qrcode`. Gate `settings:view`.
 - **v2.2 (gestão) — IMPLEMENTADO 2026-06-13** — `POST .../restart`, `POST .../disconnect`,
   gate `settings:edit` + auditoria (`WA_INSTANCE_RESTARTED`/`WA_INSTANCE_DISCONNECTED`).
-- **v2.3 (perfil/privacidade) — pendente** — `GET|PUT .../profile`, `GET|PUT .../privacy`,
-  gate `settings:edit` (account-settings, contratos §2 já disponíveis).
+- **v2.3a (perfil + privacidade-leitura) — IMPLEMENTADO 2026-06-14** — `WaAccountDialog` (botão
+  "Perfil" no card de instância conectada): `GET .../profile` + editar `name`/`description`
+  (`PUT .../profile/{field}`, gate `settings:edit`, auditoria `WA_PROFILE_UPDATED` sem o valor) +
+  `GET .../privacy` (exibição read-only dos 8 controles). Camadas: repo `getProfile`/`updateProfileField`/
+  `getPrivacy`, usecases `Get/UpdateWaProfile*`/`GetWaPrivacy`, actions com anti-IDOR, `useWaAccountViewModel`.
+  6 testes novos em `wa-backend-bff.test.ts`. `perms`: leitura=`connection:view`(settings:view), edição=`account:edit`(settings:edit).
+- **v2.3b (edição de privacidade + foto) — IMPLEMENTADO 2026-06-14** — `WaPrivacySection` editável no
+  `WaAccountDialog`: `read-receipts` (Ativado/Desativado), `messages-duration` (select), e os 5 controles
+  de visibilidade (`last-seen`/`photo`/`description`/`online` + `group-add`) como ALL/NONE/CONTACT_BLACKLIST
+  — com `BlacklistEditor` inline (add/remove de contatos via `GET .../privacy/disallowed-contacts` +
+  `PUT` com `contactsBlacklist`); `online` só ALL/NONE (sem disallowed). Foto: **upload** (`POST .../media/uploads`
+  multipart → `PUT .../profile/picture` com o caminho retornado) **ou URL**. Camadas: client `waBackendUpload`,
+  repo (`updateVisibility`/`updateGroupAdd`/`updateReadReceipts`/`updateMessagesDuration`/`getDisallowedContacts`/
+  `uploadMedia`), usecases, actions (gate `settings:edit`, Zod, anti-IDOR, auditoria `WA_PRIVACY_UPDATED`/
+  `WA_PROFILE_UPDATED` sem PII), VM handlers. 10 testes novos (`wa-backend-bff.test.ts`, suíte 417/417, tsc limpo).
+  > `group-add` usa a chave `type` (não `visualizationType`); CONTACT_BLACKLIST exige `contactsBlacklist`
+  > não-vazia (validado). Resposta de `media/uploads` lida defensivamente (`media_url`/`file_path`/`path`/`url`).
+  >
+  > **LIMITAÇÃO DE LEITURA (confirmada em produção 2026-06-14):** `GET .../profile` e `GET .../privacy`
+  > são **cache local do backend WA** — a Z-API **não expõe leitura** do perfil/privacidade reais já
+  > configurados no número. Para um número configurado fora (ex.: Lekazis), os GETs respondem `200` com
+  > **todos os campos `null`** (`synced_at: null`). Não é bug do CRM. A UI trata `null` como **"Não definido"**
+  > (não finge "Todos") e exibe uma **nota explicativa** quando nada foi sincronizado; os valores só passam a
+  > aparecer **depois** de definidos por este painel. `status` (`/status`) e foto via `picture_url` (após set)
+  > funcionam normalmente — só o "estado atual herdado" do WhatsApp é inacessível pelo provedor.
 
 > **Reconciliação confirmada (2026-06-13):** o gate de papel do backend WA bate **exatamente** na
 > permissão `settings` existente — read (owner/admin/manager) = `settings:view`; write (owner/admin)

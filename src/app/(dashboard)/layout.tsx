@@ -19,6 +19,7 @@ import { requireSuperAdmin } from "@/lib/guards";
 // eslint-disable-next-line no-restricted-imports -- checkIsSuperAdmin é self-lookup (auth.uid()), não do workspace
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { workspaceHasWhatsAppIntegration } from "@/lib/whatsapp/workspace-has-integration";
 import type { BusinessNiche } from "@/types";
 
 // Verifica is_superadmin via anon key + RLS — sem service_role, zero overhead.
@@ -106,6 +107,7 @@ export default async function DashboardLayout({
 
   const currentWorkspace = workspaces.find(w => w.id === currentWorkspaceId);
   const themeClass = getNicheThemeClass(currentWorkspace?.nicheSlug);
+  const hasWhatsApp = await workspaceHasWhatsAppIntegration();
 
   // Workspace sem nicho definido — obriga configuração (superadmin dispensado)
   if (!currentWorkspace?.nicheSlug && !isSuperAdmin) {
@@ -133,7 +135,12 @@ export default async function DashboardLayout({
 
   return (
     <div className={`flex h-screen overflow-hidden bg-background${themeClass ? ` ${themeClass}` : ''}`}>
-      <Sidebar workspaces={workspaces} currentWorkspaceId={currentWorkspaceId!} isSuperAdmin={isSuperAdmin} />
+      <Sidebar
+        workspaces={workspaces}
+        currentWorkspaceId={currentWorkspaceId!}
+        isSuperAdmin={isSuperAdmin}
+        hasWhatsApp={hasWhatsApp}
+      />
       <div className="flex flex-1 flex-col overflow-hidden">
         {impersonation && (
           <ImpersonationBanner workspaceName={impersonation.workspaceName} />

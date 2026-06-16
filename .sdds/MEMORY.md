@@ -1,7 +1,7 @@
 # MEMORY.md
 
-SDDS_VERSION: 1.3.1  
-Atualizado: 2026-05-13
+SDDS_VERSION: 1.3.2  
+Atualizado: 2026-06-14
 
 ## Stack
 
@@ -16,6 +16,8 @@ Server Actions com `"use server"` + `getWorkspaceContext(module, action)` para R
 
 - RLS em todas as tabelas — my_workspace_ids() SECURITY DEFINER
 - getWorkspaceContext() — ponto central de autorização (nunca workspace_id do cliente)
+- is_superadmin não bypassa RBAC de workspace fora de impersonação — role de membro (`owner`/`admin`/`manager`/…) governa ações como convidar membros
+- Sidebar workspace switcher: só se membership em 2+ workspaces ativos (`getActiveWorkspaceContext`); superadmin só ganha link Admin SaaS
 - createAdminClient() — apenas audit_logs, rate_limits, admin actions
 - Rate limit via tabela Supabase (não memória local)
 - Audit logs: 20+ ações com session_id + fingerprint SHA-256

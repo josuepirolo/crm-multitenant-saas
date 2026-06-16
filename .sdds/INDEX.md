@@ -1,7 +1,7 @@
 # INDEX.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-14
+Atualizado: 2026-06-15
 
 ## Ler primeiro
 1. `CURRENT_STATE.md` — estado atual
@@ -13,6 +13,7 @@ Atualizado: 2026-06-14
 | chat | `specs/chat.summary.md` | `specs/chat.spec.md` | `contracts/chat.contract.md` | `harness/chat.harness.md` |
 | contacts (bulk import) | — | `specs/contacts-bulk-import.spec.md` | — | — |
 | settings (integrations) | — | `specs/settings-integrations.spec.md` (v2 BFF, ADR-006) | — | `harness/settings-integrations.harness.md` |
+| whatsapp (console) | — | `specs/whatsapp-console.spec.md` (sidebar, ADR-008) | `contracts/wa-operational-contracts.md` (§3-§8 via `backend_zapi/frontend/wa-backend-integration-contracts.md`) | `harness/whatsapp-console.harness.md` (WC-01..14 ✅; WC-20..43 pendentes) |
 
 > ⚠️ Spec de Chat é obsoleta — conversations/messages foram removidas. `/settings/integrations` v2 BFF (ADR-006) **implementada**; authz cross-service (ADR-007) hook **habilitado em produção** — ver `sessions/2026-06-14-1923-session.md`.
 
@@ -26,6 +27,7 @@ Atualizado: 2026-06-14
 | `decisions/ADR-005-admin-wa-tenant-mapping.md` | 1 workspace CRM : N `wa_tenant_id`, com `UNIQUE(wa_tenant_id)` garantindo 1:1 inverso; gestão exclusiva via `/admin` (superadmin) |
 | `decisions/ADR-006-bff-wa-backend-management.md` | `/settings/integrations` consome o backend WA como **BFF** (Server Action repassa o JWT do usuário); base URL em `WA_BACKEND_URL`; RBAC `settings` por cima do gate permissivo do backend. Implementação gated por `WA_BACKEND_URL` + contratos dos endpoints |
 | `decisions/ADR-007-autorizacao-cross-service-claims-jwt.md` | CRM é dono único do RBAC; permissões `integration.whatsapp.*` no catálogo; Custom Access Token Hook carimba o claim `authz` (v1, CONGELADO) no JWT; integradores só leem o claim. Migration `20260613190000` aplicada; hook **habilitado e validado ao vivo 2026-06-14**; WA Fase 1 operacional. Contrato: `contracts/authz-claims.md` |
+| `decisions/ADR-008-whatsapp-console-sidebar.md` | Console operacional WhatsApp no sidebar (`/whatsapp/*`): conexão, grupos, envio, campanhas; faseamento; 5 novas permissões `integration.whatsapp.*`; bloqueado por contratos operacionais do backend |
 
 ## Discoveries
 | Discovery | Resumo |
@@ -36,10 +38,22 @@ Atualizado: 2026-06-14
 | `discoveries/2026-06-09-impersonation-tenant-isolation-bug.md` | `getWorkspaceContext`/`getCurrentWorkspaceId`/`getUserRole` ignoravam o cookie de impersonação — escritas durante impersonação iam para o workspace do superadmin, não o impersonado; corrigido com `getValidatedImpersonatedWorkspaceId` |
 | `discoveries/2026-06-10-impersonation-rls-blocks-data-access.md` | Mesmo com `workspaceId` impersonado correto, `createClient()` (RLS-bound ao superadmin) bloqueava leitura/escrita via `my_workspace_ids()`; corrigido com `getScopedSupabaseClient()` (service_role durante impersonação validada) em `contacts/` e, na sequência, nos 16 arquivos restantes (R-009 RESOLVIDO) |
 | `discoveries/2026-06-14-wa-backend-rejects-es256-jwt.md` | Backend WA rejeitava JWT ES256 (401) — **RESOLVIDO** 2026-06-14; hook authz + Fase 1 validados fim-a-fim (200 com instância Lekazis). Histórico do 401 mantido na discovery |
+| `discoveries/2026-06-15-qrcode-contract-mismatch.md` | `/qrcode` do backend WA devolve `{value: URL de pareamento}`, não `{qrcode: data-URI}` como o contrato diz → QR não gerava. CRM corrigido (lê `value`, renderiza QR localmente com `qrcode.react`, sem serviço externo); recomendado backend corrigir o doc do contrato |
+| `discoveries/2026-06-15-turbopack-routes-cache-404.md` | Cache `.next/dev/types/routes.d.ts` corrompido (entrada `/whatsapp/conexao` truncada) → 404 site-wide no `next dev`; workaround: apagar `.next` e reiniciar |
 
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-15 | **ADR-008 fases 2-4 concluídas** — grupos, enviar, campanhas implementados e commitados (`b63303e`). 418/418, tsc limpo. Ver `sessions/2026-06-15-2305-session.md` |
+| 2026-06-15 | **Checkpoint:** pacote tarde (ADR-008 f1 + hotfix Turbopack) pronto p/ commit — working tree local. Ver `sessions/2026-06-15-1345-session.md` |
+| 2026-06-15 | Hotfix dev: 404 `/dashboard` (cache Turbopack). Ver `sessions/2026-06-15-1344-session.md` |
+| 2026-06-15 | **ADR-008 fase 1:** sidebar WhatsApp + `/whatsapp/conexao`; recado backend enviado. Ver `sessions/2026-06-15-1338-session.md` |
+| 2026-06-15 | WA Integrations v2.3 (perfil/privacidade/foto) + fixes RLS/QR; validação live ADR-007; discovery `/qrcode`. Ver `sessions/2026-06-15-0649-session.md` |
+| 2026-06-14 | Esclarecimento produto: switcher multi-workspace (só com 2+ memberships) + RBAC membros (superadmin ≠ admin; manager não convida) — ver `sessions/2026-06-14-2242-session.md` |
+| 2026-06-14 | SDDS `d2f7706` pushed — memória 2216 sincronizada; HEAD remoto atualizado — ver `sessions/2026-06-14-2219-session.md` |
+| 2026-06-14 | SDDS `d9a68af` commitado e pushed (memória pós-push 2211) — ver `sessions/2026-06-14-2216-session.md` |
+| 2026-06-14 | Push `origin/dev` concluído (7 commits código, até `578ef09`) — ver `sessions/2026-06-14-2211-session.md` |
+| 2026-06-14 | Commits `feb63dc`/`0a9fc92`/`27391f1`/`578ef09`; logout fix e e2e `--admin` validados — ver `sessions/2026-06-14-1951-session.md` |
 | 2026-06-14 | Hook authz habilitado + WA Fase 1 validado (ES256/JWKS); fixes logout/impersonação e UI settings; `authz-e2e.mjs --admin` — ver `sessions/2026-06-14-1923-session.md` |
 | 2026-06-13 | Design v2 (BFF) de `/settings/integrations`: ADR-006 (CRM consome backend WA repassando JWT do usuário), spec v2 §11, harness BFF-01..12, infra `WA_BACKEND_URL` + `src/lib/wa-backend/client.ts` (typecheck limpo). Implementação tipada/UI gated por valor de `WA_BACKEND_URL` + contratos dos endpoints (backend WA gerando) — ver `sessions/2026-06-13-0729-session.md` |
 | 2026-06-12 | R-007 mitigado: `ddl_audit_log` + event triggers em produção (`d5f15b7`), documentado em `docs/security/ddl-audit.md` (`950af2a`); prompt frontend unificado `specs/PROMPTS_FRONTEND/03_UNIFIED_FRONTEND_MASTER.md` (`3cfd3fa`), evoluído para v2 com posicionamento/AEO-GEO/growth/backend-router/baseline de segurança (`2e22a96`); push de todos os commits para `origin/dev` (ver `sessions/2026-06-12-0632-session.md`) |
