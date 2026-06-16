@@ -6,38 +6,42 @@ pode baixar a pasta inteira e repassar. Documentos fora desta pasta
 (`docs/*.md`, `.sdds/`) são **internos do backend WA** — não fazem parte do
 handoff.
 
-Gerado a partir do repositório do backend WA (`api-zapi-multitenant`) em
-2026-06-13. Fonte de verdade dos contratos: `.sdds/contracts/` do backend.
+Atualizado em **2026-06-15**. Fonte de verdade: `.sdds/contracts/` no backend.
 
 ## O que tem aqui (ordem de leitura sugerida)
 
 | # | Documento | Para quê | Quem usa |
 |---|-----------|----------|----------|
-| 1 | **`frontend-whatsapp-integration.md`** | Hierarquia superadmin/workspace/wa_tenant/membros, catálogo de endpoints de administração, fluxo de onboarding e matriz de permissões. Visão geral. | Frontend (UI) |
-| 2 | **`wa-backend-integration-contracts.md`** | `WA_BACKEND_URL` + contratos request/response dos endpoints (`management-instances` com `/status` e `/qrcode`, `account-settings`). É o que destrava tipar a v2.1 sem adivinhar shape de JSON. | Frontend (UI) |
-| 3 | **`authz-architecture-and-crm-handoff.md`** | Arquitetura de autorização cross-service, **contrato do claim `authz`** (§3 congelado v1) e **checklist de implementação do lado CRM** (migration, Custom Access Token Hook, seed). | Frontend/CRM (banco + Auth) |
-| 4 | **`authz-hook-verification.sql`** | Queries de pré-checagem do `custom_access_token_hook` (função/grants/seed + dry-run do claim por papel) e prova end-to-end pós-habilitação. Rodar antes/depois do go-live do hook. | CRM (Supabase) |
+| 1 | **`frontend-whatsapp-integration.md`** | Modelo workspace↔wa_tenant, catálogo de endpoints, onboarding, matriz de permissões, §2.5 console operacional. | Frontend (UI) |
+| 2 | **`wa-backend-integration-contracts.md`** | `WA_BACKEND_URL` + contratos request/response: §1–§2 Integrações (instâncias, perfil/privacidade); **§3–§8 console operacional** (contatos, grupos, mensagens, chat, campanhas, upload). | Frontend (UI / BFF) |
+| 3 | **`authz-architecture-and-crm-handoff.md`** | Claim `authz` v1, checklist CRM (hook, migration), Fase 1 validada. | Frontend/CRM |
+| 4 | **`authz-hook-verification.sql`** | Pré-checagem do hook + dry-run por papel. | CRM (Supabase) |
 
-## Dois fluxos de trabalho distintos
+## Dois fluxos de trabalho
 
-- **Construir a UI de Integrações agora** → docs **1 + 2**. Não dependem da
-  arquitetura de autorização; o backend WA já está no ar em
-  `https://messageapi.py.tec.br`.
-- **Implementar a autorização correta no CRM** → doc **3**. A decisão de
-  gramática da chave de permissão foi **fechada pelo front em 2026-06-13**
-  (chaves com dois `:` são seguras) e o **contrato do claim `authz` (§3) está
-  congelado (v1) como referência**. Pode tocar a migration. Único ponto a
-  confirmar na implementação: tamanho do token (plano B documentado no §3).
+- **Integrações v2.3 (conexão, QR, perfil)** → docs **1 + 2** §1–§2. Live em produção.
+- **Console operacional (sidebar: grupos, chat, campanhas)** → docs **1** §2.5 + **2** §3–§8.
+- **Autorização cross-service** → doc **3** (e2e §5.4 validado 2026-06-15).
+
+## Módulos cobertos em `wa-backend-integration-contracts.md`
+
+| § | Módulo | Status backend |
+|---|--------|----------------|
+| 1 | management-instances | ✅ |
+| 2 | account-settings | ✅ |
+| 3 | contact-management (sync WA) | ✅ |
+| 4 | group-management | ✅ |
+| 5 | send-messages | ✅ |
+| 6 | conversations (chat) | ✅ |
+| 7 | campaigns | ✅ |
+| 8 | media-uploads | ✅ |
 
 ## O que fica no backend WA (não é deste bundle)
 
-- A **Fase 0** (gate por papel nas rotas de conexão/identidade) é implementada
-  no backend WA — ver `.sdds/specs/wa-rbac-gate.md` e
-  `.sdds/decisions/ADR-008-...` no repo do backend. O frontend não precisa fazer
-  nada nessa parte além de alinhar a UI (mostrar ações de escrita só p/
-  owner/admin).
+- Implementação dos routers, webhooks, workers — repo `api-zapi-multitenant`.
+- Authz Fase 2 operacional (`groups:*`, `messages:send`, `campaigns:*`) — proposta alinhada; pendente no backend.
 
 ## Dúvidas
 
-Falta o contrato completo de algum endpoint (provisioning, media-uploads) no
-mesmo formato? Pedir ao time do backend WA que exporta para cá.
+Abrir issue ou pedir export adicional no repo do backend WA. Recado CRM de referência:
+`REQUEST-operational-contracts-groups-messages-campaigns.md` (raiz do repo WA).

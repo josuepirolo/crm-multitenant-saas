@@ -1,5 +1,3 @@
-"use server";
-
 import { z } from "zod";
 import { getWorkspaceContext, getScopedSupabaseClient } from "@/lib/guards";
 import { getUserAccessToken, WaBackendNotConfiguredError, WaBackendHttpError, WaBackendUnreachableError } from "@/lib/wa-backend/client";

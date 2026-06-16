@@ -204,6 +204,7 @@ export class WaBackendOperationalRepository implements IWaOperationalRepository 
       method: "POST",
       accessToken,
       body: { groupName: dto.groupName, phones: dto.phones, autoInvite: dto.autoInvite ?? true },
+      timeoutMs: 30_000, // criação envolve Z-API — mais lento que leitura
     });
   }
 
