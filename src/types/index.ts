@@ -245,6 +245,128 @@ export interface WaMediaUpload {
   url?: string;
 }
 
+// ── WhatsApp operacional (grupos, mensagens, campanhas, conversas — §3–§8) ────
+// Contratos em backend_zapi/frontend/wa-backend-integration-contracts.md.
+// Nenhum campo de credentials/webhook_secret chega ao frontend (invariante ADR-001).
+
+// §6.1 conversas (inbox + grupos)
+export type WaConversationStatus = "open" | "closed" | "archived";
+export interface WaContactPreview {
+  id: string;
+  display_name: string;
+  phone: string;
+  profile_photo_url: string | null;
+}
+export interface WaConversation {
+  id: string;
+  instance_id: string;
+  is_group: boolean;
+  group_name: string | null;
+  /** ID Z-API do grupo — formato "120363...-group". Usar em chamadas §4. */
+  group_provider_id: string | null;
+  status: WaConversationStatus;
+  assigned_to: string | null;
+  last_message_at: string | null;
+  last_message_preview: string | null;
+  unread_count: number;
+  contact: WaContactPreview;
+}
+export interface WaConversationsPage {
+  data: WaConversation[];
+  limit: number;
+  offset: number;
+}
+
+// §4 grupos
+export interface WaGroupCreated {
+  created: boolean;
+  group_id: string;
+  group_name: string;
+  conversation_id: string | null;
+}
+/** Envelope padrão de mutações de grupo (name/photo/description/settings/participants). */
+export interface WaGroupApplied {
+  applied: boolean;
+  group_id: string;
+  action: string;
+  value?: unknown;
+  applied_at: string;
+}
+export interface WaGroupReadinessCheck {
+  name: string;
+  passed: boolean;
+  detail: string;
+  required: boolean;
+}
+export interface WaGroupReadiness {
+  group_id: string;
+  ready: boolean;
+  checks: WaGroupReadinessCheck[];
+  synced_at: string;
+}
+
+// §5 mensagens avulsas
+export type WaMessageType = "text" | "image" | "audio" | "video" | "document";
+export interface WaSendMessageBody {
+  to: string;
+  type: WaMessageType;
+  text?: string;
+  media_url?: string;
+  caption?: string;
+  filename?: string;
+}
+export interface WaMessageSent {
+  message_id: string;
+  conversation_id: string;
+  contact_id?: string;
+  provider_message_id: string;
+  status: string;
+}
+
+// §7 campanhas
+export type WaCampaignStatus =
+  | "draft" | "scheduled" | "sending" | "paused"
+  | "completed" | "cancelled" | "failed";
+export type WaCampaignType = "text" | "image" | "audio" | "video" | "document";
+export interface WaCampaign {
+  campaign_id: string;
+  name: string;
+  status: WaCampaignStatus;
+  type: WaCampaignType;
+  instance_id: string;
+  recipient_count: number;
+  sent_count?: number;
+  failed_count?: number;
+  pending_count?: number;
+  scheduled_at: string | null;
+  started_at?: string | null;
+  created_at: string;
+}
+export interface WaCampaignsPage {
+  items: WaCampaign[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+export interface WaCampaignAudienceResult {
+  campaign_id: string;
+  audience_type: string;
+  recipient_count: number;
+  excluded_opt_out: number;
+  excluded_no_whatsapp: number;
+}
+export interface WaCampaignLaunched {
+  campaign_id: string;
+  status: WaCampaignStatus;
+  send_origin_id: string;
+  started_at: string;
+}
+export interface WaCampaignLifecycle {
+  campaign_id: string;
+  status: WaCampaignStatus;
+  skipped_count?: number;
+}
+
 // ── Business Niches ───────────────────────────────────────────────────────────
 
 export interface BusinessNiche {

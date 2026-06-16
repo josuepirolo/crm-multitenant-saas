@@ -45,6 +45,13 @@ export const AUDIT_ACTIONS = {
   WA_INSTANCE_DISCONNECTED:      "wa_instance_disconnected",
   WA_PROFILE_UPDATED:            "wa_profile_updated",
   WA_PRIVACY_UPDATED:            "wa_privacy_updated",
+  WA_GROUP_CREATED:              "wa_group_created",
+  WA_GROUP_UPDATED:              "wa_group_updated",
+  WA_MESSAGE_SENT:               "wa_message_sent",
+  WA_CAMPAIGN_CREATED:           "wa_campaign_created",
+  WA_CAMPAIGN_LAUNCHED:          "wa_campaign_launched",
+  WA_CAMPAIGN_PAUSED:            "wa_campaign_paused",
+  WA_CAMPAIGN_CANCELLED:         "wa_campaign_cancelled",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
