@@ -7,6 +7,7 @@ import type {
   WaCampaignLaunched,
   WaCampaignLifecycle,
   WaGroupCreated,
+  WaGroupMetadata,
   WaGroupReadiness,
   WaGroupApplied,
   WaMessageSent,
@@ -30,6 +31,14 @@ export class CreateWaGroupUseCase {
 
   async execute(tenantId: string, instanceId: string, dto: CreateGroupDTO, accessToken: string): Promise<WaGroupCreated> {
     return this.repo.createGroup(tenantId, instanceId, dto, accessToken);
+  }
+}
+
+export class GetWaGroupMetadataUseCase {
+  constructor(private readonly repo: IWaOperationalRepository) {}
+
+  async execute(tenantId: string, instanceId: string, groupId: string, accessToken: string): Promise<WaGroupMetadata> {
+    return this.repo.getGroupMetadata(tenantId, instanceId, groupId, accessToken);
   }
 }
 

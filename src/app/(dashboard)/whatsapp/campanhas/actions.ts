@@ -99,7 +99,7 @@ export async function createWaCampaign(
     revalidatePath("/whatsapp/campanhas");
     return { campaign };
   } catch (err) {
-    return { error: mapWaError(err) };
+    return { error: mapWaError(err, "campaign") };
   }
 }
 
@@ -126,7 +126,7 @@ export async function setWaCampaignAudience(
     revalidatePath("/whatsapp/campanhas");
     return { result };
   } catch (err) {
-    return { error: mapWaError(err) };
+    return { error: mapWaError(err, "campaign") };
   }
 }
 
@@ -173,7 +173,7 @@ async function lifecycleAction(
     revalidatePath("/whatsapp/campanhas");
     return { result };
   } catch (err) {
-    return { error: mapWaError(err) };
+    return { error: mapWaError(err, "campaign") };
   }
 }
 

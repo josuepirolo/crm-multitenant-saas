@@ -7,6 +7,7 @@ import { WaBackendOperationalRepository } from "@/repositories/wa-operational.re
 import {
   ListWaGroupsUseCase,
   CreateWaGroupUseCase,
+  GetWaGroupMetadataUseCase,
   UpdateWaGroupNameUseCase,
   UpdateWaGroupDescriptionUseCase,
   AddWaGroupParticipantsUseCase,
@@ -14,7 +15,7 @@ import {
 } from "@/usecases/WaOperationalUseCases";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit/audit-log";
 import { getClientIp } from "@/lib/security/client-ip";
-import type { WaConversation, WaGroupCreated } from "@/types";
+import type { WaConversation, WaGroupCreated, WaGroupMetadata } from "@/types";
 
 const repo = () => new WaBackendOperationalRepository();
 
@@ -33,7 +34,27 @@ export async function listWaGroups(
     const groups = await new ListWaGroupsUseCase(repo()).execute(tenantId, auth.token);
     return { groups };
   } catch (err) {
-    return { error: mapWaError(err), groups: [] };
+    return { error: mapWaError(err, "group"), groups: [] };
+  }
+}
+
+// ── Metadata de grupo ─────────────────────────────────────────────────────────
+
+export async function getWaGroupMetadata(
+  tenantId: string,
+  instanceId: string,
+  groupId: string
+): Promise<{ error?: string; metadata?: WaGroupMetadata }> {
+  const auth = await authorizeWaOperation(tenantId, instanceId, "view");
+  if ("error" in auth) return { error: auth.error };
+  if (!groupId.trim()) return { error: INVALID };
+  try {
+    const metadata = await new GetWaGroupMetadataUseCase(repo()).execute(
+      tenantId, instanceId, groupId, auth.token
+    );
+    return { metadata };
+  } catch (err) {
+    return { error: mapWaError(err, "group") };
   }
 }
 
@@ -73,7 +94,7 @@ export async function createWaGroup(
     revalidatePath("/whatsapp/grupos");
     return { group };
   } catch (err) {
-    return { error: mapWaError(err) };
+    return { error: mapWaError(err, "group") };
   }
 }
 
@@ -104,7 +125,7 @@ export async function updateWaGroupName(
     revalidatePath("/whatsapp/grupos");
     return {};
   } catch (err) {
-    return { error: mapWaError(err) };
+    return { error: mapWaError(err, "group") };
   }
 }
 
@@ -134,7 +155,7 @@ export async function updateWaGroupDescription(
     });
     return {};
   } catch (err) {
-    return { error: mapWaError(err) };
+    return { error: mapWaError(err, "group") };
   }
 }
 
@@ -168,7 +189,7 @@ async function participantAction(
     });
     return {};
   } catch (err) {
-    return { error: mapWaError(err) };
+    return { error: mapWaError(err, "group") };
   }
 }
 

@@ -5,6 +5,7 @@ import type {
   WaGroupCreated,
   WaGroupApplied,
   WaGroupReadiness,
+  WaGroupMetadata,
   WaSendMessageBody,
   WaMessageSent,
   WaCampaignType,
@@ -81,6 +82,12 @@ export interface IWaOperationalRepository {
     dto: CreateGroupDTO,
     accessToken: string
   ): Promise<WaGroupCreated>;
+  getGroupMetadata(
+    tenantId: string,
+    instanceId: string,
+    groupId: string,
+    accessToken: string
+  ): Promise<WaGroupMetadata>;
   getGroupReadiness(
     tenantId: string,
     instanceId: string,
@@ -205,6 +212,18 @@ export class WaBackendOperationalRepository implements IWaOperationalRepository 
       accessToken,
       body: { groupName: dto.groupName, phones: dto.phones, autoInvite: dto.autoInvite ?? true },
       timeoutMs: 30_000, // criação envolve Z-API — mais lento que leitura
+    });
+  }
+
+  async getGroupMetadata(
+    tenantId: string,
+    instanceId: string,
+    groupId: string,
+    accessToken: string
+  ): Promise<WaGroupMetadata> {
+    return waBackendFetch<WaGroupMetadata>({
+      path: `${this.groupBase(tenantId, instanceId)}/${groupId}`,
+      accessToken,
     });
   }
 

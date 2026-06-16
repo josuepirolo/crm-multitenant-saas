@@ -304,6 +304,11 @@ export interface WaGroupReadiness {
   checks: WaGroupReadinessCheck[];
   synced_at: string;
 }
+export interface WaGroupMetadata {
+  group_id: string;
+  result: Record<string, unknown>;
+  synced_at: string;
+}
 
 // §5 mensagens avulsas
 export type WaMessageType = "text" | "image" | "audio" | "video" | "document";

@@ -5,11 +5,13 @@ import { toast } from "sonner";
 import {
   listWaGroups,
   createWaGroup,
+  getWaGroupMetadata,
   updateWaGroupName,
+  updateWaGroupDescription,
   addWaGroupParticipants,
   removeWaGroupParticipants,
 } from "@/app/(dashboard)/whatsapp/grupos/actions";
-import type { WaConversation, WaInstanceWithTenant } from "@/types";
+import type { WaConversation, WaGroupMetadata, WaInstanceWithTenant } from "@/types";
 
 export type WaGruposState =
   | { status: "idle" }
@@ -63,6 +65,20 @@ export function useWaGruposViewModel(instances: WaInstanceWithTenant[]) {
     [selectedInstance, load]
   );
 
+  const handleGetMetadata = useCallback(
+    async (groupId: string): Promise<WaGroupMetadata | null> => {
+      if (!selectedInstance) return null;
+      const res = await getWaGroupMetadata(
+        selectedInstance.tenant_id,
+        selectedInstance.instance_id,
+        groupId
+      );
+      if (res.error || !res.metadata) return null;
+      return res.metadata;
+    },
+    [selectedInstance]
+  );
+
   const handleRenameGroup = useCallback(
     async (groupId: string, value: string): Promise<boolean> => {
       if (!selectedInstance) return false;
@@ -81,6 +97,25 @@ export function useWaGruposViewModel(instances: WaInstanceWithTenant[]) {
       return true;
     },
     [selectedInstance, load]
+  );
+
+  const handleUpdateDescription = useCallback(
+    async (groupId: string, value: string): Promise<boolean> => {
+      if (!selectedInstance) return false;
+      const res = await updateWaGroupDescription(
+        selectedInstance.tenant_id,
+        selectedInstance.instance_id,
+        groupId,
+        value
+      );
+      if (res.error) {
+        toast.error(res.error);
+        return false;
+      }
+      toast.success("Descrição atualizada.");
+      return true;
+    },
+    [selectedInstance]
   );
 
   const handleAddParticipants = useCallback(
@@ -124,7 +159,9 @@ export function useWaGruposViewModel(instances: WaInstanceWithTenant[]) {
     handleSelectInstance,
     load,
     handleCreateGroup,
+    handleGetMetadata,
     handleRenameGroup,
+    handleUpdateDescription,
     handleAddParticipants,
     handleRemoveParticipant,
   };

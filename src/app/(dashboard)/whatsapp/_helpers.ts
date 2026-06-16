@@ -11,12 +11,20 @@ export const INVALID = "Requisição inválida.";
 export const uuid = z.string().uuid();
 
 /** Traduz erros do backend WA para mensagem pública — nunca vaza corpo/stack/token. */
-export function mapWaError(err: unknown): string {
+export function mapWaError(err: unknown, context?: "group" | "campaign"): string {
   console.error("[wa-bff]", err instanceof Error ? err.message.slice(0, 200) : String(err));
   if (err instanceof WaBackendNotConfiguredError) return NOT_CONFIGURED;
   if (err instanceof WaBackendHttpError) {
-    if (err.status === 403) return "Plano atual não inclui este recurso. Fale com o suporte.";
-    return err.status === 401 || err.status === 403 ? NO_ACCESS : UNAVAILABLE;
+    switch (err.status) {
+      case 400: return "Telefone(s) não encontrado(s) no WhatsApp. Verifique os números informados.";
+      case 401: return NO_ACCESS;
+      case 403: return context === "group"
+        ? "Sem permissão para administrar grupos. Requer papel owner, admin ou manager."
+        : "Plano atual não inclui este recurso. Fale com o suporte.";
+      case 409: return "Instância WhatsApp desconectada ou grupo em estado inválido. Verifique a conexão e tente novamente.";
+      case 422: return "Dados inválidos. Verifique os campos e tente novamente.";
+      default: return UNAVAILABLE;
+    }
   }
   if (err instanceof WaBackendUnreachableError) return UNAVAILABLE;
   return UNAVAILABLE;

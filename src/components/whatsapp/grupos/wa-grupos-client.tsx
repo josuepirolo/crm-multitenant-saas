@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Plus, RefreshCw, MessageSquare } from "lucide-react";
+import { Users, Plus, RefreshCw, MessageSquare, Settings2 } from "lucide-react";
 import { WaInstanceSelector } from "@/components/whatsapp/wa-instance-selector";
 import { WaCreateGroupDialog } from "./wa-create-group-dialog";
+import { WaManageGroupSheet } from "./wa-manage-group-sheet";
 import { useWaGruposViewModel } from "@/viewmodels/useWaGruposViewModel";
-import type { WaInstanceWithTenant } from "@/types";
+import type { WaConversation, WaInstanceWithTenant } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -19,6 +20,7 @@ interface WaGruposClientProps {
 export function WaGruposClient({ instances }: WaGruposClientProps) {
   const vm = useWaGruposViewModel(instances);
   const [createOpen, setCreateOpen] = useState(false);
+  const [manageGroup, setManageGroup] = useState<WaConversation | null>(null);
 
   // Auto-load quando instância já selecionada (caso de instância única)
   useEffect(() => {
@@ -114,17 +116,29 @@ export function WaGruposClient({ instances }: WaGruposClientProps) {
                   <span className="text-xs text-muted-foreground truncate">{group.last_message_preview}</span>
                 )}
               </div>
-              <div className="flex flex-col items-end gap-1 shrink-0">
-                {group.last_message_at && (
-                  <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(group.last_message_at), { locale: ptBR, addSuffix: true })}
-                  </span>
-                )}
-                {group.unread_count > 0 && (
-                  <Badge className="h-5 px-1.5 text-xs">{group.unread_count}</Badge>
-                )}
-                {group.status !== "open" && (
-                  <Badge variant="outline" className="text-[10px]">{group.status}</Badge>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-col items-end gap-1">
+                  {group.last_message_at && (
+                    <span className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(group.last_message_at), { locale: ptBR, addSuffix: true })}
+                    </span>
+                  )}
+                  {group.unread_count > 0 && (
+                    <Badge className="h-5 px-1.5 text-xs">{group.unread_count}</Badge>
+                  )}
+                  {group.status !== "open" && (
+                    <Badge variant="outline" className="text-[10px]">{group.status}</Badge>
+                  )}
+                </div>
+                {group.group_provider_id && (
+                  <button
+                    type="button"
+                    onClick={() => setManageGroup(group)}
+                    title="Gerenciar grupo"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  >
+                    <Settings2 size={14} />
+                  </button>
                 )}
               </div>
             </div>
@@ -137,6 +151,18 @@ export function WaGruposClient({ instances }: WaGruposClientProps) {
         onOpenChange={setCreateOpen}
         onSubmit={vm.handleCreateGroup}
       />
+
+      {manageGroup && (
+        <WaManageGroupSheet
+          open={!!manageGroup}
+          onOpenChange={(o) => { if (!o) setManageGroup(null); }}
+          group={manageGroup}
+          onRename={vm.handleRenameGroup}
+          onUpdateDescription={vm.handleUpdateDescription}
+          onAddParticipants={vm.handleAddParticipants}
+          onRemoveParticipant={vm.handleRemoveParticipant}
+        />
+      )}
     </div>
   );
 }
