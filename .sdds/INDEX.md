@@ -13,7 +13,7 @@ Atualizado: 2026-06-15
 | chat | `specs/chat.summary.md` | `specs/chat.spec.md` | `contracts/chat.contract.md` | `harness/chat.harness.md` |
 | contacts (bulk import) | — | `specs/contacts-bulk-import.spec.md` | — | — |
 | settings (integrations) | — | `specs/settings-integrations.spec.md` (v2 BFF, ADR-006) | — | `harness/settings-integrations.harness.md` |
-| whatsapp (console) | — | `specs/whatsapp-console.spec.md` (sidebar, ADR-008) | — | — |
+| whatsapp (console) | — | `specs/whatsapp-console.spec.md` (sidebar, ADR-008) | `contracts/wa-operational-contracts.md` (§3-§8 via `backend_zapi/frontend/wa-backend-integration-contracts.md`) | `harness/whatsapp-console.harness.md` (WC-01..14 ✅; WC-20..43 pendentes) |
 
 > ⚠️ Spec de Chat é obsoleta — conversations/messages foram removidas. `/settings/integrations` v2 BFF (ADR-006) **implementada**; authz cross-service (ADR-007) hook **habilitado em produção** — ver `sessions/2026-06-14-1923-session.md`.
 
@@ -44,6 +44,7 @@ Atualizado: 2026-06-15
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-15 | **ADR-008 fases 2-4 concluídas** — grupos, enviar, campanhas implementados e commitados (`b63303e`). 418/418, tsc limpo. Ver `sessions/2026-06-15-2305-session.md` |
 | 2026-06-15 | **Checkpoint:** pacote tarde (ADR-008 f1 + hotfix Turbopack) pronto p/ commit — working tree local. Ver `sessions/2026-06-15-1345-session.md` |
 | 2026-06-15 | Hotfix dev: 404 `/dashboard` (cache Turbopack). Ver `sessions/2026-06-15-1344-session.md` |
 | 2026-06-15 | **ADR-008 fase 1:** sidebar WhatsApp + `/whatsapp/conexao`; recado backend enviado. Ver `sessions/2026-06-15-1338-session.md` |
