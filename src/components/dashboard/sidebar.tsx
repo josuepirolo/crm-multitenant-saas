@@ -23,6 +23,10 @@ import {
   ClipboardList,
   Shirt,
   Package,
+  Link2,
+  UsersRound,
+  Send,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useTransition, useEffect } from "react";
@@ -72,10 +76,18 @@ function getNicheNav(nicheSlug?: string | null) {
 
 const SETTINGS_NAV = { href: "/settings", label: "Configurações", icon: Settings };
 
+const WA_SUB_NAV = [
+  { href: "/whatsapp/conexao", label: "Conexão", icon: Link2 },
+  { href: "/whatsapp/grupos", label: "Grupos", icon: UsersRound },
+  { href: "/whatsapp/enviar", label: "Enviar mensagem", icon: Send },
+  { href: "/whatsapp/campanhas", label: "Campanhas", icon: Megaphone },
+] as const;
+
 interface SidebarProps {
   workspaces: ActiveWorkspace[];
   currentWorkspaceId: string;
   isSuperAdmin?: boolean;
+  hasWhatsApp?: boolean;
 }
 
 // ─── Conteúdo interno da sidebar (reutilizado em desktop e drawer) ────────────
@@ -84,16 +96,19 @@ function SidebarContent({
   workspaces,
   currentWorkspaceId,
   isSuperAdmin,
+  hasWhatsApp = false,
   onNavigate,
 }: {
   collapsed: boolean;
   workspaces: ActiveWorkspace[];
   currentWorkspaceId: string;
   isSuperAdmin: boolean;
+  hasWhatsApp?: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [waOpen, setWaOpen] = useState(() => pathname.startsWith("/whatsapp"));
   const [isPending, startTransition] = useTransition();
 
   const currentWorkspace = workspaces.find(w => w.id === currentWorkspaceId);
@@ -193,6 +208,70 @@ function SidebarContent({
           </Link>
         ))}
 
+        {/* WhatsApp — só com integração vinculada (ADR-008) */}
+        {hasWhatsApp && (
+          <div className="mt-1">
+            {collapsed ? (
+              <Link
+                href="/whatsapp/conexao"
+                onClick={onNavigate}
+                title="WhatsApp"
+                className={cn(
+                  "flex items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  pathname.startsWith("/whatsapp")
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                <MessageSquare size={18} className="shrink-0" />
+              </Link>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setWaOpen((o) => !o)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "hover:bg-accent hover:text-accent-foreground",
+                    pathname.startsWith("/whatsapp")
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <MessageSquare size={18} className="shrink-0" />
+                  <span className="flex-1 text-left">WhatsApp</span>
+                  <ChevronDown
+                    size={14}
+                    className={cn("shrink-0 transition-transform", waOpen && "rotate-180")}
+                  />
+                </button>
+                {waOpen && (
+                  <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-border/50 pl-2">
+                    {WA_SUB_NAV.map(({ href, label, icon: Icon }) => (
+                      <Link
+                        key={href}
+                        href={href}
+                        onClick={onNavigate}
+                        className={cn(
+                          "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          pathname === href || pathname.startsWith(`${href}/`)
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        <Icon size={14} className="shrink-0" />
+                        <span>{label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {/* Configurações sempre no final da nav */}
         <Link
           href={SETTINGS_NAV.href}
@@ -247,7 +326,12 @@ function SidebarContent({
 }
 
 // ─── Sidebar principal ────────────────────────────────────────────────────────
-export function Sidebar({ workspaces, currentWorkspaceId, isSuperAdmin = false }: SidebarProps) {
+export function Sidebar({
+  workspaces,
+  currentWorkspaceId,
+  isSuperAdmin = false,
+  hasWhatsApp = false,
+}: SidebarProps) {
   const [collapsed, setCollapsed]   = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pathname = usePathname();
@@ -261,7 +345,7 @@ export function Sidebar({ workspaces, currentWorkspaceId, isSuperAdmin = false }
     return () => { document.body.style.overflow = ""; };
   }, [drawerOpen]);
 
-  const sharedProps = { workspaces, currentWorkspaceId, isSuperAdmin };
+  const sharedProps = { workspaces, currentWorkspaceId, isSuperAdmin, hasWhatsApp };
 
   return (
     <>

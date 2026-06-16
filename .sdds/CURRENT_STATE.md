@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-15 (v2.3 perfil/privacidade/foto + fixes RLS/QR + discovery `/qrcode`)
+Atualizado: 2026-06-15 (ADR-008 fase 1: sidebar WhatsApp + `/whatsapp/conexao`)
 Bootstrap: recuperado de código real (sessão anterior sem persistência de .sdds/)
 
 ---
@@ -21,13 +21,13 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 | Auto Sales | IMPLEMENTADO | inventário, propostas, veículos |
 | Fashion | IMPLEMENTADO | produtos, variantes, estoque |
 | Chat/Inbox | REMOVIDO | conversations/messages dropadas — WA API é fonte de verdade |
-| WA Integrations | IMPLEMENTADO (v2.1+v2.2) | gestão admin (ADR-005) em `/admin/workspaces`; **aba "Integrações" em `/settings` via BFF (ADR-006) — IMPLEMENTADA 2026-06-13**: lista instâncias WhatsApp do workspace + status ao vivo (polling) + QR Code de pareamento + reiniciar/desconectar, consumindo o backend WA (`https://messageapi.py.tec.br`) com repasse do JWT do usuário, gate `settings` (view=owner/admin/manager, edit=owner/admin), auditoria. 16 testes BFF, 400/400, tsc limpo. **Dados reais validados fim-a-fim 2026-06-14** (ES256 + claim authz; ver `discoveries/2026-06-14-wa-backend-rejects-es256-jwt.md`). Pendente: v2.3 perfil/privacidade + validação manual completa no navegador |
+| WA Integrations | IMPLEMENTADO (v2.1–v2.3 + console fase 1) | gestão admin (ADR-005) em `/admin/workspaces`; BFF (ADR-006): status, QR, perfil/privacidade/foto. **Console WhatsApp (ADR-008 fase 1):** sidebar + `/whatsapp/conexao` (reusa UI v2.3); Grupos/Enviar/Campanhas = placeholder. Visível só com vínculo `workspace_integrations`. Settings → Integrações = atalho com banner. QR validado manualmente 2026-06-15. **Fases 2–4 bloqueadas** por contratos backend (recado **enviado**) |
 
 ## Riscos atuais
 
 | ID | Risco | Nível | Status |
 |---|---|---|---|
-| R-001 | Integração WA não implementada no frontend | ALTO | RESOLVIDO (v2.1+v2.2+v2 BFF) 2026-06-13 — aba Integrações em `/settings`; **dados reais validados fim-a-fim 2026-06-14** (claim authz + ES256). Resta v2.3 (perfil/privacidade) + e2e §5.4 por papel |
+| R-001 | Integração WA não implementada no frontend | ALTO | RESOLVIDO (v2.1–v2.3 + ADR-008 fase 1) — console sidebar live; fases 2–4 (grupos/envio/campanhas) bloqueadas por contratos backend |
 | R-002 | Webhooks CRM sem HMAC | ALTO | ABERTO |
 | R-003 | Supabase Vault não configurado (tokens de integração) | MÉDIO | ABERTO |
 | R-004 | 2FA não obrigatório para todos os admins | MÉDIO | ACEITO |
@@ -87,21 +87,23 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 
 - **Fix RLS — UPDATE de `workspaces` para owner+admin (2026-06-14, commit `da21a30`, pushed):** a policy era owner-only; admin passava no gate `settings:edit` da action mas o UPDATE casava 0 linhas → `repo.update().select().single()` falhava com "Cannot coerce the result to a single JSON object" (upload de logo, dados da empresa, nome). Migration `20260614210000_workspaces_update_rls_owner_admin.sql` (aplicada): policy passa a usar `is_admin_in_workspace()` (owner+admin, `deleted_at IS NULL`). Impersonação não afetada (admin client bypassa RLS).
 
-- **WA Integrations v2.3 (perfil + privacidade) — IMPLEMENTADO 2026-06-14 (commits `36b6c10` v2.3a + `cc3ffba` v2.3b, pushed):** `WaAccountDialog` (botão "Perfil" no card de instância conectada). **v2.3a:** `GET .../profile` + editar `name`/`description`; `GET .../privacy`. **v2.3b:** edição completa de privacidade (`WaPrivacySection`: read-receipts, messages-duration, 5 controles de visibilidade ALL/NONE/CONTACT_BLACKLIST com `BlacklistEditor` inline add/remove via `disallowed-contacts`; `online` só ALL/NONE; `group-add` usa chave `type`) + **foto** via upload (`media/uploads` multipart → `profile/picture`) ou URL. Camadas completas (client `waBackendUpload`, repo/usecases/actions/viewmodel/UI), gate `settings` (view/edit), Zod, anti-IDOR, auditoria `WA_PROFILE_UPDATED`/`WA_PRIVACY_UPDATED` sem PII. **16 testes BFF de account-settings** (suíte total 417/417, tsc limpo). Ver spec §11.3. Pendente: validação manual no navegador (incl. upload de foto real, blacklist).
+- **WA Integrations v2.3 + console fase 1 (ADR-008) — IMPLEMENTADO 2026-06-15 (local, não commitado):** v2.3 (perfil/privacidade/foto, commits `36b6c10`/`cc3ffba`); **fase 1 console:** sidebar WhatsApp + rotas `/whatsapp/*`, conexão em `/whatsapp/conexao` (reusa `IntegrationsTab`). QR validado manualmente (conexão/reconexão). `tsc` limpo; BFF 33/33. Ver `sessions/2026-06-15-1338-session.md`.
 
 - **Multi-workspace sidebar — CONFIRMADO 2026-06-14 (sessão esclarecimento):** switcher em `sidebar.tsx` só aparece se `workspaces.length > 1`; lista vem de `getActiveWorkspaceContext()` → RLS `my_workspace_ids()` (membership + `workspaces.is_active`); `is_superadmin` **não** expande a lista (só link Admin SaaS); durante impersonação a lista tem 1 item → sem switcher. Ver `sessions/2026-06-14-2242-session.md`.
 
 - **RBAC membros vs superadmin — CONFIRMADO 2026-06-14 (sessão esclarecimento):** fora de impersonação, superadmin segue a **role de membro** no workspace atual — `getWorkspaceContext("members", "create")` exige `owner`/`admin` (app + RLS `is_admin_in_workspace()`); `manager` = `members:view` apenas (vê lista, não convida). Membership teste `jdredes`→Lekazis como **manager** explica bloqueio ao convidar. Alternativas: promover a admin, impersonar (ADR-004), ou gestão via Admin SaaS. Convite exige e-mail já cadastrado. Ver `sessions/2026-06-14-2242-session.md`.
 
+- **Dev Turbopack (2026-06-15):** cache `.next` corrompido pode causar **404 site-wide** no `next dev` após adicionar rotas — manifest `routes.d.ts` truncado; workaround: apagar `.next` e reiniciar. Ver `discoveries/2026-06-15-turbopack-routes-cache-404.md`. Helper `workspace-has-integration.ts` **sem** `"use server"` (só RSC).
+
 ## Próximas ações disponíveis
 
 | Ação | Módulo SDDS | Status |
 |---|---|---|
-| **Revisar contratos atualizados pelo backend** (`backend_zapi/frontend/*.md` editados + `frontend_v3/` novo — resposta ao recado do `/qrcode`); ver mudanças que afetam o CRM | — | **PRÓXIMO** |
-| Validar pareamento ponta-a-ponta (gerar QR → escanear → conectar) | — | Pendente (usuário) |
-| e2e §5.4 negativo (sales→403) — autorizar membro de teste ou via app | harness/authz-e2e-checklist.md | Pendente |
-| Validar upload de foto (v2.3) contra backend real (resposta de `media/uploads` lida defensivamente) | settings-integrations | Pendente |
-| Remover/manter membership teste `jdredes`→Lekazis (hoje **admin**) | — | Opcional |
-| Testar mapeamento WA em `/admin/workspaces` (dark mode, mobile) | — | Pendente |
-| Linkar deal → wa_conversation | 06_IMPLEMENTATION | Aguarda spec |
-| Auditar Kanban implementado | 04_AUDITOR | Disponível |
+| **Commitar** fase 1 ADR-008 + SDDS + recado backend | — | Pendente (working tree local) |
+| Validar manualmente `/whatsapp/conexao` (regressão QR) | whatsapp-console | Pendente (usuário) |
+| Dev: 404 site-wide após novas rotas → apagar `.next` e reiniciar | discovery `2026-06-15-turbopack-routes-cache-404` | Documentado |
+| Aguardar contratos operacionais do backend (grupos/mensagens/campanhas) | ADR-008 fases 2–4 | Recado **enviado** — aguardando resposta |
+| Backend corrigir doc `/qrcode` (`value` vs `qrcode`) em `frontend_v3` | discovery `/qrcode` | Pendente (CRM já compatível) |
+| e2e §5.4 negativo (sales→403) | harness/authz-e2e-checklist.md | Pendente |
+| Validar upload de foto (v2.3) contra backend real | settings-integrations | Pendente |
+| Remover/manter membership teste `jdredes`→Lekazis | — | Opcional |

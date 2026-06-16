@@ -13,6 +13,7 @@ Atualizado: 2026-06-15
 | chat | `specs/chat.summary.md` | `specs/chat.spec.md` | `contracts/chat.contract.md` | `harness/chat.harness.md` |
 | contacts (bulk import) | — | `specs/contacts-bulk-import.spec.md` | — | — |
 | settings (integrations) | — | `specs/settings-integrations.spec.md` (v2 BFF, ADR-006) | — | `harness/settings-integrations.harness.md` |
+| whatsapp (console) | — | `specs/whatsapp-console.spec.md` (sidebar, ADR-008) | — | — |
 
 > ⚠️ Spec de Chat é obsoleta — conversations/messages foram removidas. `/settings/integrations` v2 BFF (ADR-006) **implementada**; authz cross-service (ADR-007) hook **habilitado em produção** — ver `sessions/2026-06-14-1923-session.md`.
 
@@ -26,6 +27,7 @@ Atualizado: 2026-06-15
 | `decisions/ADR-005-admin-wa-tenant-mapping.md` | 1 workspace CRM : N `wa_tenant_id`, com `UNIQUE(wa_tenant_id)` garantindo 1:1 inverso; gestão exclusiva via `/admin` (superadmin) |
 | `decisions/ADR-006-bff-wa-backend-management.md` | `/settings/integrations` consome o backend WA como **BFF** (Server Action repassa o JWT do usuário); base URL em `WA_BACKEND_URL`; RBAC `settings` por cima do gate permissivo do backend. Implementação gated por `WA_BACKEND_URL` + contratos dos endpoints |
 | `decisions/ADR-007-autorizacao-cross-service-claims-jwt.md` | CRM é dono único do RBAC; permissões `integration.whatsapp.*` no catálogo; Custom Access Token Hook carimba o claim `authz` (v1, CONGELADO) no JWT; integradores só leem o claim. Migration `20260613190000` aplicada; hook **habilitado e validado ao vivo 2026-06-14**; WA Fase 1 operacional. Contrato: `contracts/authz-claims.md` |
+| `decisions/ADR-008-whatsapp-console-sidebar.md` | Console operacional WhatsApp no sidebar (`/whatsapp/*`): conexão, grupos, envio, campanhas; faseamento; 5 novas permissões `integration.whatsapp.*`; bloqueado por contratos operacionais do backend |
 
 ## Discoveries
 | Discovery | Resumo |
@@ -37,11 +39,15 @@ Atualizado: 2026-06-15
 | `discoveries/2026-06-10-impersonation-rls-blocks-data-access.md` | Mesmo com `workspaceId` impersonado correto, `createClient()` (RLS-bound ao superadmin) bloqueava leitura/escrita via `my_workspace_ids()`; corrigido com `getScopedSupabaseClient()` (service_role durante impersonação validada) em `contacts/` e, na sequência, nos 16 arquivos restantes (R-009 RESOLVIDO) |
 | `discoveries/2026-06-14-wa-backend-rejects-es256-jwt.md` | Backend WA rejeitava JWT ES256 (401) — **RESOLVIDO** 2026-06-14; hook authz + Fase 1 validados fim-a-fim (200 com instância Lekazis). Histórico do 401 mantido na discovery |
 | `discoveries/2026-06-15-qrcode-contract-mismatch.md` | `/qrcode` do backend WA devolve `{value: URL de pareamento}`, não `{qrcode: data-URI}` como o contrato diz → QR não gerava. CRM corrigido (lê `value`, renderiza QR localmente com `qrcode.react`, sem serviço externo); recomendado backend corrigir o doc do contrato |
+| `discoveries/2026-06-15-turbopack-routes-cache-404.md` | Cache `.next/dev/types/routes.d.ts` corrompido (entrada `/whatsapp/conexao` truncada) → 404 site-wide no `next dev`; workaround: apagar `.next` e reiniciar |
 
 ## Sessões recentes
 | Data | Evento |
 |---|---|
-| 2026-06-15 | WA Integrations v2.3 (perfil/privacidade/foto, commits `36b6c10`/`cc3ffba`) + fixes RLS workspaces owner+admin (`da21a30`), perfil/privacidade "Não definido" (`99cfbc3`) e QR `value` vs `qrcode` (`ccdd920`); validação live ADR-007 fim-a-fim; discovery `/qrcode` (`790afa9`). Backend respondeu o recado (contratos atualizados — revisar). Ver `sessions/2026-06-15-0649-session.md` |
+| 2026-06-15 | **Checkpoint:** pacote tarde (ADR-008 f1 + hotfix Turbopack) pronto p/ commit — working tree local. Ver `sessions/2026-06-15-1345-session.md` |
+| 2026-06-15 | Hotfix dev: 404 `/dashboard` (cache Turbopack). Ver `sessions/2026-06-15-1344-session.md` |
+| 2026-06-15 | **ADR-008 fase 1:** sidebar WhatsApp + `/whatsapp/conexao`; recado backend enviado. Ver `sessions/2026-06-15-1338-session.md` |
+| 2026-06-15 | WA Integrations v2.3 (perfil/privacidade/foto) + fixes RLS/QR; validação live ADR-007; discovery `/qrcode`. Ver `sessions/2026-06-15-0649-session.md` |
 | 2026-06-14 | Esclarecimento produto: switcher multi-workspace (só com 2+ memberships) + RBAC membros (superadmin ≠ admin; manager não convida) — ver `sessions/2026-06-14-2242-session.md` |
 | 2026-06-14 | SDDS `d2f7706` pushed — memória 2216 sincronizada; HEAD remoto atualizado — ver `sessions/2026-06-14-2219-session.md` |
 | 2026-06-14 | SDDS `d9a68af` commitado e pushed (memória pós-push 2211) — ver `sessions/2026-06-14-2216-session.md` |
