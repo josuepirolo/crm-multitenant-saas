@@ -21,7 +21,7 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 | Auto Sales | IMPLEMENTADO | inventário, propostas, veículos |
 | Fashion | IMPLEMENTADO | produtos, variantes, estoque |
 | Chat/Inbox | REMOVIDO | conversations/messages dropadas — WA API é fonte de verdade |
-| WA Integrations | IMPLEMENTADO (v2.1–v2.3 + console fases 1-4) | gestão admin (ADR-005) em `/admin/workspaces`; BFF (ADR-006): status, QR, perfil/privacidade/foto. **Console WhatsApp (ADR-008):** sidebar + `/whatsapp/conexao` (reusa UI v2.3); `/whatsapp/grupos` (listar, criar, renomear, participantes); `/whatsapp/enviar` (avulso texto/mídia); `/whatsapp/campanhas` (criar, audiência, disparar/pausar/retomar/cancelar). Anti-IDOR via `authorizeWaOperation`. Audit logging WA_GROUP_*/WA_MESSAGE_SENT/WA_CAMPAIGN_*. Visível só com vínculo `workspace_integrations`. Settings → Integrações = atalho. QR validado manualmente 2026-06-15. **Pendente**: validação manual fases 2-4 no navegador (aguarda backend operacional) |
+| WA Integrations | IMPLEMENTADO (v2.1–v2.3 + console fases 1-4 + gerenciar grupo) | gestão admin (ADR-005) em `/admin/workspaces`; BFF (ADR-006): status, QR, perfil/privacidade/foto. **Console WhatsApp (ADR-008):** sidebar + `/whatsapp/conexao` (reusa UI v2.3); `/whatsapp/grupos` (listar, criar, renomear, descrição, add/remove participantes via `WaManageGroupSheet`); `/whatsapp/enviar` (avulso texto/mídia); `/whatsapp/campanhas` (criar, audiência, disparar/pausar/retomar/cancelar). Anti-IDOR via `authorizeWaOperation`. Audit logging WA_GROUP_*/WA_MESSAGE_SENT/WA_CAMPAIGN_*. `mapWaError` contextualizado (group/campaign) com mensagens específicas por HTTP status (400/403/409/422). Visível só com vínculo `workspace_integrations`. QR validado manualmente 2026-06-15. **Pendente**: validação manual fases 2-4 no navegador (aguarda backend operacional — bug `createGroup` timeout + fix `get_my_tenant_id()` pendentes no backend) |
 
 ## Riscos atuais
 
@@ -99,10 +99,12 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 
 | Ação | Módulo SDDS | Status |
 |---|---|---|
-| Validar manualmente `/whatsapp/grupos` (listar, criar), `/whatsapp/enviar`, `/whatsapp/campanhas` | whatsapp-console | Pendente (usuário; requer backend operacional) |
+| Validar manualmente `/whatsapp/grupos` (listar, criar, gerenciar), `/whatsapp/enviar`, `/whatsapp/campanhas` | whatsapp-console | Pendente (usuário; requer backend operacional) |
+| Backend: fix `get_my_tenant_id()` (join `workspace_members+workspace_integrations`) | `RECADO-rls-get-my-tenant-id.md` | Pendente (bloqueante para Supabase-direct) |
+| Backend: investigar timeout `POST /groups` (createGroup — 30s sem resposta) | `RECADO-create-group-timeout.md` | Pendente |
 | Backend corrigir doc `/qrcode` (`value` vs `qrcode`) em `frontend_v3` | discovery `/qrcode` | Pendente (CRM já compatível) |
 | e2e §5.4 negativo (sales→403) | harness/authz-e2e-checklist.md | Pendente |
 | Validar upload de foto (v2.3) contra backend real | settings-integrations | Pendente |
-| Commitar `.sdds/indexes/files.index.md` + `backend_zapi/frontend/README.md` | — | Pendente (working tree) |
+| Commitar `.sdds/indexes/files.index.md` | — | Pendente (working tree) |
 | Remover/manter membership teste `jdredes`→Lekazis | — | Opcional |
 | Dev: 404 site-wide após novas rotas → apagar `.next` e reiniciar | discovery `2026-06-15-turbopack-routes-cache-404` | Documentado |

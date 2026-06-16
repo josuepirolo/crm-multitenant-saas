@@ -44,6 +44,7 @@ Atualizado: 2026-06-15
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-16 | **Gerenciar grupo + mapWaError contextualizado** — `WaManageGroupSheet` (slide-right, 4 seções), botão `Settings2` por card, `getGroupMetadata` em todos os layers; `mapWaError(context)` com switch HTTP 400/403/409/422. `020461d`, 418/418. Ver `sessions/2026-06-16-0603-session.md` |
 | 2026-06-15 | **ADR-008 fases 2-4 concluídas** — grupos, enviar, campanhas implementados e commitados (`b63303e`). 418/418, tsc limpo. Ver `sessions/2026-06-15-2305-session.md` |
 | 2026-06-15 | **Checkpoint:** pacote tarde (ADR-008 f1 + hotfix Turbopack) pronto p/ commit — working tree local. Ver `sessions/2026-06-15-1345-session.md` |
 | 2026-06-15 | Hotfix dev: 404 `/dashboard` (cache Turbopack). Ver `sessions/2026-06-15-1344-session.md` |
