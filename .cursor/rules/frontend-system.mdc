@@ -1,0 +1,47 @@
+---
+description: SDDS Frontend System — regras de UI e planejamento de frontend
+globs: ["**/*.tsx", "**/*.ts", "**/*.css", "**/*.jsx", "**/*.js"]
+alwaysApply: true
+---
+
+# SDDS Frontend System
+
+## Antes de qualquer código frontend
+
+1. Leia `.claude/skills/ui-execution-rules/SKILL.md`
+2. Se `docs/brand.md` existir, leia — contém a paleta e identidade visual ativa
+3. Se `src/styles/globals.css` existir, leia — contém os tokens CSS a usar
+
+## Planejamento de frontend
+
+Para verificar ou inicializar o contexto de frontend, ative a skill `frontend-init`
+(`.claude/skills/frontend-init/SKILL.md`).
+
+## Regras inegociáveis de UI
+
+- **Tokens sempre**: cores via `var(--nome-do-token)` — nunca hex hardcoded no JSX/TSX
+- **Zero Tailwind genérico**: nunca `bg-gray-*`, `text-zinc-*`, `border-blue-*` — use variáveis do projeto
+- **shadcn/ui = comportamento, não aparência**: sobrescreva 100% dos estilos visuais
+- **Todos os estados**: todo componente interativo tem default → hover → active → focus → disabled → loading → error → empty
+- **Tipografia intencional**: use a escala do projeto (`--text-xs` até `--text-3xl`) — nunca improvise tamanhos
+- **Cor = significado**: success=verde, warning=âmbar, error=vermelho — nunca inverta
+
+## Artefatos de referência
+
+| Arquivo | Usar para |
+|---------|-----------|
+| `docs/brand.md` | Paleta, tipografia, tom visual do produto |
+| `src/styles/globals.css` | Tokens CSS — fonte de verdade de todas as cores |
+| `docs/design-system.md` | Componentes disponíveis, variantes, estados |
+| `docs/screens.md` | Layout de telas, componentes por tela, ordem de implementação |
+
+## Autoavaliação antes de entregar
+
+Responda antes de considerar qualquer componente concluído:
+1. Parece o projeto ou parece template genérico de shadcn?
+2. Loading, empty e error states implementados?
+3. Funciona em 375px e 1440px?
+4. Hover e focus visíveis em todos os interativos?
+5. Alguma decisão visual que claramente não veio de um template?
+
+Se qualquer resposta for negativa, corrija antes de entregar.

@@ -277,6 +277,42 @@ export interface WaConversationsPage {
   offset: number;
 }
 
+// §6.2 histórico de mensagens do chat
+export type WaMessageDirection = "inbound" | "outbound";
+/** `status` real varia por provider — mantém string aberta com os valores conhecidos. */
+export type WaMessageStatus = "sent" | "delivered" | "read" | "failed" | string;
+export interface WaMessage {
+  id: string;
+  direction: WaMessageDirection;
+  from_me: boolean;
+  sent_by: string | null;
+  message_type: WaMessageType;
+  text_body: string | null;
+  caption: string | null;
+  status: WaMessageStatus;
+  sent_at: string;
+  created_at: string;
+  is_deleted: boolean;
+  is_edited: boolean;
+  edited_at: string | null;
+  reply_to_provider_id: string | null;
+  forwarded: boolean;
+  fail_reason: string | null;
+  fail_code: string | null;
+}
+export interface WaMessagesPage {
+  data: WaMessage[];
+  limit: number;
+  before: string | null;
+}
+
+// §6.3 alterar status da conversa
+export interface WaConversationStatusUpdated {
+  ok: boolean;
+  conversation_id: string;
+  status: WaConversationStatus;
+}
+
 // §4 grupos
 export interface WaGroupCreated {
   created: boolean;

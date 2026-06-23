@@ -1,0 +1,14 @@
+---
+description: Clean Architecture + MVVM — ler specs_default antes de codar feature
+globs: src/**/*
+alwaysApply: true
+---
+
+# Arquitetura
+
+Leia `specs_default/architecture/clean-arch-mvvm.md` e `layer-import-rules.md`.
+
+- View → ViewModel → UseCase → Repository
+- Server Actions: auth + Zod + UseCase
+- Componentes não importam Supabase
+- Plano por camadas antes de implementar

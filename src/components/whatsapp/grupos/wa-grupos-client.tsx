@@ -157,6 +157,7 @@ export function WaGruposClient({ instances }: WaGruposClientProps) {
           open={!!manageGroup}
           onOpenChange={(o) => { if (!o) setManageGroup(null); }}
           group={manageGroup}
+          onGetMetadata={vm.handleGetMetadata}
           onRename={vm.handleRenameGroup}
           onUpdateDescription={vm.handleUpdateDescription}
           onAddParticipants={vm.handleAddParticipants}

@@ -56,6 +56,9 @@ export function useWaGruposViewModel(instances: WaInstanceWithTenant[]) {
       );
       if (res.error) {
         toast.error(res.error, { id: toastId });
+        // Atualiza a lista mesmo no erro — o backend pode ter criado o grupo
+        // antes de retornar timeout ou falha de rede.
+        load();
         return false;
       }
       toast.success(`Grupo "${groupName}" criado com sucesso!`, { id: toastId });
@@ -93,6 +96,19 @@ export function useWaGruposViewModel(instances: WaInstanceWithTenant[]) {
         return false;
       }
       toast.success("Nome atualizado.");
+      // Atualização otimista — o backend WA pode ter cache no endpoint de listagem,
+      // portanto o load() imediato pode retornar o nome antigo. Atualiza localmente
+      // antes e deixa o load() em background sincronizar quando o cache expirar.
+      setState(prev =>
+        prev.status === "loaded"
+          ? {
+              ...prev,
+              groups: prev.groups.map(g =>
+                g.id === groupId ? { ...g, group_name: value } : g
+              ),
+            }
+          : prev
+      );
       load();
       return true;
     },

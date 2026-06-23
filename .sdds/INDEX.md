@@ -1,13 +1,19 @@
 # INDEX.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-15
+Atualizado: 2026-06-23
 
 ## Ler primeiro
 1. `CURRENT_STATE.md` — estado atual
 2. `MEMORY.md` — contexto técnico
 
-## Specs existentes
+## Specs portáveis (fora do SDDS)
+
+| Pacote | Uso |
+|---|---|
+| [`specs_default/`](../specs_default/README.md) | Bootstrap Next.js seguro para **novos projetos** — arquitetura, segurança, UI, skills Claude/Cursor. Sem SDDS. 46 arquivos, PT-BR + índices EN/ES. |
+
+## Specs existentes (SDDS — este produto)
 | Módulo | Summary | Spec | Contract | Harness |
 |---|---|---|---|---|
 | chat | `specs/chat.summary.md` | `specs/chat.spec.md` | `contracts/chat.contract.md` | `harness/chat.harness.md` |
@@ -40,10 +46,16 @@ Atualizado: 2026-06-15
 | `discoveries/2026-06-14-wa-backend-rejects-es256-jwt.md` | Backend WA rejeitava JWT ES256 (401) — **RESOLVIDO** 2026-06-14; hook authz + Fase 1 validados fim-a-fim (200 com instância Lekazis). Histórico do 401 mantido na discovery |
 | `discoveries/2026-06-15-qrcode-contract-mismatch.md` | `/qrcode` do backend WA devolve `{value: URL de pareamento}`, não `{qrcode: data-URI}` como o contrato diz → QR não gerava. CRM corrigido (lê `value`, renderiza QR localmente com `qrcode.react`, sem serviço externo); recomendado backend corrigir o doc do contrato |
 | `discoveries/2026-06-15-turbopack-routes-cache-404.md` | Cache `.next/dev/types/routes.d.ts` corrompido (entrada `/whatsapp/conexao` truncada) → 404 site-wide no `next dev`; workaround: apagar `.next` e reiniciar |
+| `discoveries/2026-06-17-wa-rls-gaps-and-tenant-limit1.md` | 4 tabelas `wa_*` sem RLS (`wa_campaigns`/`wa_campaign_recipients` já em produção, `wa_media_public_links`, `wa_send_origins`); `get_my_tenant_id()` com `LIMIT 1` não considera workspace ativo — usuário multi-workspace lê tenant WA arbitrário. R-010/R-011 |
 
 ## Sessões recentes
 | Data | Evento |
 |---|---|
+| 2026-06-23 | **`/sdds-update` fechamento** — README + CURRENT_STATE/INDEX pós-`specs_default`. Ver `sessions/2026-06-23-0736-session.md` |
+| 2026-06-23 | **`specs_default/` criado** — pacote portável (46 arquivos) bootstrap Next.js. Ver `sessions/2026-06-23-0735-session.md` |
+| 2026-06-23 | **`/sdds-update` consolidação** — working tree 17–18/06 (fixes grupos, Frontend System, docs, MVP Passo 1, R-010/R-011, tipos Inbox, rotate-memory). Ver `sessions/2026-06-23-consolidacao-session.md` |
+| 2026-06-17 | **`/frontend-init` (reverse-engineering)** — `docs/brand.md`/`design-system.md`/`screens.md` gerados do código real; decisão de redesign por intenção funcional antes do visual; **análise crítica (Passo 1)** de 3 documentos de MVP alternativo "Central de Atenção WhatsApp" (`refatoração/2026-06-17/`); verificação ao vivo Supabase achou R-010 (4 tabelas `wa_*` sem RLS) e R-011 (`get_my_tenant_id()` `LIMIT 1`). Não commitado. Ver `sessions/2026-06-17-2119-session.md` |
+| 2026-06-17 | **3 fixes em grupos** (revalidar lista no erro de criação; rename otimista; `WaManageGroupSheet` sem `onGetMetadata` — metadata/participantes nunca carregavam) + **SDDS Frontend System instalado** (5 skills: `frontend-init`, `brand-discovery`, `design-system-gen`, `screen-architecture`, `ui-execution-rules`; descoberta: skill precisa ser pasta `nome/SKILL.md` com frontmatter, `.md` solto é invisível ao loader). Não commitado. Ver `sessions/2026-06-17-2105-session.md` |
 | 2026-06-16 | **Gerenciar grupo + mapWaError contextualizado** — `WaManageGroupSheet` (slide-right, 4 seções), botão `Settings2` por card, `getGroupMetadata` em todos os layers; `mapWaError(context)` com switch HTTP 400/403/409/422. `020461d`, 418/418. Ver `sessions/2026-06-16-0603-session.md` |
 | 2026-06-15 | **ADR-008 fases 2-4 concluídas** — grupos, enviar, campanhas implementados e commitados (`b63303e`). 418/418, tsc limpo. Ver `sessions/2026-06-15-2305-session.md` |
 | 2026-06-15 | **Checkpoint:** pacote tarde (ADR-008 f1 + hotfix Turbopack) pronto p/ commit — working tree local. Ver `sessions/2026-06-15-1345-session.md` |
@@ -76,6 +88,17 @@ Atualizado: 2026-06-15
 | `.claude/skills/nextjs-security-audit` | Next.js genérico — 17 vetores | Auditoria profunda, onboarding, pré-deploy |
 | `.claude/skills/security-review-gate` | Este projeto — Supabase+multi-tenant | Gate antes de cada commit/push sensível |
 | `.claude/skills/security-tests` | Prompt para gerar suíte de testes | Ao criar/expandir testes de segurança |
+
+## Skills de frontend (SDDS Frontend System — instalado 2026-06-17)
+| Skill | Escopo | Quando usar |
+|---|---|---|
+| `.claude/skills/frontend-init` | Orquestradora — diagnostica `docs/brand.md`/`globals.css`/`docs/design-system.md`/`docs/screens.md` | `/frontend-init` — ponto de entrada único, nunca chamar as 3 abaixo direto |
+| `.claude/skills/brand-discovery` | Entrevista + gera `docs/brand.md` | Chamada pela `frontend-init` (Fase 1) |
+| `.claude/skills/design-system-gen` | Gera `globals.css` + `docs/design-system.md` | Chamada pela `frontend-init` (Fase 2) |
+| `.claude/skills/screen-architecture` | Gera `docs/screens.md` | Chamada pela `frontend-init` (Fase 3) |
+| `.claude/skills/ui-execution-rules` | Regras permanentes de execução de UI (tokens, estados, tipografia) | Ativa em toda sessão de código de UI — nunca desativar |
+
+> Artefatos `docs/brand.md`, `docs/design-system.md`, `docs/screens.md` gerados em 2026-06-17 via reverse-engineering do código existente (projeto já maduro/produção, sem entrevista `brand-discovery`). `src/styles/globals.css` não existe nesse caminho por design — os tokens reais vivem em `src/app/globals.css`, referenciado pelos docs.
 
 ## Indexes
 - `indexes/modules.index.md`

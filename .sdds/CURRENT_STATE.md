@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 
 SDDS_VERSION: 1.3.2
-Atualizado: 2026-06-15 (ADR-008 fases 1-4: console WhatsApp completo — grupos, enviar, campanhas)
+Atualizado: 2026-06-23 (+ pacote `specs_default/` 46 arquivos; working tree ainda não commitado)
 Bootstrap: recuperado de código real (sessão anterior sem persistência de .sdds/)
 
 ---
@@ -21,7 +21,7 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 | Auto Sales | IMPLEMENTADO | inventário, propostas, veículos |
 | Fashion | IMPLEMENTADO | produtos, variantes, estoque |
 | Chat/Inbox | REMOVIDO | conversations/messages dropadas — WA API é fonte de verdade |
-| WA Integrations | IMPLEMENTADO (v2.1–v2.3 + console fases 1-4 + gerenciar grupo) | gestão admin (ADR-005) em `/admin/workspaces`; BFF (ADR-006): status, QR, perfil/privacidade/foto. **Console WhatsApp (ADR-008):** sidebar + `/whatsapp/conexao` (reusa UI v2.3); `/whatsapp/grupos` (listar, criar, renomear, descrição, add/remove participantes via `WaManageGroupSheet`); `/whatsapp/enviar` (avulso texto/mídia); `/whatsapp/campanhas` (criar, audiência, disparar/pausar/retomar/cancelar). Anti-IDOR via `authorizeWaOperation`. Audit logging WA_GROUP_*/WA_MESSAGE_SENT/WA_CAMPAIGN_*. `mapWaError` contextualizado (group/campaign) com mensagens específicas por HTTP status (400/403/409/422). Visível só com vínculo `workspace_integrations`. QR validado manualmente 2026-06-15. **Pendente**: validação manual fases 2-4 no navegador (aguarda backend operacional — bug `createGroup` timeout + fix `get_my_tenant_id()` pendentes no backend) |
+| WA Integrations | IMPLEMENTADO (v2.1–v2.3 + console fases 1-4 + gerenciar grupo) | gestão admin (ADR-005) em `/admin/workspaces`; BFF (ADR-006): status, QR, perfil/privacidade/foto. **Console WhatsApp (ADR-008):** sidebar + `/whatsapp/conexao` (reusa UI v2.3); `/whatsapp/grupos` (listar, criar, renomear, descrição, add/remove participantes via `WaManageGroupSheet`); `/whatsapp/enviar` (avulso texto/mídia); `/whatsapp/campanhas` (criar, audiência, disparar/pausar/retomar/cancelar). Anti-IDOR via `authorizeWaOperation`. Audit logging WA_GROUP_*/WA_MESSAGE_SENT/WA_CAMPAIGN_*. `mapWaError` contextualizado (group/campaign) com mensagens específicas por HTTP status (400/403/409/422). Visível só com vínculo `workspace_integrations`. QR validado manualmente 2026-06-15. **3 fixes 2026-06-17 (local, não commitado):** `createWaGroup` revalida lista mesmo no erro; `updateWaGroupName` com atualização otimista; `WaManageGroupSheet` chama `onGetMetadata` ao abrir (metadata + participantes + skeletons). **Tipos prep Inbox (local):** `WaMessage`/`WaMessagesPage`/`WaConversationStatusUpdated` em `src/types/index.ts` (contratos §6.2–§6.3, sem UI). **Pendente**: validação manual dos fixes + commit do working tree |
 
 ## Riscos atuais
 
@@ -32,10 +32,12 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 | R-003 | Supabase Vault não configurado (tokens de integração) | MÉDIO | ABERTO |
 | R-004 | 2FA não obrigatório para todos os admins | MÉDIO | ACEITO |
 | R-005 | Kanban sem testes automatizados (harness parcial) | MÉDIO | ABERTO |
-| R-006 | RLS ausente nas tabelas wa_* (gerenciada pelo WA backend) | INFO | EXTERNO |
+| R-006 | RLS ausente nas tabelas wa_* (gerenciada pelo WA backend) | INFO | **DESATUALIZADO** — verificado ao vivo 2026-06-17: a maioria das tabelas `wa_*` TEM RLS habilitada e corretamente escopada por tenant para `SELECT`. Ver R-010/R-011 para os achados reais |
 | R-007 | Nada detecta DDL ad-hoc em produção fora do framework de migrations | ALTO | MITIGADO 2026-06-12 — `ddl_audit_log` + event triggers em produção (migration `20260612090000`); pendente camada 2: drift check periódico em CI |
 | R-008 | Fix de impersonação (acesso owner-like ao workspace impersonado em `getWorkspaceContext`/`getCurrentWorkspaceId`/`getUserRole`) sem testes automatizados próprios ainda — apenas validado contra a suíte existente (307/307) | ALTO | RESOLVIDO 2026-06-09; complementado 2026-06-10 (data layer, ver R-009) |
 | R-009 | `createClient()` (RLS-bound) usado após `getWorkspaceContext`/`getCurrentWorkspaceId` em ~15 arquivos fora de `contacts/` — durante impersonação de workspace onde o superadmin não é membro, RLS bloqueia leituras/escritas mesmo com `workspaceId` correto (mesmo padrão corrigido em `contacts/` via `getScopedSupabaseClient()`) | ALTO | RESOLVIDO 2026-06-10 |
+| R-010 | 4 tabelas sem RLS habilitada: `wa_campaigns`, `wa_campaign_recipients` (feature de Campanhas já em produção, ADR-008 fase 4), `wa_media_public_links` (expõe coluna `token`), `wa_send_origins` — qualquer requisição com anon key lê/escreve todos os tenants | CRÍTICO | ABERTO — verificado 2026-06-17 via Supabase advisors; SQL de remediação pronto, não aplicado (decisão do usuário). Ver `discoveries/2026-06-17-wa-rls-gaps-and-tenant-limit1.md` |
+| R-011 | `get_my_tenant_id()` (protege RLS de `wa_conversations`/`wa_messages`/`wa_insights`/etc.) usa `LIMIT 1` sem `ORDER BY` e sem considerar o workspace ativo da sessão — usuário membro de 2+ workspaces com integração WhatsApp pode ler dados de um tenant arbitrário, não o selecionado na UI | ALTO | ABERTO — bug novo, distinto do já corrigido via `RECADO-rls-get-my-tenant-id.md` (2026-06-15, aplicado); bloqueia qualquer leitura direta Supabase-client de `wa_*` para usuário multi-workspace. Recado ao backend ainda não enviado |
 
 ## Verdades atuais (CONFIRMADO)
 
@@ -95,16 +97,29 @@ Bootstrap: recuperado de código real (sessão anterior sem persistência de .sd
 
 - **Dev Turbopack (2026-06-15):** cache `.next` corrompido pode causar **404 site-wide** no `next dev` após adicionar rotas — manifest `routes.d.ts` truncado; workaround: apagar `.next` e reiniciar. Ver `discoveries/2026-06-15-turbopack-routes-cache-404.md`. Helper `workspace-has-integration.ts` **sem** `"use server"` (só RSC).
 
+- **SDDS Frontend System instalado — 2026-06-17 (local, não commitado):** pacote `specs/estrutura_frontend/` com 5 skills (`frontend-init`, `brand-discovery`, `design-system-gen`, `screen-architecture`, `ui-execution-rules`) que gerenciam `docs/brand.md`/`src/styles/globals.css`/`docs/design-system.md`/`docs/screens.md` como fonte de verdade de frontend. **Descoberta:** o skill loader deste harness só reconhece skills no formato pasta `nome/SKILL.md` com frontmatter YAML — os 5 arquivos chegaram como `.md` soltos e eram invisíveis (`/reload-skills` reportava "no changes"). Corrigido reestruturando em pastas + frontmatter, e atualizando referências em `CLAUDE.md`/`AGENTS.md`/`.cursor/rules/frontend-system.mdc`.
+- **`/frontend-init` executado — 2026-06-17 (não commitado):** diagnóstico mostrou os 5 artefatos ausentes; como o projeto já é maduro/produção (não greenfield), usuário optou por **reverse-engineering** em vez de entrevista `brand-discovery`. Gerados `docs/brand.md`, `docs/design-system.md`, `docs/screens.md` a partir do código real (`src/app/globals.css`, `src/components/ui/`, rotas, `sidebar.tsx`). `src/styles/globals.css` continua não existindo nesse caminho — os tokens reais vivem em `src/app/globals.css`; os docs apontam para o arquivo real em vez de duplicar.
+- **Redesign de frontend — decisão de processo (2026-06-17):** usuário insatisfeito com o visual/UX de todas as telas exceto Login/MFA. Decisão: mapear **intenção funcional de cada tela primeiro**, visual depois — não pular para identidade visual. Levantamento por blocos (Dashboard/Contacts/Kanban primeiro) iniciado, resposta do usuário ainda pendente.
+- **MVP alternativo em avaliação — "Central Inteligente de Atendimento WhatsApp" (`refatoração/2026-06-17/`, 2026-06-17/18):** usuário trouxe 3 documentos de spec propondo um produto focado em fila de prioridade (Central de Atenção) + Inbox + ficha inteligente sobre as tabelas `wa_*`, com CRM genérico (Kanban/nichos) como secundário. Segue roteiro do próprio usuário (`instrucao.txt`): análise crítica → auditoria → arquitetura final → épicos → backlog → código, um passo confirmado por vez — **ainda no Passo 1** (análise crítica entregue, nenhum código gerado). Achados principais: tabelas `wa_*` existem e RLS de leitura é tenant-scoped (contradiz R-006 antigo), mas mutação direta via Supabase client (sugerida nos documentos) é inviável — só `service_role` escreve, mutação precisa continuar via BFF (ADR-006); ver R-010/R-011 para bugs encontrados na verificação. TanStack Query e Zustand (stack proposta) não existem hoje no projeto — decisão de adoção pendente, recomendado ADR antes de instalar.
+
+- **`specs_default/` — pacote portável Next.js seguro (2026-06-23, local, não commitado):** 46 arquivos na raiz do repo para bootstrap de **outros** projetos Next.js (App Router + Supabase Auth + decisão JWT custom). Inclui: Clean Arch/MVVM, 8 specs de segurança, UI modular/tokens, ESLint/CI/hooks, harness testes security, addon Supabase (SSR/RLS/migrations), intake 25 perguntas, i18n PT+EN+ES, 5 skills Claude + 3 rules + 2 commands Cursor. **Sem SDDS** — memória viva fica fora do sistema. Origem: generalização das práticas deste CRM. Entry: `specs_default/README.md`. Ver `sessions/2026-06-23-0735-session.md`.
+
 ## Próximas ações disponíveis
 
 | Ação | Módulo SDDS | Status |
 |---|---|---|
-| Validar manualmente `/whatsapp/grupos` (listar, criar, gerenciar), `/whatsapp/enviar`, `/whatsapp/campanhas` | whatsapp-console | Pendente (usuário; requer backend operacional) |
-| Backend: fix `get_my_tenant_id()` (join `workspace_members+workspace_integrations`) | `RECADO-rls-get-my-tenant-id.md` | Pendente (bloqueante para Supabase-direct) |
+| Validar manualmente `/whatsapp/grupos` (listar, criar, gerenciar — incluindo os 3 fixes de 2026-06-17), `/whatsapp/enviar`, `/whatsapp/campanhas` | whatsapp-console | Pendente (usuário; requer backend operacional) |
+| ~~Rodar `/frontend-init`~~ | SDDS Frontend System | **CONCLUÍDO 2026-06-17** (reverse-engineering) |
+| ~~Backend: fix `get_my_tenant_id()` (join `workspace_members+workspace_integrations`)~~ | `RECADO-rls-get-my-tenant-id.md` | **CONCLUÍDO** — verificado ao vivo 2026-06-17, fix já aplicado em produção. Ver R-011 para bug residual (multi-workspace) |
+| Aplicar RLS nas 4 tabelas sem proteção (`wa_campaigns`/`wa_campaign_recipients`/`wa_media_public_links`/`wa_send_origins`) | R-010 | Pendente (SQL pronto, decisão do usuário) |
+| Recado ao backend: parametrizar `get_my_tenant_id()` pelo workspace ativo, não `LIMIT 1` | R-011 | Pendente (recado ainda não enviado) |
+| Decidir próximo passo da análise do MVP "Central de Atenção" (Passo 3 do roteiro do usuário, ou priorizar fixes R-010/R-011 antes) | `refatoração/2026-06-17/` | Pendente (decisão do usuário) |
+| Continuar levantamento de intenção de telas (Dashboard → Contacts → Kanban → resto) | redesign frontend | Pendente (usuário) |
 | Backend: investigar timeout `POST /groups` (createGroup — 30s sem resposta) | `RECADO-create-group-timeout.md` | Pendente |
 | Backend corrigir doc `/qrcode` (`value` vs `qrcode`) em `frontend_v3` | discovery `/qrcode` | Pendente (CRM já compatível) |
 | e2e §5.4 negativo (sales→403) | harness/authz-e2e-checklist.md | Pendente |
 | Validar upload de foto (v2.3) contra backend real | settings-integrations | Pendente |
-| Commitar `.sdds/indexes/files.index.md` | — | Pendente (working tree) |
+| Commitar pacote `specs_default/` (bootstrap Next.js portável) | specs_default | Pendente |
+| Commitar working tree restante (grupos WA, docs, Frontend System) | — | Pendente |
 | Remover/manter membership teste `jdredes`→Lekazis | — | Opcional |
 | Dev: 404 site-wide após novas rotas → apagar `.next` e reiniciar | discovery `2026-06-15-turbopack-routes-cache-404` | Documentado |

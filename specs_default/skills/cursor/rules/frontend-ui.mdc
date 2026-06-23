@@ -1,0 +1,14 @@
+---
+description: UI — tokens CSS, estados, anti-template shadcn
+globs: src/components/**/*,src/app/**/*.tsx,src/app/globals.css
+alwaysApply: false
+---
+
+# Frontend UI
+
+Leia `specs_default/ui/` e skill `ui-execution-rules`.
+
+- Cores via var(--token) — sem gray-* genérico
+- loading / empty / error obrigatórios
+- hover + focus-visible em interativos
+- shadcn comportamento only — visual do design system

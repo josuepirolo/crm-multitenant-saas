@@ -61,3 +61,42 @@ Never stall or go silent. A large file is a blocker — surface it immediately a
 | `/sdds-init` | Bootstrap full `.sdds/` structure — detects stack, creates all files, configures hooks |
 | `/sdds-update` | Update session memory: `sessions/`, `timeline/`, `CURRENT_STATE.md`, ADRs |
 | `/sdds-status` | Show current state, risks, pending items and next recommended action |
+
+---
+
+## SDDS Frontend System
+
+### Regras de UI permanentes (ativa em toda sessão)
+@import .claude/skills/ui-execution-rules/SKILL.md
+
+### Comandos de frontend
+
+| Comando | Propósito |
+|---|---|
+| `/frontend-init` | Verificar contexto de frontend e iniciar ou completar planejamento |
+
+### Como ativar
+Use a skill `frontend-init` (ative via Skill tool ou digitando `/frontend-init`).
+
+A skill detecta automaticamente o estado do projeto:
+- Nenhum artefato existe → conduz planejamento do zero (perguntas em blocos)
+- Artefatos completos → carrega contexto e confirma que está pronto para codar
+- Artefatos parciais → diagnostica, mostra o que falta e completa cirurgicamente
+
+### Artefatos gerenciados pelo sistema
+- `docs/brand.md`            — identidade visual (paleta, tipografia, tom)
+- `src/styles/globals.css`   — tokens CSS do design system
+- `docs/design-system.md`    — componentes base documentados
+- `docs/screens.md`          — arquitetura de telas, fluxos, estrutura de pastas
+
+### Integração com SDDS
+Precedência de contexto:
+```
+collaborator overrides
+    > SDDS specs / ADRs (.sdds/)
+        > Frontend skills (.claude/skills/)
+            > generic delegation prompts
+```
+
+Após rodar o FRONTEND-INIT, registre em `.sdds/decisions/` qualquer decisão
+arquitetural relevante gerada (ex: escolha de design system, estrutura de pastas).

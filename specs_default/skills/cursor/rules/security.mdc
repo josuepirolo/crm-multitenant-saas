@@ -1,0 +1,16 @@
+---
+description: Segurança Next.js + Supabase — Server Actions, RLS, env, cookies
+globs: src/app/**/*,src/lib/**/*,supabase/**/*
+alwaysApply: false
+---
+
+# Segurança
+
+Leia `specs_default/security/security-checklist.md`.
+
+- NEXT_PUBLIC_ nunca com secrets
+- Auth dentro de Server Actions / Route Handlers
+- workspace_id do contexto server
+- RLS ON; migrations versionadas
+- HttpOnly cookies; CSP em next.config
+- Gate: skill security-review-gate antes de commit sensível

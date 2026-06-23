@@ -52,3 +52,48 @@ Summarize:
 - Open questions or blockers
 
 This enables the developer to run `/sdds-update` and preserve the session.
+
+---
+
+## SDDS Frontend System
+
+### UI execution rules (active every session)
+
+This project uses a frontend identity system to prevent generic AI output.
+The rules are defined in `.claude/skills/ui-execution-rules/SKILL.md`.
+
+Before writing any frontend code:
+1. Read `.claude/skills/ui-execution-rules/SKILL.md`
+2. Read `docs/brand.md` if it exists — active color tokens and visual identity
+3. Read `src/styles/globals.css` if it exists — CSS variables to use in all components
+
+### Frontend planning command
+
+To check or initialize frontend context, use the `frontend-init` skill.
+
+The skill runs a diagnostic first and decides automatically:
+- No artifacts found → runs full planning from scratch (brand, tokens, screens)
+- All artifacts found → loads context and confirms ready to code
+- Partial artifacts → diagnoses gaps, completes only what is missing
+
+### Managed artifacts
+
+| File | Content |
+|---|---|
+| `docs/brand.md` | Visual identity: palette, typography, tone, references |
+| `src/styles/globals.css` | All CSS tokens — single source of truth for colors |
+| `docs/design-system.md` | Base components documented with variants and states |
+| `docs/screens.md` | Screen architecture, flows, folder structure, mocks |
+
+### Non-negotiable frontend rules
+
+- Never use hardcoded hex values outside `src/styles/globals.css`
+- Never use raw Tailwind color classes (`gray-*`, `zinc-*`, `blue-*`) — always use CSS variables
+- Never deliver a component without loading, empty and error states
+- Never use shadcn/ui default visual appearance — override 100% with project design system
+- Every interactive element must have visible hover and focus states
+
+### SDDS integration
+
+Frontend decisions (design system choices, screen architecture, folder structure)
+must be recorded in `.sdds/decisions/` after running FRONTEND-INIT.

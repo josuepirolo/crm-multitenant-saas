@@ -1,20 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { appleEase } from "@/components/ui/motion";
-import { X, Users, Pencil, FileText, UserPlus, UserMinus } from "lucide-react";
-import type { WaConversation } from "@/types";
+import { X, Users, Pencil, FileText, UserPlus, UserMinus, ShieldCheck } from "lucide-react";
+import type { WaConversation, WaGroupMetadata } from "@/types";
 
 interface WaManageGroupSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   group: WaConversation;
+  onGetMetadata: (groupId: string) => Promise<WaGroupMetadata | null>;
   onRename: (groupId: string, name: string) => Promise<boolean>;
   onUpdateDescription: (groupId: string, desc: string) => Promise<boolean>;
   onAddParticipants: (groupId: string, phones: string[]) => Promise<boolean>;
@@ -28,10 +30,21 @@ function parsePhones(raw: string): string[] {
     .filter((p) => p.length >= 10 && p.length <= 15);
 }
 
+type Participant = { phone: string; isAdmin: boolean };
+
+function extractParticipants(result: Record<string, unknown>): Participant[] {
+  const raw = result?.participants;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (p): p is Participant => typeof p === "object" && p !== null && typeof (p as Participant).phone === "string"
+  );
+}
+
 export function WaManageGroupSheet({
   open,
   onOpenChange,
   group,
+  onGetMetadata,
   onRename,
   onUpdateDescription,
   onAddParticipants,
@@ -49,6 +62,34 @@ export function WaManageGroupSheet({
   const [savingDesc, setSavingDesc] = useState(false);
   const [addingPart, setAddingPart] = useState(false);
   const [removingPart, setRemovingPart] = useState(false);
+
+  const [metadata, setMetadata] = useState<WaGroupMetadata | null>(null);
+  const [metadataLoading, setMetadataLoading] = useState(false);
+
+  // Carrega metadata ao abrir e reseta estado ao fechar
+  useEffect(() => {
+    if (!open || !groupId) {
+      setMetadata(null);
+      setMetadataLoading(false);
+      setName(displayName);
+      setDesc("");
+      return;
+    }
+    setMetadataLoading(true);
+    onGetMetadata(groupId).then((m) => {
+      setMetadata(m);
+      setMetadataLoading(false);
+    });
+  }, [open, groupId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pré-preenche campos editáveis quando metadata chega
+  useEffect(() => {
+    if (!metadata) return;
+    setName((metadata.result?.name as string | undefined) ?? displayName);
+    setDesc((metadata.result?.description as string | undefined) ?? "");
+  }, [metadata]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const participants = metadata ? extractParticipants(metadata.result) : [];
 
   const parsedAddPhones = parsePhones(addPhonesRaw);
   const parsedRemovePhone = removePhone.trim().replace(/\D/g, "");
@@ -142,12 +183,12 @@ export function WaManageGroupSheet({
                     onChange={(e) => setName(e.target.value)}
                     maxLength={100}
                     placeholder="Nome do grupo"
-                    disabled={savingName}
+                    disabled={savingName || metadataLoading}
                   />
                   <Button
                     type="submit"
                     size="sm"
-                    disabled={savingName || !name.trim() || name.trim() === displayName}
+                    disabled={savingName || metadataLoading || !name.trim() || name.trim() === displayName}
                   >
                     {savingName ? "Salvando…" : "Salvar nome"}
                   </Button>
@@ -162,20 +203,65 @@ export function WaManageGroupSheet({
                   <FileText size={12} />
                   Descrição
                 </div>
-                <form onSubmit={handleDesc} className="flex flex-col gap-2">
-                  <textarea
-                    value={desc}
-                    onChange={(e) => setDesc(e.target.value)}
-                    rows={3}
-                    maxLength={500}
-                    placeholder="Descrição do grupo (opcional)"
-                    disabled={savingDesc}
-                    className="w-full resize-none rounded-xl border border-border/60 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-                  />
-                  <Button type="submit" size="sm" disabled={savingDesc}>
-                    {savingDesc ? "Salvando…" : "Salvar descrição"}
-                  </Button>
-                </form>
+                {metadataLoading ? (
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                ) : (
+                  <form onSubmit={handleDesc} className="flex flex-col gap-2">
+                    <textarea
+                      value={desc}
+                      onChange={(e) => setDesc(e.target.value)}
+                      rows={3}
+                      maxLength={500}
+                      placeholder="Descrição do grupo (opcional)"
+                      disabled={savingDesc}
+                      className="w-full resize-none rounded-xl border border-border/60 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                    />
+                    <Button type="submit" size="sm" disabled={savingDesc}>
+                      {savingDesc ? "Salvando…" : "Salvar descrição"}
+                    </Button>
+                  </form>
+                )}
+              </section>
+
+              <div className="border-t border-border/40" />
+
+              {/* Participantes atuais */}
+              <section>
+                <div className="mb-3 flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <Users size={12} />
+                  Participantes
+                  {!metadataLoading && participants.length > 0 && (
+                    <span className="ml-auto font-normal normal-case tracking-normal">
+                      {participants.length}
+                    </span>
+                  )}
+                </div>
+                {metadataLoading ? (
+                  <div className="flex flex-col gap-1.5">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-8 w-full rounded-lg" />
+                    ))}
+                  </div>
+                ) : participants.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum participante carregado.</p>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {participants.map((p) => (
+                      <li
+                        key={p.phone}
+                        className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm hover:bg-accent/40"
+                      >
+                        <span className="font-mono text-xs text-foreground">{p.phone}</span>
+                        {p.isAdmin && (
+                          <span className="flex items-center gap-1 text-[10px] text-primary">
+                            <ShieldCheck size={11} />
+                            Admin
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </section>
 
               <div className="border-t border-border/40" />
